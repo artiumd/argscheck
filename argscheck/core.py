@@ -34,6 +34,8 @@ class CheckerLike(Checker):
         if not passed:
             return False, value
 
+        if isinstance(value, tuple) and len(value) == 1:
+            return self(name, value[0])
         if isinstance(value, Checker):
             return True, value
         if isinstance(value, type) and issubclass(value, Checker):
@@ -50,8 +52,11 @@ class Typed(Checker):
     def __init__(self, *types, **kwargs):
         super().__init__(**kwargs)
 
+        if not types:
+            raise TypeError(f'{self!r}() got not type arguments at all.')
+
         if not all(isinstance(typ, type) for typ in types):
-            raise TypeError(f'Positional arguments: {types!r} of {self!r}() are each expected to be a type.')
+            raise TypeError(f'Positional arguments: {types!r} of {self!r}() are each expected to be types.')
 
         self.types = types
 
@@ -125,9 +130,9 @@ class Sized(Checker):
         if not passed:
             return False, value
 
-        passed, excp = self.len_checker(f'len({name})', len(value))
+        passed, len_value = self.len_checker(f'len({name})', len(value))
         if not passed:
-            return False, excp
+            return False, len_value
 
         return True, value
 
@@ -199,5 +204,5 @@ if __name__ == '__main__':
     a = Sized(len_ge=4).check(a=4*[1])
     print(a)
 
-    a = Sequence(int, float, len_eq=5).check(a=(1,2,3,4, 5.1))
+    a = Sequence(String).check(a=(['2']))
     print(a)
