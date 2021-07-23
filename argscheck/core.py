@@ -6,7 +6,7 @@ class Checker:
     def __repr__(self):
         return type(self).__qualname__
 
-    def check_(self, name, value):
+    def __call__(self, name, value):
         return True, value
 
     def check(self, *args, **kwargs):
@@ -19,65 +19,51 @@ class Checker:
         if kwargs:
             name, value = next(iter(kwargs.items()))
 
-        # Perform argument checking, if passed, apply conversion, otherwise raise the error returned
-        passed, value_or_ex = self.check_(name, value)
+        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+        # exception.
+        passed, value_or_excp = self(name, value)
         if passed:
-            return value_or_ex
+            return value_or_excp
         else:
-            raise value_or_ex
+            raise value_or_excp
 
 
 class CheckerLike(Checker):
-    def check_(self, name, value):
-        passed, value = super().check_(name, value)
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
         if isinstance(value, Checker):
             return True, value
-        if issubclass(value, Checker):
+        if isinstance(value, type) and issubclass(value, Checker):
             return True, value()
-        if _is_type_or_tuple_of_types(value):
+        if isinstance(value, type):
             return True, Typed(value)
+        if isinstance(value, tuple) and all(isinstance(item, type) for item in value):
+            return True, Typed(*value)
 
         return False, TypeError(f'Argument {name}={value!r} is expected to be a checker-like.')
 
 
 class Typed(Checker):
-    def __init__(self, typ, **kwargs):
+    def __init__(self, *types, **kwargs):
         super().__init__(**kwargs)
 
-        if isinstance(typ, type):
-            typ = (typ,)
+        if not all(isinstance(typ, type) for typ in types):
+            raise TypeError(f'Positional arguments: {types!r} of {self!r}() are each expected to be a type.')
 
-        if not _is_type_or_tuple_of_types(typ):
-            raise TypeError(f'Argument typ={typ!r} of {self!r}() is expected to be a type or a non-empty tuple of types.')
+        self.types = types
 
-        self.typ = typ
-
-    def check_(self, name, value):
-        passed, value = super().check_(name, value)
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
-        if isinstance(value, self.typ):
+        if isinstance(value, self.types):
             return True, value
         else:
-            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.typ!r}.')
-
-
-def _check_order(name, value, other, order_fn, order_name):
-    if order_fn(value, other):
-        return True, value
-    else:
-        return False, ValueError(f'Argument {name}={value!r} is expected to be {order_name} {other!r}.')
-
-
-def _is_type_or_tuple_of_types(typ):
-    if not isinstance(typ, tuple):
-        typ = (typ,)
-
-    return typ and all(isinstance(item, type) for item in typ)
+            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.types!r}.')
 
 
 class Ordered(Checker):
@@ -88,8 +74,8 @@ class Ordered(Checker):
                   ge=dict(order_fn=operator.ge, order_name='greater than or equal to'),
                   gt=dict(order_fn=operator.gt, order_name='greater than'))
 
-    def __init__(self, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, **kwargs):
+        super().__init__(*args, **kwargs)
 
         if lt is not None and le is not None:
             raise ValueError(f'Arguments lt={lt!r} and le={le!r} of {self!r}() must not be both provided.')
@@ -104,13 +90,20 @@ class Ordered(Checker):
             raise ValueError(f'Argument eq={eq!r} excludes all other arguments of {self!r}.')
 
         # Create order checker functions for the arguments that are not None
-        self.checker_fns = [partial(_check_order, other=value, **self.orders[name])
+        self.checker_fns = [partial(self._check_order, other=value, **self.orders[name])
                             for name, value
                             in dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt).items()
                             if value is not None]
 
-    def check_(self, name, value):
-        passed, value = super().check_(name, value)
+    @staticmethod
+    def _check_order(name, value, other, order_fn, order_name):
+        if order_fn(value, other):
+            return True, value
+        else:
+            return False, ValueError(f'Argument {name}={value!r} is expected to be {order_name} {other!r}.')
+
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
@@ -122,14 +115,63 @@ class Ordered(Checker):
         return True, value
 
 
+class Sized(Checker):
+    def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.len_checker = Int(lt=len_lt, le=len_le, ne=len_ne, eq=len_eq, ge=len_ge, gt=len_gt)
+
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
+        passed, excp = self.len_checker(f'len({name})', len(value))
+        if not passed:
+            return False, excp
+
+        return True, value
+
+
+class Sequence(Sized, Typed):
+    def __init__(self, *args, **kwargs):
+        super().__init__(list, tuple, **kwargs)
+        passed, value = CheckerLike()('args', args)
+        if not passed:
+            raise value
+
+        self.item_checker = value
+
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
+        items = []
+        for i, item in enumerate(value):
+            passed, item = self.item_checker(f'{name}[{i}]', item)
+            if not passed:
+                return False, item
+
+            items.append(item)
+
+        value = type(value)(items)
+
+        return True, value
+
+
 class String(Typed):
     def __init__(self, **kwargs):
-        super().__init__(typ=str, **kwargs)
+        super().__init__(str, **kwargs)
+
+
+class Int(Ordered, Typed):
+    def __init__(self, **kwargs):
+        super().__init__(int, **kwargs)
 
 
 class Number(Ordered, Typed):
     def __init__(self, **kwargs):
-        super().__init__(typ=(int, float), **kwargs)
+        super().__init__(int, float, **kwargs)
 
 
 if __name__ == '__main__':
@@ -142,5 +184,20 @@ if __name__ == '__main__':
     a = String().check(a='1')
     print(a)
 
-    a = Int(ne=2).check(a=2.0)
+    a = Number(ne=23).check(a=2.0)
+    print(a)
+
+    a = CheckerLike().check(a=int)
+    print(a)
+
+    a = CheckerLike().check(a=String)
+    print(a)
+
+    a = CheckerLike().check(a=String())
+    print(a)
+
+    a = Sized(len_ge=4).check(a=4*[1])
+    print(a)
+
+    a = Sequence(int, float, len_eq=5).check(a=(1,2,3,4, 5.1))
     print(a)
