@@ -1,6 +1,6 @@
 import unittest
 
-from argscheck import Checker, CheckerLike, Typed, Ordered, Sized
+from argscheck import Checker, CheckerLike, Typed, Ordered, Sized, One
 
 
 class TestCheckerLike(unittest.TestCase):
@@ -146,6 +146,8 @@ class TestOrdered(unittest.TestCase):
             Ordered(le=5.5).check(6)
         with self.assertRaises(ValueError):
             Ordered(ge=0.0, le=1.0).check(1.1)
+        with self.assertRaises(TypeError):
+            Ordered(ge=0.0).check('1.1')
 
 
 class TestSized(unittest.TestCase):
@@ -185,3 +187,60 @@ class TestSized(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             Sized(len_lt=3).check({1, 'a', 3.14})
+
+
+class TestOne(unittest.TestCase):
+    def check_init(self):
+        One(int, float)
+        One(Ordered(), Sized())
+        One(Ordered, Sized)
+
+        with self.assertRaises(TypeError):
+            One()
+        with self.assertRaises(TypeError):
+            One(int)
+        with self.assertRaises(TypeError):
+            One(int, None)
+        with self.assertRaises(TypeError):
+            One(str, 2)
+
+    def test_check(self):
+        int_or_str = One(int, str)
+        value = 'abcd'
+        value_ret = int_or_str.check(value)
+        self.assertIs(value_ret, value)
+        value = 1234
+        value_ret = int_or_str.check(value)
+        self.assertIs(value_ret, value)
+        value = True
+        value_ret = int_or_str.check(value)
+        self.assertIs(value_ret, value)
+
+        with self.assertRaises(Exception):
+            int_or_str.check(1.1)
+
+        sized_list = One(Sized, list)
+        with self.assertRaises(Exception):
+            sized_list.check([])
+
+        int_or_bool = One(int, bool)
+        value = int(1e5)
+        value_ret = int_or_bool.check(value)
+        self.assertIs(value, value_ret)
+        with self.assertRaises(Exception):
+            int_or_bool.check(True)
+
+        one = One(float, str, bool, Sized(len_eq=2))
+        value = 1.234
+        value_ret = one.check(value)
+        self.assertIs(value, value_ret)
+        value = 'abcd'
+        value_ret = one.check(value)
+        self.assertIs(value, value_ret)
+        value = {1, 'a'}
+        value_ret = one.check(value)
+        self.assertIs(value, value_ret)
+
+        with self.assertRaises(Exception):
+            one.check([1, 2, 3])
+            one.check(1)

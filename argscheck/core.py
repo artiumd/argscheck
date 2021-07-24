@@ -124,7 +124,13 @@ class Ordered(Checker):
 
     @staticmethod
     def _check_order(name, value, other, order_fn, order_name):
-        if order_fn(value, other):
+        # Compare value, if it fails, return the caught exception
+        try:
+            res = order_fn(value, other)
+        except Exception as e:
+            return False, e
+
+        if res:
             return True, value
         else:
             return False, ValueError(f'Argument {name}={value!r} is expected to be {order_name} {other!r}.')
@@ -152,17 +158,54 @@ class Sized(Checker):
         if not passed:
             return False, value
 
-        # Try and get the length of value, if fails, return the raised exception
+        # Get value's length, if it fails, return the caught exception
         try:
             len_value = len(value)
         except Exception as e:
             return False, e
 
-        passed, len_value = self.len_checker(f'len({name})', len_value)
+        # Check length
+        passed, e = self.len_checker(f'len({name})', len_value)
         if not passed:
-            return False, len_value
+            return False, e
 
         return True, value
+
+
+class One(Checker):
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs)
+
+        if len(args) < 2:
+            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
+
+        # Resolve checker-like positional arguments
+        checker_like = CheckerLike()
+        self.checkers = []
+        for i, arg in enumerate(args):
+            passed, value = checker_like(f'args[{i}]', arg)
+            if not passed:
+                raise value
+
+            self.checkers.append(value)
+
+    def __call__(self, name, value):
+        # Apply all checkers to value, make sure only one passes
+        passed_count = 0
+        ret_value = None
+
+        for checker in self.checkers:
+            passed, ret_value_ = checker(name, value)
+            if passed:
+                passed_count += 1
+                ret_value = ret_value_
+
+        # The `One` checker passes if exactly one of its checkers passes
+        if passed_count == 1:
+            return True, ret_value
+        else:
+            checkers = ', '.join([repr(checker) for checker in self.checkers])
+            return False, ValueError(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')
 
 
 class Sequence(Sized, Typed):
