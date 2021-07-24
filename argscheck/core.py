@@ -36,39 +36,38 @@ class CheckerLike(Checker):
 
         if isinstance(value, tuple) and len(value) == 1:
             return self(name, value[0])
+        if isinstance(value, tuple):
+            raise NotImplementedError()
         if isinstance(value, Checker):
             return True, value
         if isinstance(value, type) and issubclass(value, Checker):
             return True, value()
         if isinstance(value, type):
             return True, Typed(value)
-        if isinstance(value, tuple) and all(isinstance(item, type) for item in value):
-            return True, Typed(*value)
+        # if isinstance(value, tuple) and all(isinstance(item, type) for item in value):
+        #     return True, Typed(*value)
 
         return False, TypeError(f'Argument {name}={value!r} is expected to be a checker-like.')
 
 
 class Typed(Checker):
-    def __init__(self, *types, **kwargs):
+    def __init__(self, typ, **kwargs):
         super().__init__(**kwargs)
 
-        if not types:
-            raise TypeError(f'{self!r}() got not type arguments at all.')
+        if not isinstance(typ, type):
+            raise TypeError(f'Argument typ={type!r} of {self!r}() is expected to be a type.')
 
-        if not all(isinstance(typ, type) for typ in types):
-            raise TypeError(f'Positional arguments: {types!r} of {self!r}() are each expected to be types.')
-
-        self.types = types
+        self.typ = typ
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
-        if isinstance(value, self.types):
+        if isinstance(value, self.typ):
             return True, value
         else:
-            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.types!r}.')
+            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.typ!r}.')
 
 
 class Ordered(Checker):
@@ -94,10 +93,18 @@ class Ordered(Checker):
         if eq is not None and any(p is not None for p in {lt, le, ne, ge, gt}):
             raise ValueError(f'Argument eq={eq!r} excludes all other arguments of {self!r}.')
 
+        # Arrange arguments in dictionary for easy access
+        order_args = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
+
+        # Check that arguments are numbers or None
+        for name, value in order_args.items():
+            if value is not None and not isinstance(value, (int, float)):
+                raise TypeError(f'Argument {name}={value!r} of {self!r}() must be a number or None.')
+
         # Create order checker functions for the arguments that are not None
         self.checker_fns = [partial(self._check_order, other=value, **self.orders[name])
                             for name, value
-                            in dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt).items()
+                            in order_args.items()
                             if value is not None]
 
     @staticmethod
@@ -130,7 +137,13 @@ class Sized(Checker):
         if not passed:
             return False, value
 
-        passed, len_value = self.len_checker(f'len({name})', len(value))
+        # Try and get the length of value, if fails, return the raised exception
+        try:
+            len_value = len(value)
+        except Exception as e:
+            return False, e
+
+        passed, len_value = self.len_checker(f'len({name})', len_value)
         if not passed:
             return False, len_value
 
@@ -176,7 +189,7 @@ class Int(Ordered, Typed):
 
 class Number(Ordered, Typed):
     def __init__(self, **kwargs):
-        super().__init__(int, float, **kwargs)
+        super().__init__(float, **kwargs)
 
 
 if __name__ == '__main__':
