@@ -9,10 +9,6 @@ class TestTyped(unittest.TestCase):
         with self.assertRaises(TypeError):
             Typed()
 
-        # Two arguments
-        with self.assertRaises(TypeError):
-            Typed(int, float)
-
         # Non type argument
         with self.assertRaises(TypeError):
             Typed(None)
@@ -29,6 +25,8 @@ class TestTyped(unittest.TestCase):
         Typed(type(None))
         Typed(Checker)
         Typed(type)
+        Typed(int, float)
+        Typed(int, bool, list, dict)
 
     def test_check(self):
         value = 1e5
@@ -49,6 +47,15 @@ class TestTyped(unittest.TestCase):
         typed = Typed(Typed)
         value_ret = typed.check(typed)
         self.assertIs(value_ret, typed)
+
+        typed = Typed(int, float)
+        value = -12
+        value_ret = typed.check(value)
+        self.assertIs(value_ret, value)
+
+        value = 1.234
+        value_ret = typed.check(value)
+        self.assertIs(value_ret, value)
 
         with self.assertRaises(TypeError):
             Typed(bool).check(1)

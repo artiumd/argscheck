@@ -44,23 +44,26 @@ def _validate_checker_like(name, value):
 
 
 class Typed(Checker):
-    def __init__(self, typ, **kwargs):
+    def __init__(self, *types, **kwargs):
         super().__init__(**kwargs)
 
-        if not isinstance(typ, type):
-            raise TypeError(f'Argument typ={type!r} of {self!r}() is expected to be a type.')
+        if not types:
+            raise TypeError(f'{self!r}() expects at least one positional argument.')
 
-        self.typ = typ
+        if not all(isinstance(typ, type) for typ in types):
+            raise TypeError(f'Argument types={types!r} of {self!r}() is expected to be one or more types.')
+
+        self.types = types
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
-        if isinstance(value, self.typ):
+        if isinstance(value, self.types):
             return True, value
         else:
-            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.typ!r}.')
+            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.types!r}.')
 
 
 class Ordered(Checker):
