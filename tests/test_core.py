@@ -25,18 +25,22 @@ class TestTyped(TestCaseArgscheck):
         self.assertRaises(TypeError, Typed, tuple())
 
     def test_check(self):
-        # Good arguments
         self.assertOutputIsInput(Typed(float), 1e5)
         self.assertOutputIsInput(Typed(int), True)
         self.assertOutputIsInput(Typed(list), [1, 2, 3])
-        typed = Typed(Typed)
-        self.assertOutputIsInput(typed, typed)
-        self.assertOutputIsInput(Typed(int, float), -12)
-        self.assertOutputIsInput(Typed(int, float), 1.234)
 
-        # Bad arguments
-        self.assertRaises(TypeError, Typed(bool).check, 1)
-        self.assertRaises(TypeError, Typed(str).check, 0x1234)
+        self.checker = Typed(Typed)
+        self.assertOutputIsInput(self.checker)
+
+        self.checker = Typed(int, float)
+        self.assertOutputIsInput(-12)
+        self.assertOutputIsInput(1.234)
+
+        self.checker = Typed(bool)
+        self.assertRaisesOnCheck(TypeError, 1)
+
+        self.checker = Typed(str)
+        self.assertRaisesOnCheck(TypeError, 0x1234)
 
 
 class TestOrdered(TestCaseArgscheck):
@@ -85,16 +89,17 @@ class TestSized(TestCaseArgscheck):
         self.assertRaises(TypeError, Sized, len_eq=1, len_ne=1)
 
     def test_check(self):
-        # Good arguments
         self.assertOutputIsInput(Sized(), [1, 2, 3])
         self.assertOutputIsInput(Sized(len_ge=0), [1, 2, 3])
         self.assertOutputIsInput(Sized(len_ge=0, len_le=3), [1, 2, 3])
         self.assertOutputIsInput(Sized(len_eq=0), {})
 
-        # Bad arguments
-        self.assertRaises(TypeError, Sized(len_ne=2).check, True)
-        self.assertRaises(ValueError, Sized(len_ne=2).check, dict(a=1, b=2))
-        self.assertRaises(ValueError, Sized(len_lt=3).check, {1, 'a', 3.14})
+        self.checker = Sized(len_ne=2)
+        self.assertRaisesOnCheck(TypeError, True)
+        self.assertRaisesOnCheck(ValueError, dict(a=1, b=2))
+
+        self.checker = Sized(len_lt=3)
+        self.assertRaisesOnCheck(ValueError, {1, 'a', 3.14})
 
 
 class TestOne(TestCaseArgscheck):
@@ -112,18 +117,22 @@ class TestOne(TestCaseArgscheck):
         self.assertRaises(TypeError, One, str, 2)
 
     def test_check(self):
-        # Good arguments
-        self.assertOutputIsInput(One(int, str), 'abcd')
-        self.assertOutputIsInput(One(int, str), 1234)
-        self.assertOutputIsInput(One(int, str), True)
-        self.assertOutputIsInput(One(int, bool), int(1e5))
-        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), 1.234)
-        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), 'abcd')
-        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), {1, 'a'})
+        self.checker = One(int, str)
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput(1234)
+        self.assertOutputIsInput(True)
+        self.assertRaisesOnCheck(ValueError, 1.1)
 
-        # Bad arguments
-        self.assertRaises(ValueError, One(int, str).check, 1.1)
-        self.assertRaises(ValueError, One(int, bool).check, True)
-        self.assertRaises(ValueError, One(float, str, bool, Sized(len_eq=2)).check, [1, 2, 3])
-        self.assertRaises(ValueError, One(float, str, bool, Sized(len_eq=2)).check, 1)
-        self.assertRaises(ValueError, One(Sized, list).check, [])
+        self.checker = One(int, bool)
+        self.assertOutputIsInput(int(1e5))
+        self.assertRaisesOnCheck(ValueError, True)
+
+        self.checker = One(float, str, bool, Sized(len_eq=2))
+        self.assertOutputIsInput(1.234)
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput({1, 'a'})
+        self.assertRaisesOnCheck(ValueError, [1, 2, 3])
+        self.assertRaisesOnCheck(ValueError, 1)
+
+        self.checker = One(Sized, list)
+        self.assertRaisesOnCheck(ValueError, [])

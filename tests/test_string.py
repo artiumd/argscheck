@@ -21,19 +21,25 @@ class TestString(TestCaseArgscheck):
         self.assertRaises(TypeError, String, 'abcd', flags=1.1)
 
     def test_check(self):
-        # Good arguments
-        self.assertOutputIsInput(String(), 'abcd')
-        self.assertOutputIsInput(String('.bcd'), 'abcd')
-        self.assertOutputIsInput(String('.bcd'), 'abcde')
-        self.assertOutputIsInput(String('.bcd'), '1bcd')
-        self.assertOutputIsInput(String('.bcd', method='search'), '111abcde')
-        self.assertOutputIsInput(String('.bcd', method='search'), 'abcde')
-        self.assertOutputIsInput(String('.bcd', flags=re.IGNORECASE), 'abcde')
-        self.assertOutputIsInput(String('.bcd', flags=re.IGNORECASE), 'ABCDE')
+        self.checker = String()
+        self.assertOutputIsInput('abcd')
+        self.assertRaisesOnCheck(TypeError, 1234)
 
-        # Bad arguments
-        self.assertRaises(TypeError, String(), 1234)
-        self.assertRaises(ValueError, String('.bcd').check, '111abcde')
-        self.assertRaises(ValueError, String('.bcd').check, 'ABCDE')
-        self.assertRaises(ValueError, String('.bcd', method='fullmatch').check, 'abcde')
-        self.assertRaises(ValueError, String('.bcd', method='fullmatch').check, 'ac')
+        self.checker = String('.bcd')
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput('abcde')
+        self.assertOutputIsInput('1bcd')
+        self.assertRaisesOnCheck(ValueError, '111abcde')
+        self.assertRaisesOnCheck(ValueError, 'ABCDE')
+
+        self.checker = String('.bcd', method='search')
+        self.assertOutputIsInput('111abcde')
+        self.assertOutputIsInput('abcde')
+
+        self.checker = String('.bcd', flags=re.IGNORECASE)
+        self.assertOutputIsInput('abcde')
+        self.assertOutputIsInput('ABCDE')
+
+        self.checker = String('.bcd', method='fullmatch')
+        self.assertRaisesOnCheck(ValueError, 'abcde')
+        self.assertRaisesOnCheck(ValueError, 'ac')

@@ -34,3 +34,6 @@ class TestCaseArgscheck(unittest.TestCase):
 
         ret = checker.check(value)
         self.assertIs(ret, value)
+
+    def assertRaisesOnCheck(self, expected_exception, *args, **kwargs):
+        return self.assertRaises(expected_exception, self.checker.check, *args, **kwargs)
