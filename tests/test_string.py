@@ -9,12 +9,12 @@ class TestString(unittest.TestCase):
         String()
         String(None)
         String('abcd')
-        String('abcd', fullmatch=True)
-        String('abcd', fullmatch=False)
-        String(fullmatch=False)
+        String('abcd', method='match')
+        String('abcd', method='fullmatch')
+        String(method='search')
 
-        with self.assertRaises(TypeError):
-            String(fullmatch=1)
+        with self.assertRaises(ValueError):
+            String(method=1)
 
         with self.assertRaises(TypeError):
             String(1234)
@@ -42,18 +42,31 @@ class TestString(unittest.TestCase):
         self.assertIs(ret, value)
 
         with self.assertRaises(ValueError):
+            string.check('111abcde')
+
+        with self.assertRaises(ValueError):
             string.check('ABCDE')
 
         value = '1bcd'
         ret = string.check(value)
         self.assertIs(ret, value)
 
-        string = String('.bcd', fullmatch=True)
+        string = String('.bcd', method='fullmatch')
         with self.assertRaises(ValueError):
             string.check('abcde')
 
         with self.assertRaises(ValueError):
             string.check('ac')
+
+        string = String('.bcd', method='search')
+
+        value = '111abcde'
+        ret = string.check(value)
+        self.assertIs(ret, value)
+
+        value = 'abcde'
+        ret = string.check(value)
+        self.assertIs(ret, value)
 
         string = String('.bcd', flags=re.IGNORECASE)
 
