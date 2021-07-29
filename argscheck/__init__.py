@@ -1,1 +1,1 @@
-from .core import Checker, CheckerLike, Typed, Ordered, Sized, One
+from .core import Checker, Typed, Ordered, Sized, One

@@ -1,43 +1,6 @@
 import unittest
 
-from argscheck import Checker, CheckerLike, Typed, Ordered, Sized, One
-
-
-class TestCheckerLike(unittest.TestCase):
-    def test_check(self):
-        # Checker instance
-        sized = Sized()
-        sized_ret = CheckerLike().check(sized)
-        self.assertIs(sized, sized_ret)
-
-        sized_ret = CheckerLike().check((sized,))
-        self.assertIs(sized, sized_ret)
-
-        # Checker type
-        sized_ret = CheckerLike().check(Sized)
-        self.assertIsInstance(sized_ret, Sized)
-
-        sized_ret = CheckerLike().check((Sized,))
-        self.assertIsInstance(sized_ret, Sized)
-
-        # Non Checker type
-        typed = CheckerLike().check(int)
-        self.assertIsInstance(typed, Typed)
-        self.assertIs(typed.typ, int)
-
-        typed = CheckerLike().check((int,))
-        self.assertIsInstance(typed, Typed)
-        self.assertIs(typed.typ, int)
-
-        # Non supported arguments
-        with self.assertRaises(TypeError):
-            CheckerLike().check(None)
-        with self.assertRaises(TypeError):
-            CheckerLike().check(1)
-        with self.assertRaises(TypeError):
-            CheckerLike().check('abcd')
-        with self.assertRaises(TypeError):
-            CheckerLike().check(list())
+from argscheck import Checker, Typed, Ordered, Sized, One
 
 
 class TestTyped(unittest.TestCase):

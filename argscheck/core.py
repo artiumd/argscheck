@@ -28,26 +28,19 @@ class Checker:
             raise value_or_excp
 
 
-class CheckerLike(Checker):
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
-        if not passed:
-            return False, value
+def _validate_checker_like(name, value):
+    if isinstance(value, tuple) and len(value) == 1:
+        return _validate_checker_like(name, value[0])
+    if isinstance(value, tuple) and len(value) > 1:
+        return One(*value)
+    if isinstance(value, Checker):
+        return value
+    if isinstance(value, type) and issubclass(value, Checker):
+        return value()
+    if isinstance(value, type):
+        return Typed(value)
 
-        if isinstance(value, tuple) and len(value) == 1:
-            return self(name, value[0])
-        if isinstance(value, tuple):
-            raise NotImplementedError()
-        if isinstance(value, Checker):
-            return True, value
-        if isinstance(value, type) and issubclass(value, Checker):
-            return True, value()
-        if isinstance(value, type):
-            return True, Typed(value)
-        # if isinstance(value, tuple) and all(isinstance(item, type) for item in value):
-        #     return True, Typed(*value)
-
-        return False, TypeError(f'Argument {name}={value!r} is expected to be a checker-like.')
+    raise TypeError(f'Argument {name}={value!r} is expected to be a checker-like.')
 
 
 class Typed(Checker):
@@ -124,7 +117,7 @@ class Ordered(Checker):
 
     @staticmethod
     def _check_order(name, value, other, order_fn, order_name):
-        # Compare value, if it fails, return the caught exception
+        # Compare value, if comparison fails, return the caught exception
         try:
             res = order_fn(value, other)
         except Exception as e:
@@ -179,28 +172,27 @@ class One(Checker):
         if len(args) < 2:
             raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
 
-        # Resolve checker-like positional arguments
-        checker_like = CheckerLike()
-        self.checkers = []
-        for i, arg in enumerate(args):
-            passed, value = checker_like(f'args[{i}]', arg)
-            if not passed:
-                raise value
-
-            self.checkers.append(value)
+        # Validate checker-like positional arguments
+        self.checkers = [_validate_checker_like(f'args[{i}]', arg)
+                         for i, arg
+                         in enumerate(args)]
 
     def __call__(self, name, value):
-        # Apply all checkers to value, make sure only one passes
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
         passed_count = 0
         ret_value = None
 
+        # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
             passed, ret_value_ = checker(name, value)
             if passed:
                 passed_count += 1
                 ret_value = ret_value_
 
-        # The `One` checker passes if exactly one of its checkers passes
+        # The `One` checker passes only if exactly one of its checkers passes
         if passed_count == 1:
             return True, ret_value
         else:
@@ -211,11 +203,8 @@ class One(Checker):
 class Sequence(Sized, Typed):
     def __init__(self, *args, **kwargs):
         super().__init__(list, tuple, **kwargs)
-        passed, value = CheckerLike()('args', args)
-        if not passed:
-            raise value
 
-        self.item_checker = value
+        self.item_checker = _validate_checker_like('args', args)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -247,33 +236,4 @@ class Int(Ordered, Typed):
 
 class Number(Ordered, Typed):
     def __init__(self, **kwargs):
-        super().__init__(float, **kwargs)
-
-
-if __name__ == '__main__':
-    a = Typed(int).check(a=1)
-    print(a)
-
-    a = CheckerLike().check(a=str)
-    print(a)
-
-    a = String().check(a='1')
-    print(a)
-
-    a = Number(ne=23).check(a=2.0)
-    print(a)
-
-    a = CheckerLike().check(a=int)
-    print(a)
-
-    a = CheckerLike().check(a=String)
-    print(a)
-
-    a = CheckerLike().check(a=String())
-    print(a)
-
-    a = Sized(len_ge=4).check(a=4*[1])
-    print(a)
-
-    a = Sequence(String).check(a=(['2']))
-    print(a)
+        super().__init__(int, float, **kwargs)
