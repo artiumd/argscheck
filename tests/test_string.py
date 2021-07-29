@@ -1,10 +1,11 @@
-import unittest
 import re
 
 from argscheck import String
 
+from tests.argscheck_test_case import TestCaseArgscheck
 
-class TestString(unittest.TestCase):
+
+class TestString(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         String()
@@ -20,50 +21,19 @@ class TestString(unittest.TestCase):
         self.assertRaises(TypeError, String, 'abcd', flags=1.1)
 
     def test_check(self):
-        string = String()
-        value = 'abcd'
-        ret = string.check(value)
-        self.assertIs(ret, value)
+        # Good arguments
+        self.assertOutputIsInput(String(), 'abcd')
+        self.assertOutputIsInput(String('.bcd'), 'abcd')
+        self.assertOutputIsInput(String('.bcd'), 'abcde')
+        self.assertOutputIsInput(String('.bcd'), '1bcd')
+        self.assertOutputIsInput(String('.bcd', method='search'), '111abcde')
+        self.assertOutputIsInput(String('.bcd', method='search'), 'abcde')
+        self.assertOutputIsInput(String('.bcd', flags=re.IGNORECASE), 'abcde')
+        self.assertOutputIsInput(String('.bcd', flags=re.IGNORECASE), 'ABCDE')
 
-        self.assertRaises(TypeError, string.check, 1234)
-
-        string = String('.bcd')
-
-        value = 'abcd'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        value = 'abcde'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        self.assertRaises(ValueError, string.check, '111abcde')
-        self.assertRaises(ValueError, string.check, 'ABCDE')
-
-        value = '1bcd'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        string = String('.bcd', method='fullmatch')
-        self.assertRaises(ValueError, string.check, 'abcde')
-        self.assertRaises(ValueError, string.check, 'ac')
-
-        string = String('.bcd', method='search')
-
-        value = '111abcde'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        value = 'abcde'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        string = String('.bcd', flags=re.IGNORECASE)
-
-        value = 'abcde'
-        ret = string.check(value)
-        self.assertIs(ret, value)
-
-        value = 'ABCDE'
-        ret = string.check(value)
-        self.assertIs(ret, value)
+        # Bad arguments
+        self.assertRaises(TypeError, String(), 1234)
+        self.assertRaises(ValueError, String('.bcd').check, '111abcde')
+        self.assertRaises(ValueError, String('.bcd').check, 'ABCDE')
+        self.assertRaises(ValueError, String('.bcd', method='fullmatch').check, 'abcde')
+        self.assertRaises(ValueError, String('.bcd', method='fullmatch').check, 'ac')

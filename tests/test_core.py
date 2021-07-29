@@ -1,14 +1,16 @@
-import unittest
-
 from argscheck import Checker, Typed, Ordered, Sized, One
 
+from tests.argscheck_test_case import TestCaseArgscheck
 
-class TestTyped(unittest.TestCase):
+
+class MockClass:
+    pass
+
+
+class TestTyped(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
-        class C:
-            pass
-        Typed(C)
+        Typed(MockClass)
         Typed(int)
         Typed(type(None))
         Typed(Checker)
@@ -24,40 +26,20 @@ class TestTyped(unittest.TestCase):
 
     def test_check(self):
         # Good arguments
-        value = 1e5
-        typed = Typed(float)
-        ret = typed.check(value)
-        self.assertIs(ret, value)
-
-        value = True
-        typed = Typed(int)
-        ret = typed.check(value)
-        self.assertIs(ret, value)
-
-        value = [1, 2, 3]
-        typed = Typed(list)
-        ret = typed.check(value)
-        self.assertIs(ret, value)
-
+        self.assertOutputIsInput(Typed(float), 1e5)
+        self.assertOutputIsInput(Typed(int), True)
+        self.assertOutputIsInput(Typed(list), [1, 2, 3])
         typed = Typed(Typed)
-        ret = typed.check(typed)
-        self.assertIs(ret, typed)
-
-        typed = Typed(int, float)
-        value = -12
-        ret = typed.check(value)
-        self.assertIs(ret, value)
-
-        value = 1.234
-        ret = typed.check(value)
-        self.assertIs(ret, value)
+        self.assertOutputIsInput(typed, typed)
+        self.assertOutputIsInput(Typed(int, float), -12)
+        self.assertOutputIsInput(Typed(int, float), 1.234)
 
         # Bad arguments
         self.assertRaises(TypeError, Typed(bool).check, 1)
         self.assertRaises(TypeError, Typed(str).check, 0x1234)
 
 
-class TestOrdered(unittest.TestCase):
+class TestOrdered(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         Ordered()
@@ -74,29 +56,12 @@ class TestOrdered(unittest.TestCase):
 
     def test_check(self):
         # Good arguments
-        value = 1e5
-        ret = Ordered().check(value)
-        self.assertIs(value, ret)
-
-        value = 3.14
-        ret = Ordered(gt=3.0, ne=3.1, le=3.14).check(value)
-        self.assertIs(value, ret)
-
-        value = 1
-        ret = Ordered(ne=0).check(value)
-        self.assertIs(value, ret)
-
-        value = -19.0
-        ret = Ordered(eq=-19).check(value)
-        self.assertIs(value, ret)
-
-        value = -19.0
-        ret = Ordered(ge=-19).check(value)
-        self.assertIs(value, ret)
-
-        value = 0.5
-        ret = Ordered(ge=0.0, le=1.0).check(value)
-        self.assertIs(value, ret)
+        self.assertOutputIsInput(Ordered(), 1e5)
+        self.assertOutputIsInput(Ordered(gt=3.0, ne=3.1, le=3.14), 3.14)
+        self.assertOutputIsInput(Ordered(ne=0), 1)
+        self.assertOutputIsInput(Ordered(eq=-19), -19.0)
+        self.assertOutputIsInput(Ordered(ge=-19), -19.0)
+        self.assertOutputIsInput(Ordered(ge=0.0, le=1.0), 0.5)
 
         # Bad arguments
         self.assertRaises(ValueError, Ordered(ne=4).check, 4.0)
@@ -107,7 +72,7 @@ class TestOrdered(unittest.TestCase):
         self.assertRaises(TypeError, Ordered(ge=0.0).check, '1.1')
 
 
-class TestSized(unittest.TestCase):
+class TestSized(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         Sized()
@@ -121,21 +86,10 @@ class TestSized(unittest.TestCase):
 
     def test_check(self):
         # Good arguments
-        value = [1, 2, 3]
-        ret = Sized().check(value)
-        self.assertIs(value, ret)
-
-        value = [1, 2, 3]
-        ret = Sized(len_ge=0).check(value)
-        self.assertIs(value, ret)
-
-        value = [1, 2, 3]
-        ret = Sized(len_ge=0, len_le=3).check(value)
-        self.assertIs(value, ret)
-
-        value = {}
-        ret = Sized(len_eq=0).check(value)
-        self.assertIs(value, ret)
+        self.assertOutputIsInput(Sized(), [1, 2, 3])
+        self.assertOutputIsInput(Sized(len_ge=0), [1, 2, 3])
+        self.assertOutputIsInput(Sized(len_ge=0, len_le=3), [1, 2, 3])
+        self.assertOutputIsInput(Sized(len_eq=0), {})
 
         # Bad arguments
         self.assertRaises(TypeError, Sized(len_ne=2).check, True)
@@ -143,7 +97,7 @@ class TestSized(unittest.TestCase):
         self.assertRaises(ValueError, Sized(len_lt=3).check, {1, 'a', 3.14})
 
 
-class TestOne(unittest.TestCase):
+class TestOne(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         One(int, float)
@@ -159,32 +113,13 @@ class TestOne(unittest.TestCase):
 
     def test_check(self):
         # Good arguments
-        int_or_str = One(int, str)
-        value = 'abcd'
-        ret = int_or_str.check(value)
-        self.assertIs(ret, value)
-        value = 1234
-        ret = int_or_str.check(value)
-        self.assertIs(ret, value)
-        value = True
-        ret = int_or_str.check(value)
-        self.assertIs(ret, value)
-
-        int_or_bool = One(int, bool)
-        value = int(1e5)
-        ret = int_or_bool.check(value)
-        self.assertIs(value, ret)
-
-        one = One(float, str, bool, Sized(len_eq=2))
-        value = 1.234
-        ret = one.check(value)
-        self.assertIs(value, ret)
-        value = 'abcd'
-        ret = one.check(value)
-        self.assertIs(value, ret)
-        value = {1, 'a'}
-        ret = one.check(value)
-        self.assertIs(value, ret)
+        self.assertOutputIsInput(One(int, str), 'abcd')
+        self.assertOutputIsInput(One(int, str), 1234)
+        self.assertOutputIsInput(One(int, str), True)
+        self.assertOutputIsInput(One(int, bool), int(1e5))
+        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), 1.234)
+        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), 'abcd')
+        self.assertOutputIsInput(One(float, str, bool, Sized(len_eq=2)), {1, 'a'})
 
         # Bad arguments
         self.assertRaises(ValueError, One(int, str).check, 1.1)
