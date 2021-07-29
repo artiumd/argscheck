@@ -31,31 +31,31 @@ class TestTyped(unittest.TestCase):
     def test_check(self):
         value = 1e5
         typed = Typed(float)
-        value_ret = typed.check(value)
-        self.assertIs(value_ret, value)
+        ret = typed.check(value)
+        self.assertIs(ret, value)
 
         value = True
         typed = Typed(int)
-        value_ret = typed.check(value)
-        self.assertIs(value_ret, value)
+        ret = typed.check(value)
+        self.assertIs(ret, value)
 
         value = [1, 2, 3]
         typed = Typed(list)
-        value_ret = typed.check(value)
-        self.assertIs(value_ret, value)
+        ret = typed.check(value)
+        self.assertIs(ret, value)
 
         typed = Typed(Typed)
-        value_ret = typed.check(typed)
-        self.assertIs(value_ret, typed)
+        ret = typed.check(typed)
+        self.assertIs(ret, typed)
 
         typed = Typed(int, float)
         value = -12
-        value_ret = typed.check(value)
-        self.assertIs(value_ret, value)
+        ret = typed.check(value)
+        self.assertIs(ret, value)
 
         value = 1.234
-        value_ret = typed.check(value)
-        self.assertIs(value_ret, value)
+        ret = typed.check(value)
+        self.assertIs(ret, value)
 
         with self.assertRaises(TypeError):
             Typed(bool).check(1)
@@ -160,10 +160,11 @@ class TestSized(unittest.TestCase):
 
 
 class TestOne(unittest.TestCase):
-    def check_init(self):
+    def test_init(self):
         One(int, float)
         One(Ordered(), Sized())
         One(Ordered, Sized)
+        One(Ordered, int)
 
         with self.assertRaises(TypeError):
             One()
@@ -177,14 +178,14 @@ class TestOne(unittest.TestCase):
     def test_check(self):
         int_or_str = One(int, str)
         value = 'abcd'
-        value_ret = int_or_str.check(value)
-        self.assertIs(value_ret, value)
+        ret = int_or_str.check(value)
+        self.assertIs(ret, value)
         value = 1234
-        value_ret = int_or_str.check(value)
-        self.assertIs(value_ret, value)
+        ret = int_or_str.check(value)
+        self.assertIs(ret, value)
         value = True
-        value_ret = int_or_str.check(value)
-        self.assertIs(value_ret, value)
+        ret = int_or_str.check(value)
+        self.assertIs(ret, value)
 
         with self.assertRaises(Exception):
             int_or_str.check(1.1)
@@ -195,21 +196,21 @@ class TestOne(unittest.TestCase):
 
         int_or_bool = One(int, bool)
         value = int(1e5)
-        value_ret = int_or_bool.check(value)
-        self.assertIs(value, value_ret)
+        ret = int_or_bool.check(value)
+        self.assertIs(value, ret)
         with self.assertRaises(Exception):
             int_or_bool.check(True)
 
         one = One(float, str, bool, Sized(len_eq=2))
         value = 1.234
-        value_ret = one.check(value)
-        self.assertIs(value, value_ret)
+        ret = one.check(value)
+        self.assertIs(value, ret)
         value = 'abcd'
-        value_ret = one.check(value)
-        self.assertIs(value, value_ret)
+        ret = one.check(value)
+        self.assertIs(value, ret)
         value = {1, 'a'}
-        value_ret = one.check(value)
-        self.assertIs(value, value_ret)
+        ret = one.check(value)
+        self.assertIs(value, ret)
 
         with self.assertRaises(Exception):
             one.check([1, 2, 3])

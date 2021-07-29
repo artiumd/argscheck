@@ -227,11 +227,6 @@ class Sequence(Sized, Typed):
         return True, value
 
 
-class String(Typed):
-    def __init__(self, **kwargs):
-        super().__init__(str, **kwargs)
-
-
 class Int(Ordered, Typed):
     def __init__(self, **kwargs):
         super().__init__(int, **kwargs)
