@@ -5,19 +5,7 @@ from argscheck import Checker, Typed, Ordered, Sized, One
 
 class TestTyped(unittest.TestCase):
     def test_init(self):
-        # Zero arguments
-        with self.assertRaises(TypeError):
-            Typed()
-
-        # Non type argument
-        with self.assertRaises(TypeError):
-            Typed(None)
-        with self.assertRaises(TypeError):
-            Typed(1)
-        with self.assertRaises(TypeError):
-            Typed(tuple())
-
-        # Allowed arguments
+        # Good arguments
         class C:
             pass
         Typed(C)
@@ -28,7 +16,14 @@ class TestTyped(unittest.TestCase):
         Typed(int, float)
         Typed(int, bool, list, dict)
 
+        # Bad arguments
+        self.assertRaises(TypeError, Typed)
+        self.assertRaises(TypeError, Typed, None)
+        self.assertRaises(TypeError, Typed, 1)
+        self.assertRaises(TypeError, Typed, tuple())
+
     def test_check(self):
+        # Good arguments
         value = 1e5
         typed = Typed(float)
         ret = typed.check(value)
@@ -57,10 +52,9 @@ class TestTyped(unittest.TestCase):
         ret = typed.check(value)
         self.assertIs(ret, value)
 
-        with self.assertRaises(TypeError):
-            Typed(bool).check(1)
-        with self.assertRaises(TypeError):
-            Typed(str).check(0x1234)
+        # Bad arguments
+        self.assertRaises(TypeError, Typed(bool).check, 1)
+        self.assertRaises(TypeError, Typed(str).check, 0x1234)
 
 
 class TestOrdered(unittest.TestCase):
@@ -74,14 +68,12 @@ class TestOrdered(unittest.TestCase):
         Ordered(eq=3)
 
         # Bad arguments
-        with self.assertRaises(TypeError):
-            Ordered(le='abcd')
-        with self.assertRaises(TypeError):
-            Ordered(eq=3, lt=1)
-        with self.assertRaises(ValueError):
-            Ordered(ge=4, le=3)
+        self.assertRaises(TypeError, Ordered, le='abcd')
+        self.assertRaises(TypeError, Ordered, eq=3, lt=1)
+        self.assertRaises(ValueError, Ordered, ge=4, le=3)
 
     def test_check(self):
+        # Good arguments
         value = 1e5
         ret = Ordered().check(value)
         self.assertIs(value, ret)
@@ -106,33 +98,29 @@ class TestOrdered(unittest.TestCase):
         ret = Ordered(ge=0.0, le=1.0).check(value)
         self.assertIs(value, ret)
 
-        with self.assertRaises(ValueError):
-            Ordered(ne=4).check(4.0)
-        with self.assertRaises(ValueError):
-            Ordered(eq=4).check(4.1)
-        with self.assertRaises(ValueError):
-            Ordered(gt=3).check(3)
-        with self.assertRaises(ValueError):
-            Ordered(le=5.5).check(6)
-        with self.assertRaises(ValueError):
-            Ordered(ge=0.0, le=1.0).check(1.1)
-        with self.assertRaises(TypeError):
-            Ordered(ge=0.0).check('1.1')
+        # Bad arguments
+        self.assertRaises(ValueError, Ordered(ne=4).check, 4.0)
+        self.assertRaises(ValueError, Ordered(eq=4).check, 4.1)
+        self.assertRaises(ValueError, Ordered(gt=3).check, 3)
+        self.assertRaises(ValueError, Ordered(le=5.5).check, 6)
+        self.assertRaises(ValueError, Ordered(ge=0.0, le=1.0).check, 1.1)
+        self.assertRaises(TypeError, Ordered(ge=0.0).check, '1.1')
 
 
 class TestSized(unittest.TestCase):
     def test_init(self):
+        # Good arguments
         Sized()
         Sized(len_eq=5)
         Sized(len_ge=4)
         Sized(len_ge=0, len_le=10)
 
-        with self.assertRaises(TypeError):
-            Sized(len_eq='asd')
-        with self.assertRaises(TypeError):
-            Sized(len_eq=1, len_ne=1)
+        # Bad arguments
+        self.assertRaises(TypeError, Sized, len_eq='asd')
+        self.assertRaises(TypeError, Sized, len_eq=1, len_ne=1)
 
     def test_check(self):
+        # Good arguments
         value = [1, 2, 3]
         ret = Sized().check(value)
         self.assertIs(value, ret)
@@ -149,33 +137,28 @@ class TestSized(unittest.TestCase):
         ret = Sized(len_eq=0).check(value)
         self.assertIs(value, ret)
 
-        with self.assertRaises(TypeError):
-            Sized(len_ne=2).check(True)
-
-        with self.assertRaises(ValueError):
-            Sized(len_ne=2).check(dict(a=1, b=2))
-
-        with self.assertRaises(ValueError):
-            Sized(len_lt=3).check({1, 'a', 3.14})
+        # Bad arguments
+        self.assertRaises(TypeError, Sized(len_ne=2).check, True)
+        self.assertRaises(ValueError, Sized(len_ne=2).check, dict(a=1, b=2))
+        self.assertRaises(ValueError, Sized(len_lt=3).check, {1, 'a', 3.14})
 
 
 class TestOne(unittest.TestCase):
     def test_init(self):
+        # Good arguments
         One(int, float)
         One(Ordered(), Sized())
         One(Ordered, Sized)
         One(Ordered, int)
 
-        with self.assertRaises(TypeError):
-            One()
-        with self.assertRaises(TypeError):
-            One(int)
-        with self.assertRaises(TypeError):
-            One(int, None)
-        with self.assertRaises(TypeError):
-            One(str, 2)
+        # Bad arguments
+        self.assertRaises(TypeError, One)
+        self.assertRaises(TypeError, One, int)
+        self.assertRaises(TypeError, One, int, None)
+        self.assertRaises(TypeError, One, str, 2)
 
     def test_check(self):
+        # Good arguments
         int_or_str = One(int, str)
         value = 'abcd'
         ret = int_or_str.check(value)
@@ -187,19 +170,10 @@ class TestOne(unittest.TestCase):
         ret = int_or_str.check(value)
         self.assertIs(ret, value)
 
-        with self.assertRaises(Exception):
-            int_or_str.check(1.1)
-
-        sized_list = One(Sized, list)
-        with self.assertRaises(Exception):
-            sized_list.check([])
-
         int_or_bool = One(int, bool)
         value = int(1e5)
         ret = int_or_bool.check(value)
         self.assertIs(value, ret)
-        with self.assertRaises(Exception):
-            int_or_bool.check(True)
 
         one = One(float, str, bool, Sized(len_eq=2))
         value = 1.234
@@ -212,6 +186,9 @@ class TestOne(unittest.TestCase):
         ret = one.check(value)
         self.assertIs(value, ret)
 
-        with self.assertRaises(Exception):
-            one.check([1, 2, 3])
-            one.check(1)
+        # Bad arguments
+        self.assertRaises(ValueError, One(int, str).check, 1.1)
+        self.assertRaises(ValueError, One(int, bool).check, True)
+        self.assertRaises(ValueError, One(float, str, bool, Sized(len_eq=2)).check, [1, 2, 3])
+        self.assertRaises(ValueError, One(float, str, bool, Sized(len_eq=2)).check, 1)
+        self.assertRaises(ValueError, One(Sized, list).check, [])

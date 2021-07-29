@@ -6,6 +6,7 @@ from argscheck import String
 
 class TestString(unittest.TestCase):
     def test_init(self):
+        # Good arguments
         String()
         String(None)
         String('abcd')
@@ -13,14 +14,10 @@ class TestString(unittest.TestCase):
         String('abcd', method='fullmatch')
         String(method='search')
 
-        with self.assertRaises(ValueError):
-            String(method=1)
-
-        with self.assertRaises(TypeError):
-            String(1234)
-
-        with self.assertRaises(TypeError):
-            String('abcd', flags=1.1)
+        # Bad arguments
+        self.assertRaises(ValueError, String, method=1)
+        self.assertRaises(TypeError, String, 1234)
+        self.assertRaises(TypeError, String, 'abcd', flags=1.1)
 
     def test_check(self):
         string = String()
@@ -28,8 +25,7 @@ class TestString(unittest.TestCase):
         ret = string.check(value)
         self.assertIs(ret, value)
 
-        with self.assertRaises(TypeError):
-            string.check(1234)
+        self.assertRaises(TypeError, string.check, 1234)
 
         string = String('.bcd')
 
@@ -41,22 +37,16 @@ class TestString(unittest.TestCase):
         ret = string.check(value)
         self.assertIs(ret, value)
 
-        with self.assertRaises(ValueError):
-            string.check('111abcde')
-
-        with self.assertRaises(ValueError):
-            string.check('ABCDE')
+        self.assertRaises(ValueError, string.check, '111abcde')
+        self.assertRaises(ValueError, string.check, 'ABCDE')
 
         value = '1bcd'
         ret = string.check(value)
         self.assertIs(ret, value)
 
         string = String('.bcd', method='fullmatch')
-        with self.assertRaises(ValueError):
-            string.check('abcde')
-
-        with self.assertRaises(ValueError):
-            string.check('ac')
+        self.assertRaises(ValueError, string.check, 'abcde')
+        self.assertRaises(ValueError, string.check, 'ac')
 
         string = String('.bcd', method='search')
 
