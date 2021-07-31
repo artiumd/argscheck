@@ -28,9 +28,9 @@ class Checker:
             raise value_or_excp
 
 
-def _validate_checker_like(name, value):
+def _validate_checker_like(caller, name, value):
     if isinstance(value, tuple) and len(value) == 1:
-        return _validate_checker_like(name, value[0])
+        return _validate_checker_like(caller, name, value[0])
     if isinstance(value, tuple) and len(value) > 1:
         return One(*value)
     if isinstance(value, Checker):
@@ -40,7 +40,7 @@ def _validate_checker_like(name, value):
     if isinstance(value, type):
         return Typed(value)
 
-    raise TypeError(f'Argument {name}={value!r} is expected to be a checker-like.')
+    raise TypeError(f'{caller!r} expects that {name}={value!r} is a checker-like.')
 
 
 class Typed(Checker):
@@ -176,7 +176,7 @@ class One(Checker):
             raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
 
         # Validate checker-like positional arguments
-        self.checkers = [_validate_checker_like(f'args[{i}]', arg)
+        self.checkers = [_validate_checker_like(self, f'args[{i}]', arg)
                          for i, arg
                          in enumerate(args)]
 
@@ -203,11 +203,48 @@ class One(Checker):
             return False, ValueError(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')
 
 
+class Optional(Checker):
+    missing = object()
+
+    def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
+        super().__init__(**kwargs)
+
+        if default_value is not self.missing and default_factory is not self.missing:
+            raise TypeError(f'{self!r}() expects that default_value and default_factory are not both provided.')
+
+        if default_factory is not self.missing and not callable(default_factory):
+            raise TypeError(f'{self!r}() expects that if default_factory is provided, it must be a callable.')
+
+        if default_factory is not self.missing:
+            self.default_factory = default_factory
+        elif default_value is not self.missing:
+            self.default_factory = lambda: default_value
+        else:
+            self.default_factory = lambda: sentinel
+
+        self.checker = _validate_checker_like(self, 'args', args)
+        self.sentinel = sentinel
+
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
+        passed, value_ = self.checker(name, value)
+
+        if passed:
+            return True, value_
+        elif value is self.sentinel:
+            return True, self.default_factory()
+        else:
+            return False, ValueError(f'Argument {name}={value!r} is expected to be missing or {self.checker!r}.')
+
+
 class Sequence(Sized, Typed):
     def __init__(self, *args, **kwargs):
         super().__init__(list, tuple, **kwargs)
 
-        self.item_checker = _validate_checker_like('args', args)
+        self.item_checker = _validate_checker_like(self, 'args', args)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
