@@ -16,21 +16,37 @@ class TestTyped(TestCaseArgscheck):
         Typed(Checker)
         Typed(type)
         Typed(int, float)
-        Typed(int, bool, list, dict)
+        Typed(int, bool, list, dict, str, MockClass)
 
         # Bad arguments
         self.assertRaises(TypeError, Typed)
         self.assertRaises(TypeError, Typed, None)
         self.assertRaises(TypeError, Typed, 1)
         self.assertRaises(TypeError, Typed, tuple())
+        self.assertRaises(TypeError, Typed, MockClass())
 
     def test_check(self):
-        self.assertOutputIsInput(Typed(float), 1e5)
-        self.assertOutputIsInput(Typed(int), True)
-        self.assertOutputIsInput(Typed(list), [1, 2, 3])
+        self.checker = Typed(float)
+        self.assertOutputIsInput(1e5)
+        self.assertOutputIsInput(float('nan'))
+        self.assertOutputIsInput(float('inf'))
+        self.assertOutputIsInput(float('-inf'))
+        self.assertRaisesOnCheck(TypeError, 1)
+
+        self.checker = Typed(int)
+        self.assertOutputIsInput(True)
+        self.assertOutputIsInput(-1234)
+        self.assertRaisesOnCheck(TypeError, 1e5)
+
+        self.checker = Typed(list)
+        self.assertOutputIsInput(['', {}, [], ()])
+        self.assertOutputIsInput([])
+        self.assertRaisesOnCheck(TypeError, {})
+        self.assertRaisesOnCheck(TypeError, ())
 
         self.checker = Typed(Typed)
         self.assertOutputIsInput(self.checker)
+        self.assertRaisesOnCheck(TypeError, Checker())
 
         self.checker = Typed(int, float)
         self.assertOutputIsInput(-12)
@@ -40,6 +56,8 @@ class TestTyped(TestCaseArgscheck):
         self.assertRaisesOnCheck(TypeError, 1)
 
         self.checker = Typed(str)
+        self.assertOutputIsInput('')
+        self.assertOutputIsInput('abcd')
         self.assertRaisesOnCheck(TypeError, 0x1234)
 
 
@@ -59,21 +77,38 @@ class TestOrdered(TestCaseArgscheck):
         self.assertRaises(ValueError, Ordered, ge=4, le=3)
 
     def test_check(self):
-        # Good arguments
-        self.assertOutputIsInput(Ordered(), 1e5)
-        self.assertOutputIsInput(Ordered(gt=3.0, ne=3.1, le=3.14), 3.14)
-        self.assertOutputIsInput(Ordered(ne=0), 1)
-        self.assertOutputIsInput(Ordered(eq=-19), -19.0)
-        self.assertOutputIsInput(Ordered(ge=-19), -19.0)
-        self.assertOutputIsInput(Ordered(ge=0.0, le=1.0), 0.5)
+        self.checker = Ordered()
+        self.assertOutputIsInput(1e5)
+        self.assertOutputIsInput('')
+        self.assertOutputIsInput(float('nan'))
 
-        # Bad arguments
-        self.assertRaises(ValueError, Ordered(ne=4).check, 4.0)
-        self.assertRaises(ValueError, Ordered(eq=4).check, 4.1)
-        self.assertRaises(ValueError, Ordered(gt=3).check, 3)
-        self.assertRaises(ValueError, Ordered(le=5.5).check, 6)
-        self.assertRaises(ValueError, Ordered(ge=0.0, le=1.0).check, 1.1)
-        self.assertRaises(TypeError, Ordered(ge=0.0).check, '1.1')
+        self.checker = Ordered(gt=3.0, ne=3.1, le=3.14)
+        self.assertOutputIsInput(3.14)
+        self.assertOutputIsInput(3.11)
+        self.assertRaisesOnCheck(ValueError, 3.1)
+        self.assertRaisesOnCheck(ValueError, 3.0)
+        self.assertRaisesOnCheck(ValueError, float('inf'))
+        self.assertRaisesOnCheck(ValueError, float('-inf'))
+        self.assertRaisesOnCheck(ValueError, float('nan'))
+
+        self.checker = Ordered(ne=0)
+        self.assertOutputIsInput(1)
+        self.assertOutputIsInput(None)
+        self.assertRaisesOnCheck(ValueError, 0.0)
+
+        self.checker = Ordered(eq=-19)
+        self.assertOutputIsInput(-19.0)
+        self.assertRaisesOnCheck(ValueError, -19.0001)
+
+        self.checker = Ordered(ge=-19)
+        self.assertOutputIsInput(-19.0)
+        self.assertOutputIsInput(-18.9)
+        self.assertRaisesOnCheck(ValueError, -19.1)
+
+        self.checker = Ordered(gt=float('-inf'), lt=float('inf'))
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput(2**10)
+        self.assertOutputIsInput(-2 ** 10)
 
 
 class TestSized(TestCaseArgscheck):
@@ -89,16 +124,29 @@ class TestSized(TestCaseArgscheck):
         self.assertRaises(TypeError, Sized, len_eq=1, len_ne=1)
 
     def test_check(self):
-        self.assertOutputIsInput(Sized(), [1, 2, 3])
-        self.assertOutputIsInput(Sized(len_ge=0), [1, 2, 3])
-        self.assertOutputIsInput(Sized(len_ge=0, len_le=3), [1, 2, 3])
-        self.assertOutputIsInput(Sized(len_eq=0), {})
+        self.checker = Sized()
+        self.assertOutputIsInput([1, 2, 3])
+        self.assertRaisesOnCheck(TypeError, 1)
+
+        self.checker = Sized(len_ge=0)
+        self.assertOutputIsInput([1, 2, 3])
+
+        self.checker = Sized(len_ge=0, len_le=3)
+        self.assertOutputIsInput([1, 2, 3])
+        self.assertRaisesOnCheck(ValueError, [1, 2, 3, 4])
+
+        self.checker = Sized(len_eq=0)
+        self.assertOutputIsInput({})
+        self.assertRaisesOnCheck(ValueError, [1])
 
         self.checker = Sized(len_ne=2)
+        self.assertOutputIsInput({})
+        self.assertOutputIsInput({1, 2, 3})
         self.assertRaisesOnCheck(TypeError, True)
         self.assertRaisesOnCheck(ValueError, dict(a=1, b=2))
 
         self.checker = Sized(len_lt=3)
+        self.assertOutputIsInput({1, 2})
         self.assertRaisesOnCheck(ValueError, {1, 'a', 3.14})
 
 

@@ -22,17 +22,8 @@ class TestCaseArgscheck(unittest.TestCase):
 
         self._checker = value
 
-    def assertOutputIsInput(self, *args):
-        # Unpack arguments
-        if len(args) == 2:
-            checker, value = args
-            self.checker = None
-        elif len(args) == 1:
-            checker, value = self.checker, args[0]
-        else:
-            raise TypeError(f'{self!r}.assertOutputIsInput() expects one or two arguments, got {len(args)} instead.')
-
-        ret = checker.check(value)
+    def assertOutputIsInput(self, value):
+        ret = self.checker.check(value)
         self.assertIs(ret, value)
 
     def assertRaisesOnCheck(self, expected_exception, *args, **kwargs):
