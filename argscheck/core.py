@@ -28,9 +28,9 @@ class Checker:
             raise value_or_excp
 
 
-def _validate_checker_like(caller, name, value):
+def validate_checker_like(caller, name, value):
     if isinstance(value, tuple) and len(value) == 1:
-        return _validate_checker_like(caller, name, value[0])
+        return validate_checker_like(caller, name, value[0])
     if isinstance(value, tuple) and len(value) > 1:
         return One(*value)
     if isinstance(value, Checker):
@@ -169,16 +169,16 @@ class Sized(Checker):
 
 
 class One(Checker):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *checker_likes, **kwargs):
         super().__init__(**kwargs)
 
-        if len(args) < 2:
-            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
+        if len(checker_likes) < 2:
+            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {checker_likes!r}.')
 
         # Validate checker-like positional arguments
-        self.checkers = [_validate_checker_like(self, f'args[{i}]', arg)
-                         for i, arg
-                         in enumerate(args)]
+        self.checkers = [validate_checker_like(self, f'checker_likes[{i}]', checker_like)
+                         for i, checker_like
+                         in enumerate(checker_likes)]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -206,7 +206,7 @@ class One(Checker):
 class Optional(Checker):
     missing = object()
 
-    def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
+    def __init__(self, *checker_likes, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
         super().__init__(**kwargs)
 
         if default_value is not self.missing and default_factory is not self.missing:
@@ -222,7 +222,7 @@ class Optional(Checker):
         else:
             self.default_factory = lambda: sentinel
 
-        self.checker = _validate_checker_like(self, 'args', args)
+        self.checker = validate_checker_like(self, 'checker_likes', checker_likes)
         self.sentinel = sentinel
 
     def __call__(self, name, value):
@@ -240,33 +240,14 @@ class Optional(Checker):
             return False, ValueError(f'Argument {name}={value!r} is expected to be missing or {self.checker!r}.')
 
 
-class Sequence(Sized, Typed):
-    def __init__(self, *args, **kwargs):
-        super().__init__(list, tuple, **kwargs)
-
-        self.item_checker = _validate_checker_like(self, 'args', args)
-
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
-        if not passed:
-            return False, value
-
-        items = []
-        for i, item in enumerate(value):
-            passed, item = self.item_checker(f'{name}[{i}]', item)
-            if not passed:
-                return False, item
-
-            items.append(item)
-
-        value = type(value)(items)
-
-        return True, value
-
-
 class Int(Ordered, Typed):
     def __init__(self, **kwargs):
         super().__init__(int, **kwargs)
+
+
+class Float(Ordered, Typed):
+    def __init__(self, **kwargs):
+        super().__init__(float, **kwargs)
 
 
 class Number(Ordered, Typed):
