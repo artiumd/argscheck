@@ -9,15 +9,18 @@ class Checker:
     def __call__(self, name, value):
         return True, value
 
-    def check(self, *args, **kwargs):
+    def _resolve_check_args(self, *args, **kwargs):
         # Make sure method is called properly and unpack argument's name and value
         if len(args) + len(kwargs) != 1:
             raise TypeError(f'{self!r}.check() must be called with a single positional or keyword argument.'
                             f' Got {len(args)} positional arguments and {len(kwargs)} keyword arguments.')
         if args:
-            name, value = 'argument', args[0]
-        if kwargs:
-            name, value = next(iter(kwargs.items()))
+            return 'argument', args[0]
+        else:
+            return next(iter(kwargs.items()))
+
+    def check(self, *args, **kwargs):
+        name, value = self._resolve_check_args(*args, **kwargs)
 
         # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
         # exception.

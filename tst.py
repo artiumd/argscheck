@@ -1,5 +1,3 @@
-from argscheck import Sequence, Optional, List, Tuple, Set
+from argscheck import List
 
-
-a = Set(Optional(int, default_value=222), len_ge=3).check(a={1, None, -1})
-print(a)
+List(int).check(lis=[1,2,'3'])

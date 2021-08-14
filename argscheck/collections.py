@@ -1,4 +1,5 @@
-from .core import Sized, Typed, validate_checker_like
+from .core import Sized, Typed
+from .iter import Iterable
 
 
 class Sequence(Sized, Typed):
@@ -6,17 +7,7 @@ class Sequence(Sized, Typed):
 
     def __init__(self, *checker_likes, **kwargs):
         super().__init__(self.type_, **kwargs)
-
-        self.item_checker = validate_checker_like(self, 'checker_likes', checker_likes)
-
-    def _item_iter(self, name, value):
-        for i, item in enumerate(value):
-            passed, item = self.item_checker(f'{name}[{i}]', item)
-
-            if not passed:
-                raise item
-
-            yield item
+        self.iterable = Iterable(*checker_likes)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -26,7 +17,7 @@ class Sequence(Sized, Typed):
         type_ = type(value)
 
         try:
-            value = type_(self._item_iter(name, value))
+            value = type_(self.iterable(name, value))
         except Exception as e:
             return False, e
 
