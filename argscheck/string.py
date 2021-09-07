@@ -13,11 +13,11 @@ class String(Typed):
         # Create callable that will return None if value does not match the given pattern
         if pattern is not None:
             re_obj = re.compile(pattern, flags)
-            self.matcher = dict(match=re_obj.match,
-                                fullmatch=re_obj.fullmatch,
-                                search=re_obj.search)[method]
+            self.re_matcher = dict(match=re_obj.match,
+                                   fullmatch=re_obj.fullmatch,
+                                   search=re_obj.search)[method]
         else:
-            self.matcher = lambda string: True
+            self.re_matcher = lambda string: True
 
         # Save arguments for use in error messages
         self.method = method
@@ -29,7 +29,7 @@ class String(Typed):
             return False, value
 
         # Check if given value match the regex pattern, if no match, return error
-        if self.matcher(value) is None:
+        if self.re_matcher(value) is None:
             return False, ValueError(f'Argument {name}={value} is expected to match this regex pattern: '
                                      f'"{self.pattern}" via the re.{self.method} method.')
 

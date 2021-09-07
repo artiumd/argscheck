@@ -1,12 +1,13 @@
-from .core import Sized, Typed
+from .core import Typed
+from .numeric import Sized
 from .iter import Iterable
 
 
-class Sequence(Sized, Typed):
-    type_ = object
+class Collection(Sized, Typed):
+    types = ()
 
     def __init__(self, *checker_likes, **kwargs):
-        super().__init__(self.type_, **kwargs)
+        super().__init__(*self.types, **kwargs)
         self.iterable = Iterable(*checker_likes)
 
     def __call__(self, name, value):
@@ -24,13 +25,13 @@ class Sequence(Sized, Typed):
         return True, value
 
 
-class Tuple(Sequence):
-    type_ = tuple
+class Tuple(Collection):
+    types = (tuple,)
 
 
-class List(Sequence):
-    type_ = list
+class List(Collection):
+    types = (list,)
 
 
-class Set(Sequence):
-    type_ = set
+class Set(Collection):
+    types = (set,)

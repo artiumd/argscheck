@@ -29,30 +29,40 @@ class MockIterator:
 class TestIterable(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
+        # Iterable().check(MockIterable('ret'))
         Iterable(str).check(MockIterable('ret'))
         Iterable(Optional(int, default_value=66)).check(iter([1, 2, None, 3]))
 
         # Bad arguments
-        self.assertRaises(TypeError, Iterable)
         self.assertRaises(TypeError, Iterable, None)
 
     def test_check(self):
-        value = 'ret'
-        iter_checker = Iterable(str).check(MockIterable(value))
+        values = ([], [], [])
+        iter_checker = Iterable(list).check(MockIterable(values))
+
         i = 0
-
-        for item in iter_checker:
-            self.assertIs(item, value[i])
+        for item, value in zip(iter_checker, values):
+            self.assertIs(item, value)
             i += 1
+        self.assertEqual(i, len(values))
 
-        self.assertEqual(i, len(value))
-
+        values = [1, 2, None, 3]
         checker = Iterable(Optional(int, default_value=66))
-        value = [1, 2, None, 3]
-        ret = list(checker.check(value))
+
+        ret = list(checker.check(values))
         self.assertEqual(ret, [1, 2, 66, 3])
 
 
 class TestIterator(TestCaseArgscheck):
     def test_check(self):
-        pass
+        values = ([], [], [])
+        iterator = MockIterator(values)
+        checker = Iterator(list)
+        checker.check(iterator)
+
+        for value in values:
+            ret = next(checker)
+            self.assertIs(value, ret)
+
+        with self.assertRaises(StopIteration):
+            next(checker)

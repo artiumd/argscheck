@@ -1,4 +1,5 @@
-from .core import Checker, Typed, Ordered, Sized, One, Optional
+from .core import Checker, Typed, One, Optional
+from .numeric import Ordered, Sized, Int, Float, Number
 from .string import String, Str
-from .collections import Sequence, Tuple, List, Set
+from .collections import Collection, Tuple, List, Set
 from .iter import Iterator, Iterable

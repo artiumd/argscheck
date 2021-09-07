@@ -26,6 +26,10 @@ class TestCaseArgscheck(unittest.TestCase):
         ret = self.checker.check(value)
         self.assertIs(ret, value)
 
+    def assertOutputEqualsInput(self, value):
+        ret = self.checker.check(value)
+        self.assertEqual(ret, value)
+
     def assertOutputIs(self, value, exp_output):
         ret = self.checker.check(value)
         self.assertIs(ret, exp_output)

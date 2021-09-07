@@ -1,3 +1,6 @@
-from argscheck import List
+from argscheck import List, Typed, Int
 
-List(int).check(lis=[1,2,'3'])
+
+Typed(set, int).check(1)
+# List(len_ne=2).check(a=[1,1])
+Int(ge=4).check(1)
