@@ -3,7 +3,7 @@ from .core import Checker, validate_checker_like
 
 class Iterator(Checker):
     def __init__(self, *checker_likes):
-        self.checker = validate_checker_like(self, 'checker_likes', checker_likes)
+        self.item_checker = validate_checker_like(self, 'checker_likes', checker_likes)
         self.name = self.i = self.iterator = None
 
     def check(self, *args, **kwargs):
@@ -21,7 +21,7 @@ class Iterator(Checker):
         name = self.name.format(self.i)
         self.i += 1
         value = next(self.iterator)
-        passed, value = self.checker(name, value)
+        passed, value = self.item_checker(name, value)
 
         if not passed:
             raise value
