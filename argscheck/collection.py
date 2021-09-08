@@ -1,5 +1,6 @@
 from .core import Typed
-from .numeric import Sized, Comparable
+from .numeric import Sized
+from . import Comparable
 from .iter import Iterable
 
 
@@ -39,4 +40,5 @@ class Set(Comparable, Collection):
     types = (set,)
 
     def __init__(self, *args, **kwargs):
+        # Sets should only be compared to other sets, hence: other_type=set
         super().__init__(*args, other_type=set, **kwargs)
