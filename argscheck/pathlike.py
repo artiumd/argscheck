@@ -98,3 +98,17 @@ class PathLike(Typed):
             return True, str(value)
         else:
             return True, value
+
+
+class ExistingDirectory(PathLike):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, is_dir=True, **kwargs)
+
+
+class ExistingFile(PathLike):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, is_file=True, **kwargs)
+
+
+# Aliases
+ExistingDir = ExistingDirectory

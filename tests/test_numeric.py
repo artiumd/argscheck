@@ -3,7 +3,7 @@ from argscheck import Comparable, Sized
 from tests.argscheck_test_case import TestCaseArgscheck
 
 
-class TestOrdered(TestCaseArgscheck):
+class TestComparable(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         Comparable()
