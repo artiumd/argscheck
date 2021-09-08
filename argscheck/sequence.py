@@ -38,11 +38,7 @@ class Sequence(Sized, Typed):
 
         return True, items, modified
 
-    def _set_items(self, name, value, items, modified):
-        # If none of the items in the sequence were modified during checking, return the sequence as-is
-        if not modified:
-            return True, value
-
+    def _set_items(self, name, value, items):
         # Otherwise, create a new sequence of the same type, with the modified items
         try:
             return True, type(value)(items)
@@ -62,9 +58,10 @@ class Sequence(Sized, Typed):
 
         # Prepare return value, for an immutable sequence, a new sequence instance is created and returned, for a
         # mutable sequence, items are set inplace and the original sequence is returned.
-        passed, value = self._set_items(name, value, items, modified)
-        if not passed:
-            return False, value
+        if modified:
+            passed, value = self._set_items(name, value, items)
+            if not passed:
+                return False, value
 
         # TODO astype goes here
 
@@ -82,7 +79,7 @@ class MutableSequence(Sequence):
     1. All the properties of a sequence.
     2. Has __setitem__ implemented, which accepts integers in range [0, length - 1] as the keys.
     """
-    def _set_items(self, name, value, items, modified):
+    def _set_items(self, name, value, items):
         for i, item in enumerate(items):
             try:
                 value[i] = item
