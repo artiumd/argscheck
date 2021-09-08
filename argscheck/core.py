@@ -96,7 +96,7 @@ class One(Checker):
         if passed_count == 1:
             return True, ret_value
         else:
-            checkers = ', '.join([repr(checker) for checker in self.checkers])
+            checkers = ', '.join(map(repr, self.checkers))
             return False, ValueError(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')
 
 

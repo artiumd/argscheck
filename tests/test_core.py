@@ -27,6 +27,7 @@ class TestTyped(TestCaseArgscheck):
 
     def test_check(self):
         self.checker = Typed(float)
+        self.assertOutputIsInput(0.0)
         self.assertOutputIsInput(1e5)
         self.assertOutputIsInput(float('nan'))
         self.assertOutputIsInput(float('inf'))
@@ -53,7 +54,9 @@ class TestTyped(TestCaseArgscheck):
         self.assertOutputIsInput(1.234)
 
         self.checker = Typed(bool)
-        self.assertRaisesOnCheck(TypeError, 1)
+        self.assertOutputIsInput(False)
+        self.assertRaisesOnCheck(TypeError, 1)  # 1 is not a bool
+        self.assertRaisesOnCheck(TypeError, None)
 
         self.checker = Typed(str)
         self.assertOutputIsInput('')
@@ -84,7 +87,7 @@ class TestOne(TestCaseArgscheck):
 
         self.checker = One(int, bool)
         self.assertOutputIsInput(int(1e5))
-        self.assertRaisesOnCheck(ValueError, True)
+        self.assertRaisesOnCheck(ValueError, True)  # True is both an int and a bool
 
         self.checker = One(float, str, bool, Sized(len_eq=2))
         self.assertOutputIsInput(1.234)
@@ -94,7 +97,7 @@ class TestOne(TestCaseArgscheck):
         self.assertRaisesOnCheck(ValueError, 1)
 
         self.checker = One(Sized, list)
-        self.assertRaisesOnCheck(ValueError, [])
+        self.assertRaisesOnCheck(ValueError, [])  # [] is both a list and has a length
 
 
 class TestOptional(TestCaseArgscheck):
@@ -136,12 +139,12 @@ class TestOptional(TestCaseArgscheck):
         self.checker = Optional(int, list, default_factory=list)
         self.assertOutputIsInput(111)
         self.assertOutputIsInput([1, 1, 1])
-        self.assertOutputEqual(None, [])
+        self.assertOutputEquals(None, [])
         self.assertRaisesOnCheck(ValueError, 'abcd')
 
         sentinel = object()
         self.checker = Optional(int, list, default_factory=list, sentinel=sentinel)
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput([1, 1, 1])
-        self.assertOutputEqual(sentinel, [])
+        self.assertOutputEquals(sentinel, [])
         self.assertRaisesOnCheck(ValueError, None)

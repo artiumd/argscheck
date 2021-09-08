@@ -29,12 +29,12 @@ class MockIterator:
 class TestIterable(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
-        # Iterable().check(MockIterable('ret'))
         Iterable(str).check(MockIterable('ret'))
-        Iterable(Optional(int, default_value=66)).check(iter([1, 2, None, 3]))
+        Iterable(Optional(int, default_value=66)).check([1, 2, None, 3])
 
         # Bad arguments
         self.assertRaises(TypeError, Iterable, None)
+        self.assertRaises(TypeError, Iterable, MockIterator('ret'))
 
     def test_check(self):
         values = ([], [], [])
@@ -52,8 +52,17 @@ class TestIterable(TestCaseArgscheck):
         ret = list(checker.check(values))
         self.assertEqual(ret, [1, 2, 66, 3])
 
+        iter_checker = Iterable(int).check(MockIterable('ret'))
+        self.assertRaises(TypeError, list, iter_checker)
+
 
 class TestIterator(TestCaseArgscheck):
+    def test_init(self):
+        Iterator(str).check(MockIterator('ret'))
+
+        self.assertRaises(TypeError, Iterator, None)
+        self.assertRaises(TypeError, Iterator, None)
+
     def test_check(self):
         values = ([], [], [])
         iterator = MockIterator(values)

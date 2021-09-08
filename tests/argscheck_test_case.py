@@ -34,7 +34,7 @@ class TestCaseArgscheck(unittest.TestCase):
         ret = self.checker.check(value)
         self.assertIs(ret, exp_output)
 
-    def assertOutputEqual(self, value, exp_output):
+    def assertOutputEquals(self, value, exp_output):
         ret = self.checker.check(value)
         self.assertEqual(ret, exp_output)
 
