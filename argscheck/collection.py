@@ -1,5 +1,5 @@
 from .core import Typed
-from .numeric import Sized
+from .numeric import Sized, Comparable
 from .iter import Iterable
 
 
@@ -35,6 +35,8 @@ class Collection(Sized, Typed):
             return False, e
 
 
-class Set(Collection):
+class Set(Comparable, Collection):
     types = (set,)
-    # TODO add `subset`, `superset` options
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, other_type=set, **kwargs)

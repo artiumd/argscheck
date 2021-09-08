@@ -1,6 +1,6 @@
-from argscheck import List, Typed, Int
+from argscheck import List, Typed, Int, Sized, Set
 
 
-Typed(set, int).check(1)
-# List(len_ne=2).check(a=[1,1])
-Int(ge=4).check(1)
+# Sized(len_eq='asd').check([1, 2, 3])
+Set(int, ge=1, len_lt=3).check({1,2})
+print(Set.__mro__)

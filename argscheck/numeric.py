@@ -4,24 +4,24 @@ from functools import partial
 from .core import Checker, Typed
 
 
-class Ordered(Checker):
-    orders = dict(lt=dict(order_fn=operator.lt, order_name='less than'),
-                  le=dict(order_fn=operator.le, order_name='less than or equal to'),
-                  ne=dict(order_fn=operator.ne, order_name='not equal to'),
-                  eq=dict(order_fn=operator.eq, order_name='equal to'),
-                  ge=dict(order_fn=operator.ge, order_name='greater than or equal to'),
-                  gt=dict(order_fn=operator.gt, order_name='greater than'))
+class Comparable(Checker):
+    comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
+                       le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
+                       ne=dict(comp_fn=operator.ne, comp_name='not equal to'),
+                       eq=dict(comp_fn=operator.eq, comp_name='equal to'),
+                       ge=dict(comp_fn=operator.ge, comp_name='greater than or equal to'),
+                       gt=dict(comp_fn=operator.gt, comp_name='greater than'))
 
-    def __init__(self, *args, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, **kwargs):
+    def __init__(self, *args, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, other_type=object, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Arrange arguments in a dictionary for convenience
-        order_args = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
+        others = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
 
         # Check that arguments are numbers or None
-        for name, value in order_args.items():
-            if value is not None and not isinstance(value, (int, float)):
-                raise TypeError(f'Argument {name}={value!r} of {self!r}() must be a number or None.')
+        for name, value in others.items():
+            if value is not None and not isinstance(value, other_type):
+                raise TypeError(f'Argument {name}={value!r} of {self!r}() must be {other_type!r} or None.')
 
         if (lt is not None) and (le is not None):
             raise TypeError(f'Arguments lt={lt!r} and le={le!r} of {self!r}() must not be both provided.')
@@ -42,10 +42,10 @@ class Ordered(Checker):
             raise ValueError(f'Lower bound {lb!r} of {self!r} must be lower than the upper bound {ub!r}.')
 
         # Create order checker functions for the arguments that are not None
-        self.checker_fns = [partial(self._check_order, other=value, **self.orders[name])
-                            for name, value
-                            in order_args.items()
-                            if value is not None]
+        self.comparators = [partial(self._compare, other=other, **self.comparisons[name])
+                            for name, other
+                            in others.items()
+                            if other is not None]
 
     @staticmethod
     def _get_not_none(x, y):
@@ -57,23 +57,26 @@ class Ordered(Checker):
         return None
 
     @classmethod
-    def _check_order(cls, name, value, other, order_fn, order_name):
+    def _compare(cls, name, value, other, comp_fn, comp_name):
         # Compare value, if comparison fails, return the caught exception
         try:
-            if order_fn(value, other):
-                return True, value
-            else:
-                return False, ValueError(f'Argument {name}={value!r} is expected to be {order_name} {other!r}.')
+            ret = comp_fn(value, other)
         except Exception as e:
+            # TODO add verbose message
             return False, e
+
+        if ret:
+            return True, value
+        else:
+            return False, ValueError(f'Argument {name}={value!r} is expected to be {comp_name} {other!r}.')
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
             return False, value
 
-        for checker_fn in self.checker_fns:
-            passed, value = checker_fn(name, value)
+        for comparator in self.comparators:
+            passed, value = comparator(name, value)
             if not passed:
                 return False, value
 
@@ -83,7 +86,7 @@ class Ordered(Checker):
 class Sized(Checker):
     def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.len_checker = Int(lt=len_lt, le=len_le, ne=len_ne, eq=len_eq, ge=len_ge, gt=len_gt)
+        self.len_checker = Int(lt=len_lt, le=len_le, ne=len_ne, eq=len_eq, ge=len_ge, gt=len_gt, other_type=int)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -104,16 +107,16 @@ class Sized(Checker):
         return True, value
 
 
-class Int(Ordered, Typed):
-    def __init__(self, **kwargs):
-        super().__init__(int, **kwargs)
+class Int(Comparable, Typed):
+    def __init__(self, other_type=(int, float), **kwargs):
+        super().__init__(int, other_type=other_type, **kwargs)
 
 
-class Float(Ordered, Typed):
-    def __init__(self, **kwargs):
-        super().__init__(float, **kwargs)
+class Float(Comparable, Typed):
+    def __init__(self, other_type=(int, float), **kwargs):
+        super().__init__(float, other_type=other_type, **kwargs)
 
 
-class Number(Ordered, Typed):
-    def __init__(self, **kwargs):
-        super().__init__(int, float, **kwargs)
+class Number(Comparable, Typed):
+    def __init__(self, other_type=(int, float), **kwargs):
+        super().__init__(int, float, other_type=other_type, **kwargs)

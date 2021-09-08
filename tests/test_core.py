@@ -1,4 +1,4 @@
-from argscheck import Checker, Typed, Ordered, Sized, One, Optional
+from argscheck import Checker, Typed, Comparable, Sized, One, Optional
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -68,9 +68,9 @@ class TestOne(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
         One(int, float)
-        One(Ordered(), Sized())
-        One(Ordered, Sized)
-        One(Ordered, int)
+        One(Comparable(), Sized())
+        One(Comparable, Sized)
+        One(Comparable, int)
 
         # Bad arguments
         self.assertRaises(TypeError, One)
