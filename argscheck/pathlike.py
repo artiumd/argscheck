@@ -11,6 +11,56 @@ _optional_suffix = Optional(_suffix)
 _optional_suffix_list = Optional(List(_suffix))
 
 
+class _Suffix:
+    def __init__(self, suffix, suffixes, ignore_case):
+        # Check and set arguments
+        self.ignore_case = _bool_typed.check(ignore_suffix_case=ignore_case)
+        self.suffix = _optional_suffix.check(suffix=suffix)
+        self.suffixes = _optional_suffix_list.check(suffixes=suffixes)
+
+        # Create indicators for whether suffix / suffixes should be checked
+        self.suffix_is_provided = self.suffix is not None
+        self.suffixes_is_provided = self.suffixes is not None
+
+        # Suffixes list of strings is converted to a plain string for convenience
+        if self.suffixes_is_provided:
+            self.suffixes = ''.join(self.suffixes)
+
+        # If ignoring case, convert suffix and suffixes to lower case
+        if self.ignore_case:
+            if self.suffix_is_provided:
+                self.suffix = self.suffix.lower()
+            if self.suffixes_is_provided:
+                self.suffixes = self.suffixes.lower()
+
+        # If both suffix and suffixes are provided, it is sufficient that only one of them passes
+        self.max_fail_count = int(self.suffix_is_provided or self.suffixes_is_provided)
+
+    def _check_suffix(self, actual, expected):
+        if self.ignore_case:
+            actual = actual.lower()
+
+        return expected != actual
+
+    def __call__(self, name, value):
+        # Check suffix
+        suffix_failed = self.suffix_is_provided and self._check_suffix(actual=value.suffix,
+                                                                       expected=self.suffix)
+        # Check suffixes
+        suffixes_failed = self.suffixes_is_provided and self._check_suffix(actual=''.join(value.suffixes),
+                                                                           expected=self.suffixes)
+
+        # Return error if both suffix and suffixes do not match
+        if suffix_failed + suffixes_failed > self.max_fail_count:
+            expected_suffixes = self.suffix_is_provided * [f'suffix {self.suffix}'] + \
+                                self.suffixes_is_provided * [f'suffixes {self.suffixes}']
+            expected_suffixes = ' or '.join(expected_suffixes)
+
+            return False, ValueError(f'Expected {name} = {value} to to have {expected_suffixes}')
+        else:
+            return True, value
+
+
 class PathLike(Typed):
     def __init__(self, is_dir=False, is_file=False, suffix=None, suffixes=None, ignore_suffix_case=True, as_str=False,
                  as_path=False, **kwargs):
@@ -19,7 +69,6 @@ class PathLike(Typed):
         # Check and set boolean attributes
         self.is_dir = _bool_typed.check(is_dir=is_dir)
         self.is_file = _bool_typed.check(is_file=is_file)
-        self.ignore_suffix_case = _bool_typed.check(ignore_suffix_case=ignore_suffix_case)
         self.as_str = _bool_typed.check(as_str=as_str)
         self.as_path = _bool_typed.check(as_path=as_path)
 
@@ -31,22 +80,7 @@ class PathLike(Typed):
         if self.as_str and self.as_path:
             raise ValueError('PathLike() got both as_str=True and as_path=True')
 
-        # If a suffix is provided, it must be a string.
-        self.suffix = _optional_suffix.check(suffix=suffix)
-
-        # If a suffixes is provided, it must be a list of strings.
-        self.suffixes = _optional_suffix_list.check(suffixes=suffixes)
-
-        if self.suffixes is not None:
-            self.suffixes = ''.join(self.suffixes)
-
-        if self.ignore_suffix_case:
-            if self.suffix is not None:
-                self.suffix = self.suffix.lower()
-            if self.suffixes is not None:
-                self.suffixes = self.suffixes.lower()
-
-        self.min_count = max(self.suffix is not None, self.suffixes is not None)
+        self.suffix = _Suffix(suffix, suffixes, ignore_suffix_case)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -55,41 +89,18 @@ class PathLike(Typed):
 
         path = Path(value)
 
+        # Check for directory
         if self.is_dir and not path.is_dir():
             return False, ValueError(f'Expected {name} = {path} to be an existing directory.')
 
+        # Check for file
         if self.is_file and not path.is_file():
             return False, ValueError(f'Expected {name} = {path} to be an existing file.')
 
-        fail_count = 0
-
-        # Check suffix
-        if self.suffix is not None:
-            suffix = path.suffix
-
-            if self.ignore_suffix_case:
-                suffix = suffix.lower()
-
-            if self.suffix != suffix:
-                fail_count += 1
-
-        # Check suffixes
-        if self.suffixes is not None:
-            suffixes = ''.join(path.suffixes)
-
-            if self.ignore_suffix_case:
-                suffixes = suffixes.lower()
-
-            if self.suffixes != suffixes:
-                fail_count += 1
-
-        # Return error if both suffix and suffixes do not match
-        if fail_count > self.min_count:
-            expected_suffixes = (self.suffix is not None) * [f'suffix {self.suffix}'] + \
-                                (self.suffixes is not None) * [f'suffixes {"".join(self.suffixes)}']
-            expected_suffixes = ' or '.join(expected_suffixes)
-
-            return False, ValueError(f'Expected {name} = {path} to to have {expected_suffixes}')
+        # Check suffix(es)
+        passed, e = self.suffix(name, path)
+        if not passed:
+            return False, e
 
         # Return possibly converted value
         if self.as_path:
