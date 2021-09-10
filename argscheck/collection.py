@@ -1,6 +1,5 @@
-from .core import Typed
+from .core import Typed, Comparable
 from .numeric import Sized
-from . import Comparable
 from .iter import Iterable
 
 

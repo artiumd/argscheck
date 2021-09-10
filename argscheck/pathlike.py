@@ -6,7 +6,8 @@ from .string import String
 
 
 _bool_typed = Typed(bool)
-_suffix = String(r'(|\.[^\.]+)')  # Empty string or a dot followed by one or more "non-dot" characters
+# A suffix is an empty string or a dot followed by one or more "non-dot" characters
+_suffix = String(r'(|\.[^\.]+)', method='fullmatch')
 _optional_suffix = Optional(_suffix)
 _optional_suffix_list = Optional(List(_suffix))
 
@@ -89,11 +90,11 @@ class PathLike(Typed):
 
         path = Path(value)
 
-        # Check for directory
+        # Check if directory
         if self.is_dir and not path.is_dir():
             return False, ValueError(f'Expected {name} = {path} to be an existing directory.')
 
-        # Check for file
+        # Check if file
         if self.is_file and not path.is_file():
             return False, ValueError(f'Expected {name} = {path} to be an existing file.')
 

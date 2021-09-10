@@ -44,3 +44,106 @@ class Float(Comparable, Typed):
 class Number(Comparable, Typed):
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_numbers, other_type=other_type, **kwargs)
+
+
+"""
+Positive
+"""
+
+
+class PositiveNumber(Number):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, gt=0, **kwargs)
+
+
+class PositiveInt(Int):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, gt=0, **kwargs)
+
+
+class PositiveFloat(Float):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, gt=0, **kwargs)
+
+
+"""
+Non Negative
+"""
+
+
+class NonNegativeNumber(Number):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, ge=0, **kwargs)
+
+
+class NonNegativeInt(Int):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, ge=0, **kwargs)
+
+
+class NonNegativeFloat(Float):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, ge=0, **kwargs)
+
+
+"""
+Negative
+"""
+
+
+class NegativeNumber(Number):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, lt=0, **kwargs)
+
+
+class NegativeInt(Int):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, lt=0, **kwargs)
+
+
+class NegativeFloat(Float):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, lt=0, **kwargs)
+
+
+"""
+Non Positive
+"""
+
+
+class NonPositiveNumber(Number):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, le=0, **kwargs)
+
+
+class NonPositiveInt(Int):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, le=0, **kwargs)
+
+
+class NonPositiveFloat(Float):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, le=0, **kwargs)
+
+
+# Aliases
+Integer = Int
+Num = Number
+
+PositiveInteger = PosInt = PositiveInt
+PosNumber = PosNum = PositiveNumber
+PosFloat = PositiveFloat
+
+NonNegativeInteger = NonNegInt = NonNegativeInt
+NonNegNumber = NonNegNum = NonNegativeNumber
+NonNegFloat = NonNegativeFloat
+
+
+NegativeInteger = NegInt = NegativeInt
+NegNumber = NegNum = NegativeNumber
+NegFloat = NegativeFloat
+
+
+NonPositiveInteger = NonPosInt = NonPositiveInt
+NonPosNumber = NonPosNum = NonPositiveNumber
+NonPosFloat = NonPositiveFloat

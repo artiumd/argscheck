@@ -8,19 +8,19 @@ class TestCaseArgscheck(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self._checker = None
 
-    @property
-    def checker(self):
+    def get_checker(self):
         if self._checker is None:
             raise ValueError(f'checker property of {self!r} has not been set yet.')
 
         return self._checker
 
-    @checker.setter
-    def checker(self, value):
+    def set_checker(self, value):
         if value is not None and not isinstance(value, Checker):
             raise TypeError(f'checker property of {self!r} must be None or a checker instance. Got {value!r}.')
 
         self._checker = value
+
+    checker = property(get_checker, set_checker)
 
     def assertOutputIsInput(self, value):
         ret = self.checker.check(value)
