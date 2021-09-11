@@ -1,13 +1,16 @@
-from .core import Checker, validate_checker_like
+from .core import Checker
 
 
 class Iterator(Checker):
-    def __init__(self, *checker_likes):
-        self.item_checker = validate_checker_like(self, 'checker_likes', checker_likes)
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs)
+
+        self.item_checker = self._validate_args(args)
         self.name = self.i = self.iterator = None
 
     def check(self, *args, **kwargs):
         name, value = self._resolve_name_value(*args, **kwargs)
+
         return self.__call__(name, value)
 
     def __call__(self, name, value):

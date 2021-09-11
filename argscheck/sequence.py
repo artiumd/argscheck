@@ -1,4 +1,4 @@
-from .core import Typed, validate_checker_like
+from .core import Typed
 from .numeric import Sized
 
 
@@ -12,10 +12,11 @@ class Sequence(Sized, Typed):
     """
     types = ()
 
-    def __init__(self, *checker_likes, **kwargs):
+    def __init__(self, *args, **kwargs):
         # TODO add `astype=None` option
         super().__init__(*self.types, **kwargs)
-        self.item_checker = validate_checker_like(self, 'checker_likes', *checker_likes)
+
+        self.item_checker = self._validate_args(args)
 
     def _get_items(self, name, value):
         items = []

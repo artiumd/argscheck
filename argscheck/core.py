@@ -9,6 +9,20 @@ class Checker:
     def __call__(self, name, value):
         return True, value
 
+    def _validate_args(self, value, name='args'):
+        if isinstance(value, tuple) and len(value) == 1:
+            return self._validate_args(value[0], name=f'{name}[0]')
+        if isinstance(value, tuple) and len(value) > 1:
+            return One(*value)
+        if isinstance(value, Checker):
+            return value
+        if isinstance(value, type) and issubclass(value, Checker):
+            return value()
+        if isinstance(value, type):
+            return Typed(value)
+
+        raise TypeError(f'{self!r} expects that {name}={value!r} is a checker-like.')
+
     def _resolve_name_value(self, *args, **kwargs):
         # Make sure method is called properly and unpack argument's name and value
         if len(args) + len(kwargs) != 1:
@@ -29,21 +43,6 @@ class Checker:
             return value_or_excp
         else:
             raise value_or_excp
-
-
-def validate_checker_like(caller, name, value):
-    if isinstance(value, tuple) and len(value) == 1:
-        return validate_checker_like(caller, name, value[0])
-    if isinstance(value, tuple) and len(value) > 1:
-        return One(*value)
-    if isinstance(value, Checker):
-        return value
-    if isinstance(value, type) and issubclass(value, Checker):
-        return value()
-    if isinstance(value, type):
-        return Typed(value)
-
-    raise TypeError(f'{caller!r} expects that {name}={value!r} is a checker-like.')
 
 
 class Typed(Checker):
@@ -70,16 +69,14 @@ class Typed(Checker):
 
 
 class One(Checker):
-    def __init__(self, *checker_likes, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
-        if len(checker_likes) < 2:
-            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {checker_likes!r}.')
+        if len(args) < 2:
+            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
 
         # Validate checker-like positional arguments
-        self.checkers = [validate_checker_like(self, f'checker_likes[{i}]', checker_like)
-                         for i, checker_like
-                         in enumerate(checker_likes)]
+        self.checkers = [self._validate_args(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -107,7 +104,7 @@ class One(Checker):
 class Optional(Checker):
     missing = object()
 
-    def __init__(self, *checker_likes, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
+    def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
         super().__init__(**kwargs)
 
         if default_value is not self.missing and default_factory is not self.missing:
@@ -123,7 +120,7 @@ class Optional(Checker):
         else:
             self.default_factory = lambda: sentinel
 
-        self.checker = validate_checker_like(self, 'checker_likes', checker_likes)
+        self.checker = self._validate_args(args)
         self.sentinel = sentinel
 
     def __call__(self, name, value):

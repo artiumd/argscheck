@@ -13,10 +13,10 @@ class Collection(Sized, Typed):
     """
     types = ()
 
-    def __init__(self, *checker_likes, **kwargs):
+    def __init__(self, *args, **kwargs):
         # TODO add `astype=None` option
         super().__init__(*self.types, **kwargs)
-        self.iterable = Iterable(*checker_likes)
+        self.iterable = Iterable(*args)
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
