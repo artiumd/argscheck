@@ -10,7 +10,7 @@ class Sequence(Sized, Typed):
     2. Has __getitem__ implemented, which accepts integers in range [0, length - 1] as the keys.
     3. Can be instantiated from an iterable.
     """
-    types = ()
+    types = (object,)
 
     def __init__(self, *args, **kwargs):
         # TODO add `astype=None` option

@@ -2,6 +2,14 @@ import operator
 from functools import partial
 
 
+class Sentinel:
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return self.name
+
+
 class Checker:
     def __repr__(self):
         return type(self).__qualname__
@@ -46,6 +54,24 @@ class Checker:
 
 
 class Typed(Checker):
+    """
+    Check if argument is an instance of a given type (or types).
+
+    Internally, ``types`` is passed as a second argument to ``isinstance()``.
+
+    :param types: One or more types which the argument must be an instance of.
+    :param kwargs: Used only for compatibility.
+
+    Examples:
+
+    .. code-block:: python
+
+        # Check if integer or float
+        checker = Typed(int, float)
+
+        checker.check(1.234)    # Passes, returns 1.234
+        checker.check("1.234")  # Fails, raises TypeError
+    """
     def __init__(self, *types, **kwargs):
         super().__init__(**kwargs)
 
@@ -68,41 +94,31 @@ class Typed(Checker):
             return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.types!r}.')
 
 
-class One(Checker):
-    def __init__(self, *args, **kwargs):
-        super().__init__(**kwargs)
-
-        if len(args) < 2:
-            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
-
-        # Validate checker-like positional arguments
-        self.checkers = [self._validate_args(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
-
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
-        if not passed:
-            return False, value
-
-        passed_count = 0
-        ret_value = None
-
-        # Apply all checkers to value, make sure only one passes
-        for checker in self.checkers:
-            passed, ret_value_ = checker(name, value)
-            if passed:
-                passed_count += 1
-                ret_value = ret_value_
-
-        # The `One` checker passes only if exactly one of its checkers passes
-        if passed_count == 1:
-            return True, ret_value
-        else:
-            checkers = ', '.join(map(repr, self.checkers))
-            return False, ValueError(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')
-
-
 class Optional(Checker):
-    missing = object()
+    """
+    Check if argument is ``None`` or something else, similarly to ``typing.Optional``.
+
+    :param args: Checker-like object(s) that specify what the argument may be (other than ``None``).
+    :param default_value: *(optional)* If argument is ``None``, it will be replaced by ``default_value``.
+    :param default_factory: *(optional)* if argument is ``None``, it will be replaced by ``default_factory()``.
+        This is useful for setting default values that are of mutable types.
+    :param sentinel: *(optional)* ``x is sentinel`` will be used to tell if the argument is missing, instead of
+        ``x is None``.
+    :param kwargs: Used only for compatibility.
+
+    Examples:
+
+    .. code-block:: python
+
+        # Check if a list, set or None, replace None with a fresh list
+        checker = Optional(list, set, default_factory=list)
+
+        checker.check([1, 2, 3])  # Passes, returns [1, 2, 3]
+        checker.check({1, 2, 3})  # Passes, returns {1, 2, 3}
+        checker.check(None)       # Passes, returns []
+        checker.check('string')   # Fails, raises TypeError
+    """
+    missing = Sentinel('<MISSING>')
 
     def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
         super().__init__(**kwargs)
@@ -135,10 +151,26 @@ class Optional(Checker):
         elif value is self.sentinel:
             return True, self.default_factory()
         else:
-            return False, ValueError(f'Argument {name}={value!r} is expected to be missing or {self.checker!r}.')
+            Error = type(value_)
+
+            return False, Error(f'Argument {name}={value!r} is expected to be missing or {self.checker!r}.')
 
 
 class Comparable(Checker):
+    """
+    Check if argument correctly compares to other value(s) using any of the following binary operators:
+    ``{<|<=|!=|==|>=|>}``.
+
+    :param args: Used only for compatibility.
+    :param lt: *(optional)* Argument must be less than ``lt``.
+    :param le: *(optional)* Argument must be less than or equal to ``le``.
+    :param ne: *(optional)* Argument must not be equal to ``ne``.
+    :param eq: *(optional)* Argument must be equal to ``eq``.
+    :param ge: *(optional)* Argument must be greater than or equal to ``ge``.
+    :param gt: *(optional)* Argument must be greater than ``gt``.
+    :param other_type: *(optional)* The above parameters will have to be of this type(s).
+    :param kwargs: Used only for compatibility.
+    """
     comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
                        le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
                        ne=dict(comp_fn=operator.ne, comp_name='not equal to'),
@@ -215,3 +247,41 @@ class Comparable(Checker):
                 return False, value
 
         return True, value
+
+
+class One(Checker):
+    """
+    Check if argument
+    :param args:
+    :param kwargs:
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs)
+
+        if len(args) < 2:
+            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
+
+        # Validate checker-like positional arguments
+        self.checkers = [self._validate_args(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
+
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
+        passed_count = 0
+        ret_value = None
+
+        # Apply all checkers to value, make sure only one passes
+        for checker in self.checkers:
+            passed, ret_value_ = checker(name, value)
+            if passed:
+                passed_count += 1
+                ret_value = ret_value_
+
+        # The `One` checker passes only if exactly one of its checkers passes
+        if passed_count == 1:
+            return True, ret_value
+        else:
+            checkers = ', '.join(map(repr, self.checkers))
+            return False, Exception(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')

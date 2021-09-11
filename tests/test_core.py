@@ -83,21 +83,21 @@ class TestOne(TestCaseArgscheck):
         self.assertOutputIsInput('abcd')
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput(True)
-        self.assertRaisesOnCheck(ValueError, 1.1)
+        self.assertRaisesOnCheck(Exception, 1.1)
 
         self.checker = One(int, bool)
         self.assertOutputIsInput(int(1e5))
-        self.assertRaisesOnCheck(ValueError, True)  # True is both an int and a bool
+        self.assertRaisesOnCheck(Exception, True)  # True is both an int and a bool
 
         self.checker = One(float, str, bool, Sized(len_eq=2))
         self.assertOutputIsInput(1.234)
         self.assertOutputIsInput('abcd')
         self.assertOutputIsInput({1, 'a'})
-        self.assertRaisesOnCheck(ValueError, [1, 2, 3])
-        self.assertRaisesOnCheck(ValueError, 1)
+        self.assertRaisesOnCheck(Exception, [1, 2, 3])
+        self.assertRaisesOnCheck(Exception, 1)
 
         self.checker = One(Sized, list)
-        self.assertRaisesOnCheck(ValueError, [])  # [] is both a list and has a length
+        self.assertRaisesOnCheck(Exception, [])  # [] is both a list and has a length
 
 
 class TestOptional(TestCaseArgscheck):
@@ -121,30 +121,30 @@ class TestOptional(TestCaseArgscheck):
         self.checker = Optional(int)
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput(None)
-        self.assertRaisesOnCheck(ValueError, 'abcd')
+        self.assertRaisesOnCheck(TypeError, 'abcd')
 
         sentinel = object()
         self.checker = Optional(int, sentinel=sentinel)
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput(sentinel)
-        self.assertRaisesOnCheck(ValueError, None)
+        self.assertRaisesOnCheck(TypeError, None)
 
         default_value = 1234567
         self.checker = Optional(int, list, default_value=default_value)
         self.assertOutputIsInput(111)
         self.assertOutputIsInput([1, 1, 1])
         self.assertOutputIs(None, default_value)
-        self.assertRaisesOnCheck(ValueError, 'abcd')
+        self.assertRaisesOnCheck(Exception, 'abcd')
 
         self.checker = Optional(int, list, default_factory=list)
         self.assertOutputIsInput(111)
         self.assertOutputIsInput([1, 1, 1])
         self.assertOutputEquals(None, [])
-        self.assertRaisesOnCheck(ValueError, 'abcd')
+        self.assertRaisesOnCheck(Exception, 'abcd')
 
         sentinel = object()
         self.checker = Optional(int, list, default_factory=list, sentinel=sentinel)
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput([1, 1, 1])
         self.assertOutputEquals(sentinel, [])
-        self.assertRaisesOnCheck(ValueError, None)
+        self.assertRaisesOnCheck(Exception, None)
