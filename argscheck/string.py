@@ -4,6 +4,15 @@ from .core import Typed
 
 
 class String(Typed):
+    """
+    Check if argument is a string and optionally check if it matches a particular regex pattern.
+
+    :param pattern: *Optional[str]* – Argument must match this regex pattern, passed to ``re.compile()``.
+    :param flags: *int* – Flags passed to ``re.compile()``. Only relevant if ``pattern`` is provided.
+    :param method: *str* – Name of ``re.Pattern`` method that will be used to check the argument against the regex
+        pattern. Must be ``"match"``, ``"fullmatch"`` or ``"search"``. Only relevant if ``pattern`` is provided.
+    :param kwargs: Used for compatibility only.
+    """
     def __init__(self, pattern=None, flags=0, method='match', **kwargs):
         super().__init__(str, **kwargs)
 
@@ -32,7 +41,3 @@ class String(Typed):
                                      f'"{self.pattern}" via the re.{self.method} method.')
 
         return True, value
-
-
-# Aliases
-Str = String

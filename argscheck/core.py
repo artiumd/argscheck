@@ -59,12 +59,14 @@ class Typed(Checker):
 
     Internally, ``types`` is passed as a second argument to ``isinstance()``.
 
-    :param types: One or more types which the argument must be an instance of.
+    :param types: *Tuple[Type]* – One or more types which the argument must be an instance of.
     :param kwargs: Used only for compatibility.
 
     Examples:
 
     .. code-block:: python
+
+        from argscheck import Typed
 
         # Check if integer or float
         checker = Typed(int, float)
@@ -99,16 +101,18 @@ class Optional(Checker):
     Check if argument is ``None`` or something else, similarly to ``typing.Optional``.
 
     :param args: Checker-like object(s) that specify what the argument may be (other than ``None``).
-    :param default_value: *(optional)* If argument is ``None``, it will be replaced by ``default_value``.
-    :param default_factory: *(optional)* if argument is ``None``, it will be replaced by ``default_factory()``.
+    :param default_value: *Optional[Any]* – If argument is ``None``, it will be replaced by ``default_value``.
+    :param default_factory: *Optional[Callable]* – if argument is ``None``, it will be replaced by ``default_factory()``.
         This is useful for setting default values that are of mutable types.
-    :param sentinel: *(optional)* ``x is sentinel`` will be used to tell if the argument is missing, instead of
+    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the argument is missing, instead of
         ``x is None``.
     :param kwargs: Used only for compatibility.
 
     Examples:
 
     .. code-block:: python
+
+        from argscheck import Optional
 
         # Check if a list, set or None, replace None with a fresh list
         checker = Optional(list, set, default_factory=list)
@@ -162,14 +166,27 @@ class Comparable(Checker):
     ``{<|<=|!=|==|>=|>}``.
 
     :param args: Used only for compatibility.
-    :param lt: *(optional)* Argument must be less than ``lt``.
-    :param le: *(optional)* Argument must be less than or equal to ``le``.
-    :param ne: *(optional)* Argument must not be equal to ``ne``.
-    :param eq: *(optional)* Argument must be equal to ``eq``.
-    :param ge: *(optional)* Argument must be greater than or equal to ``ge``.
-    :param gt: *(optional)* Argument must be greater than ``gt``.
-    :param other_type: *(optional)* The above parameters will have to be of this type(s).
+    :param lt: *Optional[Any]* – Argument must be less than ``lt``.
+    :param le: *Optional[Any]* – Argument must be less than or equal to ``le``.
+    :param ne: *Optional[Any]* – Argument must not be equal to ``ne``.
+    :param eq: *Optional[Any]* – Argument must be equal to ``eq``.
+    :param ge: *Optional[Any]* – Argument must be greater than or equal to ``ge``.
+    :param gt: *Optional[Any]* – Argument must be greater than ``gt``.
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – The above parameters will have to be of this type(s).
     :param kwargs: Used only for compatibility.
+
+    Examples:
+
+    .. code-block:: python
+
+        from argscheck import Comparable
+
+        # Check if non negative
+        checker = Comparable(ge=0)
+
+        checker.check(1234)  # Passes, returns 1234
+        checker.check(0.0)   # Passes, returns 0.0
+        checker.check(-1)    # Fails, raises ValueError
     """
     comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
                        le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
@@ -231,6 +248,8 @@ class Comparable(Checker):
             # TODO add verbose message
             return False, e
 
+        # TODO check if bool
+
         if ret:
             return True, value
         else:
@@ -251,9 +270,18 @@ class Comparable(Checker):
 
 class One(Checker):
     """
-    Check if argument
-    :param args:
-    :param kwargs:
+    Check if argument matches exactly one of a set of checkers.
+
+    :param args: At least two checker-like object(s) out of which exactly one must pass.
+    :param kwargs: Used only for compatibility.
+
+    Examples:
+
+    .. code-block:: python
+
+        from argscheck import One
+
+        checker = One()
     """
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)

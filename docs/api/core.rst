@@ -1,5 +1,5 @@
 Core
 ====
 
-.. automodule:: core
+.. automodule:: argscheck.core
     :members:
