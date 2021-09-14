@@ -2,6 +2,29 @@ from .core import Checker
 
 
 class Iterator(Checker):
+    """
+    Check if argument is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
+
+    The usage of the ``Iterator`` checker is a little different than the rest: calling ``check()`` returns a wrapper
+    around the argument, and calling ``next()`` on it will call ``next()`` on the argument and check each item before
+    it is returned.
+
+    :param args: *Tuple[CheckerLike]* – Describes what each item from the iterator must be.
+
+    Example:
+
+    .. code-block:: python
+
+        from argscheck import Iterator
+
+        # Each item must be an str or bool instance
+        checker = Iterator(str, bool)
+        iterator = checker.check(iter(['a', True, 1.1]))
+
+        next(iterator)  # Passes, returns 'a'
+        next(iterator)  # Passes, returns True
+        next(iterator)  # Fails, raises TypeError (because 1.1 is not an str or bool).
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
@@ -33,6 +56,24 @@ class Iterator(Checker):
 
 
 class Iterable(Iterator):
+    """
+    Same as :class:`.Iterator`, but argument can be a plain iterable (not necessarily an iterator).
+
+    Example:
+
+    .. code-block:: python
+
+        from argscheck import Iterator
+
+        # Each item must be an str or bool instance
+        checker = Iterable(str, bool)
+        iterable = checker.check(['a', True, 1.1])
+
+        iterator = iter(iterable)
+        next(iterator)  # Passes, returns 'a'
+        next(iterator)  # Passes, returns True
+        next(iterator)  # Fails, raises TypeError (because 1.1 is not an str or bool).
+    """
     def __iter__(self):
         self.iterator = iter(self.iterator)
 

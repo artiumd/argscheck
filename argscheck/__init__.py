@@ -4,6 +4,6 @@ from .numeric import Sized, Int, Float, Number, PositiveInt, PositiveNumber, Pos
     NonPositiveNumber, NonPositiveFloat
 from .string import String
 from .collection import Collection, Set
-from .sequence import Sequence, Tuple, MutableSequence, List
+from .sequence import Sequence, Tuple, NonEmptyTuple, MutableSequence, List, NonEmptyList
 from .iter import Iterator, Iterable
 from .pathlike import PathLike, ExistingDir, ExistingFile

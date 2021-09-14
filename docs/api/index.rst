@@ -8,3 +8,6 @@ API
    string
    numeric
    pathlike
+   iter
+   collection
+   sequence

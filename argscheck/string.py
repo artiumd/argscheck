@@ -11,7 +11,6 @@ class String(Typed):
     :param flags: *int* – Flags passed to ``re.compile()``. Only relevant if ``pattern`` is provided.
     :param method: *str* – Name of ``re.Pattern`` method that will be used to check the argument against the regex
         pattern. Must be ``"match"``, ``"fullmatch"`` or ``"search"``. Only relevant if ``pattern`` is provided.
-    :param kwargs: Used for compatibility only.
     """
     def __init__(self, pattern=None, flags=0, method='match', **kwargs):
         super().__init__(str, **kwargs)

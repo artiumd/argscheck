@@ -4,10 +4,13 @@ from .numeric import Sized
 
 class Sequence(Sized, Typed):
     """
+    Check if argument is a homogeneous sequence, i.e. each item in the sequence satisfies the same set of checkers.
+
     A sequence is assumed to have the following properties:
 
-    1. Has __len__ implemented.
-    2. Has __getitem__ implemented, which accepts integers in range [0, length - 1] as the keys.
+    1. Has ``__len__()`` implemented.
+    2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
+       object's own length.
     3. Can be instantiated from an iterable.
     """
     types = (object,)
@@ -70,15 +73,29 @@ class Sequence(Sized, Typed):
 
 
 class Tuple(Sequence):
+    """
+    Same as :class:`.Sequence`, and argument must be a ``tuple`` instance.
+    """
     types = (tuple,)
+
+
+class NonEmptyTuple(Tuple):
+    """
+    Same as :class:`.Tuple`, and argument's length must be greater than zero.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, len_gt=0, **kwargs)
 
 
 class MutableSequence(Sequence):
     """
+    Check if argument is a homogeneous mutable sequence, i.e. each item in the sequence satisfies the same set of
+    checkers.
+
     A mutable sequence is assumed to have the following properties:
 
     1. All the properties of a sequence.
-    2. Has __setitem__ implemented, which accepts integers in range [0, length - 1] as the keys.
+    2. Has ``__setitem__()`` implemented, which accepts the same keys as ``__getitem__()``.
     """
     def _set_items(self, name, value, items):
         for i, item in enumerate(items):
@@ -92,4 +109,15 @@ class MutableSequence(Sequence):
 
 
 class List(MutableSequence):
+    """
+    Same as :class:`.MutableSequence`, and argument must be a ``list`` instance.
+    """
     types = (list,)
+
+
+class NonEmptyList(List):
+    """
+    Same as :class:`.List`, and argument's length must be greater than zero.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, len_gt=0, **kwargs)

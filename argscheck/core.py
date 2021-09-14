@@ -60,7 +60,6 @@ class Typed(Checker):
     Internally, ``types`` is passed as a second argument to ``isinstance()``.
 
     :param types: *Tuple[Type]* – One or more types which the argument must be an instance of.
-    :param kwargs: Used only for compatibility.
 
     Examples:
 
@@ -100,13 +99,12 @@ class Optional(Checker):
     """
     Check if argument is ``None`` or something else, similarly to ``typing.Optional``.
 
-    :param args: Checker-like object(s) that specify what the argument may be (other than ``None``).
+    :param args: *Tuple[CheckerLike]* – Specifies what the argument may be (other than ``None``).
     :param default_value: *Optional[Any]* – If argument is ``None``, it will be replaced by ``default_value``.
     :param default_factory: *Optional[Callable]* – if argument is ``None``, it will be replaced by ``default_factory()``.
         This is useful for setting default values that are of mutable types.
     :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the argument is missing, instead of
         ``x is None``.
-    :param kwargs: Used only for compatibility.
 
     Examples:
 
@@ -173,7 +171,6 @@ class Comparable(Checker):
     :param ge: *Optional[Any]* – Argument must be greater than or equal to ``ge``.
     :param gt: *Optional[Any]* – Argument must be greater than ``gt``.
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – The above parameters will have to be of this type(s).
-    :param kwargs: Used only for compatibility.
 
     Examples:
 
@@ -181,12 +178,13 @@ class Comparable(Checker):
 
         from argscheck import Comparable
 
-        # Check if non negative
-        checker = Comparable(ge=0)
+        # Check if a strict subset
+        checker = Comparable(lt={'a', 'b'})
 
-        checker.check(1234)  # Passes, returns 1234
-        checker.check(0.0)   # Passes, returns 0.0
-        checker.check(-1)    # Fails, raises ValueError
+        checker.check(set())       # Passes, returns set()
+        checker.check({'a'})       # Passes, returns {'a'}
+        checker.check({'a', 'b'})  # Fails, raises ValueError
+        checker.check('a')         # Fails, raises TypeError
     """
     comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
                        le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
@@ -272,8 +270,7 @@ class One(Checker):
     """
     Check if argument matches exactly one of a set of checkers.
 
-    :param args: At least two checker-like object(s) out of which exactly one must pass.
-    :param kwargs: Used only for compatibility.
+    :param args: *Tuple[CheckerLike]* – At least two checker-like object(s) out of which exactly one must pass.
 
     Examples:
 

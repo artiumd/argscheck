@@ -5,11 +5,15 @@ from .iter import Iterable
 
 class Collection(Sized, Typed):
     """
+    Check if argument is a homogenous collection, i.e. each item in the collection satisfies the same set of checkers.
+
     A collection is assumed to have the following properties:
 
-    1. Has __len__ implemented.
+    1. Has ``__len__()`` implemented.
     2. Is iterable.
     3. Can be instantiated from an iterable.
+
+    :param args: *Tuple[CheckerLike]* – Describes what each item in the collection must be.
     """
     types = ()
 
@@ -36,6 +40,9 @@ class Collection(Sized, Typed):
 
 
 class Set(Comparable, Collection):
+    """
+    Check if argument is a homogenous ``set``.
+    """
     types = (set,)
 
     def __init__(self, *args, **kwargs):

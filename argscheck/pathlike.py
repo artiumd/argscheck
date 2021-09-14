@@ -76,7 +76,6 @@ class PathLike(Typed):
         ``suffix`` or ``suffixes`` are provided.
     :param as_str: *bool* – If ``True``, argument will be converted to ``str`` before it is returned.
     :param as_path: *bool* – If ``True``, argument will be converted to ``pathlib.Path`` before it is returned.
-    :param kwargs: Used only for compatibility.
     """
     def __init__(self, is_dir=False, is_file=False, suffix=None, suffixes=None, ignore_suffix_case=True, as_str=False,
                  as_path=False, **kwargs):

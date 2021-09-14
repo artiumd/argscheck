@@ -13,7 +13,6 @@ class Number(Comparable, Typed):
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – Argument can only be compared to this type(s), passing
         values of other types for comparison will raise a ``TypeError``. By default, can only be compared to other
         ``int`` or ``float`` objects.
-    :param kwargs: Used only for compatibility.
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_numbers, other_type=other_type, **kwargs)
@@ -156,7 +155,7 @@ _optional_non_neg = Optional(NonNegativeInt)
 
 class Sized(Checker):
     """
-    Check argument's length (as reported by ``len()``).
+    Check argument's length (as returned from calling ``len()`` on it).
 
     :param args: Used for compatibility only.
     :param len_lt: *Optional[int]* – Argument's length must be less than ``len_lt``.
@@ -165,9 +164,21 @@ class Sized(Checker):
     :param len_eq: *Optional[int]* – Argument's length must be equal to ``len_ne``.
     :param len_ge: *Optional[int]* – Argument's length must greater than or equal to ``len_ne``.
     :param len_gt: *Optional[int]* – Argument's length must greater than ``len_ne``.
-    :param kwargs: Used for compatibility only.
-    """
 
+    Example:
+
+    .. code-block:: python
+
+        from argscheck import Sized
+
+        # Check if length is equal to 3
+        checker = Sized(len_eq=3)
+
+        checker.check(['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
+        checker.check('abc')            # Passes, returns 'abc'
+        checker.check({'a', 'b'})       # Fails, raises ValueError
+        checker.check(123)              # Fails, raises TypeError
+    """
     def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Length must be an int and must only be compared to an int
