@@ -1,6 +1,16 @@
-from argscheck import Optional, List, Tuple
+from argscheck import Optional, List, Tuple, Sequence
 
 from tests.argscheck_test_case import TestCaseArgscheck
+
+
+class TestSequence(TestCaseArgscheck):
+    def test_check(self):
+        self.checker = Sequence(str, len_ge=2)
+        self.assertOutputIsInput(('a', 'b'))
+        self.assertOutputIsInput(['a', 'b'])
+        self.assertRaisesOnCheck(TypeError, {'a', 'b'})
+        self.assertRaisesOnCheck(ValueError, ['a'])
+        self.assertRaisesOnCheck(TypeError, ['a', 1])
 
 
 class TestTuple(TestCaseArgscheck):

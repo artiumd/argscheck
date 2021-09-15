@@ -55,6 +55,15 @@ class TestIterable(TestCaseArgscheck):
         iter_checker = Iterable(int).check(MockIterable('ret'))
         self.assertRaises(TypeError, list, iter_checker)
 
+        checker = Iterable(str, bool)
+        iterable = checker.check(['a', True, 1.1])
+
+        iterator = iter(iterable)
+        self.assertEqual(next(iterator), 'a')
+        self.assertEqual(next(iterator), True)
+        with self.assertRaises(Exception):
+            next(iterator)
+
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
@@ -75,3 +84,12 @@ class TestIterator(TestCaseArgscheck):
 
         with self.assertRaises(StopIteration):
             next(checker)
+
+        # Each item must be an str or bool instance
+        checker = Iterator(str, bool)
+        iterator = checker.check(iter(['a', True, 1.1]))
+
+        self.assertEqual(next(iterator), 'a')
+        self.assertEqual(next(iterator), True)
+        with self.assertRaises(Exception):
+            next(iterator)

@@ -17,6 +17,20 @@ class Sequence(Sized, Typed):
     2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
        object's own length.
     3. Can be instantiated from an iterable.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import Sequence
+
+        # Check if a set of length at least 2 and is a superset of {'a'}
+        checker = Sequence(str, len_ge=2)
+
+        checker.check(['a', 'b'])    # Passes, returns ['a', 'b']
+        checker.check({'a', 'b'})    # Fails, raises TypeError (set is not a sequence)
+        checker.check(['a'])         # Fails, raises ValueError (length is less than 2)
+        checker.check(['a', 1])      # Fails, raises TypeError (not all items are str)
     """
     types = (object,)
 
@@ -37,11 +51,11 @@ class Sequence(Sized, Typed):
             try:
                 pre_check_item = value[i]
             except Exception:
-                return False, TypeError(f'Failed when getting {name}[{i}], make sure {name} is a sequence.'), None
+                return False, TypeError(f'Failed when getting {name}[{i}], make sure {name} is a sequence.'), modified
 
             passed, post_check_item = self.item_checker(f'{name}[{i}]', pre_check_item)
             if not passed:
-                return False, post_check_item, None
+                return False, post_check_item, modified
 
             if post_check_item is not pre_check_item:
                 modified = True
@@ -72,12 +86,14 @@ class Sequence(Sized, Typed):
         if not passed:
             return False, items
 
+        if not modified:
+            return True, value
+
         # Prepare return value, for an immutable sequence, a new sequence instance is created and returned, for a
         # mutable sequence, items are set inplace and the original sequence is returned.
-        if modified:
-            passed, value = self._set_items(name, value, items)
-            if not passed:
-                return False, value
+        passed, value = self._set_items(name, value, items)
+        if not passed:
+            return False, value
 
         # TODO astype goes here
 

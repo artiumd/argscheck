@@ -1,4 +1,4 @@
-from argscheck import Checker, Typed, Comparable, Sized, One, Optional
+from argscheck import Checker, Typed, Sized, One, Optional, Comparable
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -64,42 +64,6 @@ class TestTyped(TestCaseArgscheck):
         self.assertRaisesOnCheck(TypeError, 0x1234)
 
 
-class TestOne(TestCaseArgscheck):
-    def test_init(self):
-        # Good arguments
-        One(int, float)
-        One(Comparable(), Sized())
-        One(Comparable, Sized)
-        One(Comparable, int)
-
-        # Bad arguments
-        self.assertRaises(TypeError, One)
-        self.assertRaises(TypeError, One, int)
-        self.assertRaises(TypeError, One, int, None)
-        self.assertRaises(TypeError, One, str, 2)
-
-    def test_check(self):
-        self.checker = One(int, str)
-        self.assertOutputIsInput('abcd')
-        self.assertOutputIsInput(1234)
-        self.assertOutputIsInput(True)
-        self.assertRaisesOnCheck(Exception, 1.1)
-
-        self.checker = One(int, bool)
-        self.assertOutputIsInput(int(1e5))
-        self.assertRaisesOnCheck(Exception, True)  # True is both an int and a bool
-
-        self.checker = One(float, str, bool, Sized(len_eq=2))
-        self.assertOutputIsInput(1.234)
-        self.assertOutputIsInput('abcd')
-        self.assertOutputIsInput({1, 'a'})
-        self.assertRaisesOnCheck(Exception, [1, 2, 3])
-        self.assertRaisesOnCheck(Exception, 1)
-
-        self.checker = One(Sized, list)
-        self.assertRaisesOnCheck(Exception, [])  # [] is both a list and has a length
-
-
 class TestOptional(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
@@ -148,3 +112,108 @@ class TestOptional(TestCaseArgscheck):
         self.assertOutputIsInput([1, 1, 1])
         self.assertOutputEquals(sentinel, [])
         self.assertRaisesOnCheck(Exception, None)
+
+
+class TestOne(TestCaseArgscheck):
+    def test_init(self):
+        # Good arguments
+        One(int, float)
+        One(Comparable(), Sized())
+        One(Comparable, Sized)
+        One(Comparable, int)
+
+        # Bad arguments
+        self.assertRaises(TypeError, One)
+        self.assertRaises(TypeError, One, int)
+        self.assertRaises(TypeError, One, int, None)
+        self.assertRaises(TypeError, One, str, 2)
+
+    def test_check(self):
+        self.checker = One(int, str)
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput(1234)
+        self.assertOutputIsInput(True)
+        self.assertRaisesOnCheck(Exception, 1.1)
+
+        self.checker = One(int, bool)
+        self.assertOutputIsInput(int(1e5))
+        self.assertRaisesOnCheck(Exception, True)  # True is both an int and a bool
+
+        self.checker = One(float, str, bool, Sized(len_eq=2))
+        self.assertOutputIsInput(1.234)
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput({1, 'a'})
+        self.assertRaisesOnCheck(Exception, [1, 2, 3])
+        self.assertRaisesOnCheck(Exception, 1)
+
+        self.checker = One(Sized, list)
+        self.assertRaisesOnCheck(Exception, [])  # [] is both a list and has a length
+
+
+class TestComparable(TestCaseArgscheck):
+    def test_init(self):
+        # Good arguments
+        Comparable()
+        Comparable(le=1.0)
+        Comparable(gt=-4)
+        Comparable(ge=-4, lt=10.4)
+        Comparable(ge=-99.9, lt=-10, ne=-50)
+        Comparable(eq=3)
+
+        # Bad arguments
+        self.assertRaises(TypeError, Comparable, eq=3, lt=1)
+        self.assertRaises(ValueError, Comparable, ge=4, le=3)
+
+    def test_check(self):
+        self.checker = Comparable()
+        self.assertOutputIsInput(1e5)
+        self.assertOutputIsInput('')
+        self.assertOutputIsInput(float('nan'))
+
+        self.checker = Comparable(gt=3.0, ne=3.1, le=3.14)
+        self.assertOutputIsInput(3.14)
+        self.assertOutputIsInput(3.11)
+        self.assertRaisesOnCheck(ValueError, 3.1)
+        self.assertRaisesOnCheck(ValueError, 3.0)
+        self.assertRaisesOnCheck(ValueError, float('inf'))
+        self.assertRaisesOnCheck(ValueError, float('-inf'))
+        self.assertRaisesOnCheck(ValueError, float('nan'))
+
+        self.checker = Comparable(ne=0)
+        self.assertOutputIsInput(1)
+        self.assertOutputIsInput(None)
+        self.assertRaisesOnCheck(ValueError, 0.0)
+
+        self.checker = Comparable(eq=-19)
+        self.assertOutputIsInput(-19.0)
+        self.assertRaisesOnCheck(ValueError, -19.0001)
+
+        self.checker = Comparable(ge=-19)
+        self.assertOutputIsInput(-19.0)
+        self.assertOutputIsInput(-18.9)
+        self.assertRaisesOnCheck(ValueError, -19.1)
+
+        self.checker = Comparable(gt=float('-inf'), lt=float('inf'))
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput(2**10)
+        self.assertOutputIsInput(-2 ** 10)
+
+        self.checker = Comparable(le='abcd')
+        self.assertRaisesOnCheck(TypeError, -19.0001)
+
+        self.checker = Comparable(ne='abcd')
+        self.assertOutputIsInput(100)
+        self.assertOutputIsInput('abcde')
+
+        self.checker = Comparable(lt={'a', 'b'})
+        self.assertOutputIsInput(set())
+        self.assertOutputIsInput({'a'})
+        self.assertRaisesOnCheck(ValueError, {'a', 'b'})
+        self.assertRaisesOnCheck(TypeError, 'a')
+
+        self.checker = Comparable(gt=0.0, le=10.0)
+        self.assertOutputIsInput(1)
+        self.assertOutputIsInput(10.0)
+        self.assertRaisesOnCheck(ValueError, 0)
+        self.assertRaisesOnCheck(ValueError, 10.01)
+        self.assertRaisesOnCheck(TypeError, 'a')

@@ -19,7 +19,7 @@ class Collection(Sized, Typed):
 
     :param args: *Tuple[CheckerLike]* – Describes what each item in the collection must be.
     """
-    types = ()
+    types = (object,)
 
     def __init__(self, *args, **kwargs):
         # TODO add `astype=None` option
