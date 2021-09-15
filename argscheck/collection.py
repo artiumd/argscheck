@@ -52,7 +52,7 @@ class Set(Comparable, Collection):
     Check if argument is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
     operators, e.g. using ``gt`` will check if argument is a superset of the other set.
 
-    Example:
+    :Example:
 
     .. code-block:: python
 

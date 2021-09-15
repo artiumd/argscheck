@@ -15,7 +15,7 @@ class String(Typed):
     :param method: *str* – Name of ``re.Pattern`` method that will be used to match the argument against the regex
         pattern. Must be ``"match"``, ``"fullmatch"`` or ``"search"``. Only relevant if ``pattern`` is provided.
 
-    Example:
+    :Example:
 
     .. code-block:: python
 

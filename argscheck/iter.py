@@ -11,7 +11,7 @@ class Iterator(Checker):
 
     :param args: *Tuple[CheckerLike]* – Describes what each item from the iterator must be.
 
-    Example:
+    :Example:
 
     .. code-block:: python
 
@@ -59,7 +59,7 @@ class Iterable(Iterator):
     """
     Same as :class:`.Iterator`, but argument can be a plain iterable (not necessarily an iterator).
 
-    Example:
+    :Example:
 
     .. code-block:: python
 

@@ -61,7 +61,7 @@ class Typed(Checker):
 
     :param types: *Tuple[Type]* – One or more types which the argument must be an instance of.
 
-    Examples:
+    :Example:
 
     .. code-block:: python
 
@@ -106,7 +106,7 @@ class Optional(Checker):
     :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the argument is missing, instead of
         ``x is None``.
 
-    Examples:
+    :Example:
 
     .. code-block:: python
 
@@ -174,7 +174,7 @@ class Comparable(Checker):
     :param gt: *Optional[Any]* – Argument must be greater than ``gt``.
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – The above parameters will have to be of this type(s).
 
-    Example:
+    :Example:
 
     .. code-block:: python
 
@@ -186,7 +186,7 @@ class Comparable(Checker):
         checker.check(set())       # Passes, returns set()
         checker.check({'a'})       # Passes, returns {'a'}
         checker.check({'a', 'b'})  # Fails, raises ValueError ({'a', 'b'} is equal to {'a', 'b'})
-        checker.check('a')         # Fails, raises TypeError (operator < is not supported between set and str)
+        checker.check('a')         # Fails, raises TypeError (< is not supported between set and str)
     """
     comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
                        le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
@@ -274,7 +274,7 @@ class One(Checker):
 
     :param args: *Tuple[CheckerLike]* – At least two checker-like object(s) out of which exactly one must pass.
 
-    Examples:
+    :Example:
 
     .. code-block:: python
 

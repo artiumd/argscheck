@@ -64,14 +64,15 @@ class _Suffix:
 
 class PathLike(Typed):
     """
-    Check if argument is of a path-like type (``str`` or ``pathlib.Path``). Additional checks and conversions can be
-    performed by changing some of the default parameters.
+    Check if argument is of a path-like type (``str`` or ``pathlib.Path``).
+
+    Additional checks and conversions can be performed by changing some of the default parameters.
 
     :param is_dir: *bool* – If ``True``, argument must point to an existing directory.
     :param is_file: *bool* – If ``True``, argument must point to an existing file.
     :param suffix: *Optional[str]* – Argument must have this suffix (wildcards and regex are not supported).
-    :param suffixes: *Optional[List[str]]* – Argument must have these suffixes (wildcards and regex are not supported). If both
-        ``suffix`` and ``suffixes`` are provided, then, argument's suffix(es) must match at least one of them.
+    :param suffixes: *Optional[List[str]]* – Argument must have these suffixes (wildcards and regex are not supported).
+       If both ``suffix`` and ``suffixes`` are provided, then, argument's suffix(es) must match at least one of them.
     :param ignore_suffix_case: *bool* – Whether or not the suffix's case should be ignored. Only relevant if
         ``suffix`` or ``suffixes`` are provided.
     :param as_str: *bool* – If ``True``, argument will be converted to ``str`` before it is returned.

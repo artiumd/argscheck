@@ -166,7 +166,7 @@ class Sized(Checker):
     :param len_ge: *Optional[int]* – Argument's length must greater than or equal to ``len_ne``.
     :param len_gt: *Optional[int]* – Argument's length must greater than ``len_ne``.
 
-    Example:
+    :Example:
 
     .. code-block:: python
 
