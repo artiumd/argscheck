@@ -1,3 +1,7 @@
+"""
+String
+======
+"""
 import re
 
 from .core import Typed

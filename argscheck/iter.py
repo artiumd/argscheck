@@ -1,3 +1,7 @@
+"""
+Iterator and Iterable
+=====================
+"""
 from .core import Checker
 
 

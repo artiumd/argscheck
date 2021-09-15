@@ -1,3 +1,7 @@
+"""
+Numeric
+=======
+"""
 from .core import Checker, Typed, Comparable, Optional
 
 
@@ -162,9 +166,9 @@ class Sized(Checker):
     :param len_lt: *Optional[int]* – Argument's length must be less than ``len_lt``.
     :param len_le: *Optional[int]* – Argument's length must be less than or equal to ``len_le``.
     :param len_ne: *Optional[int]* – Argument's length must be not equal to ``len_ne``.
-    :param len_eq: *Optional[int]* – Argument's length must be equal to ``len_ne``.
-    :param len_ge: *Optional[int]* – Argument's length must greater than or equal to ``len_ne``.
-    :param len_gt: *Optional[int]* – Argument's length must greater than ``len_ne``.
+    :param len_eq: *Optional[int]* – Argument's length must be equal to ``len_eq``.
+    :param len_ge: *Optional[int]* – Argument's length must greater than or equal to ``len_ge``.
+    :param len_gt: *Optional[int]* – Argument's length must greater than ``len_gt``.
 
     :Example:
 

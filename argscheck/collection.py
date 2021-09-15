@@ -1,3 +1,7 @@
+"""
+Collections
+===========
+"""
 from .core import Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable

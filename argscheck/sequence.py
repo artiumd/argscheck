@@ -1,3 +1,8 @@
+"""
+Sequences
+=========
+"""
+
 from .core import Typed
 from .numeric import Sized
 

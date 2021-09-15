@@ -1,3 +1,7 @@
+"""
+Core
+====
+"""
 import operator
 from functools import partial
 

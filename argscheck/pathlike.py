@@ -1,3 +1,7 @@
+"""
+PathLike
+========
+"""
 from pathlib import Path
 
 from .core import Typed, Optional
