@@ -23,7 +23,7 @@ class Iterator(Checker):
 
         next(iterator)  # Passes, returns 'a'
         next(iterator)  # Passes, returns True
-        next(iterator)  # Fails, raises TypeError (because 1.1 is not an str or bool).
+        next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).
     """
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
@@ -72,7 +72,7 @@ class Iterable(Iterator):
         iterator = iter(iterable)
         next(iterator)  # Passes, returns 'a'
         next(iterator)  # Passes, returns True
-        next(iterator)  # Fails, raises TypeError (because 1.1 is not an str or bool).
+        next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).
     """
     def __iter__(self):
         self.iterator = iter(self.iterator)

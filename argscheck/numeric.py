@@ -8,7 +8,8 @@ _numbers = _ints + _floats
 
 class Number(Comparable, Typed):
     """
-    Check if argument is of a numeric type (``int`` or ``float``).
+    Check if argument is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
+    any of the following binary operators: ``{< | <= | != | == | >= | >}``.
 
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – Argument can only be compared to this type(s), passing
         values of other types for comparison will raise a ``TypeError``. By default, can only be compared to other
@@ -176,8 +177,8 @@ class Sized(Checker):
 
         checker.check(['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
         checker.check('abc')            # Passes, returns 'abc'
-        checker.check({'a', 'b'})       # Fails, raises ValueError
-        checker.check(123)              # Fails, raises TypeError
+        checker.check({'a', 'b'})       # Fails, raises ValueError (length is 2 instead of 3)
+        checker.check(123)              # Fails, raises TypeError (int does not have a length)
     """
     def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
         super().__init__(*args, **kwargs)

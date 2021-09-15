@@ -71,7 +71,7 @@ class Typed(Checker):
         checker = Typed(int, float)
 
         checker.check(1.234)    # Passes, returns 1.234
-        checker.check("1.234")  # Fails, raises TypeError
+        checker.check("1.234")  # Fails, raises TypeError (type is str and not int or float)
     """
     def __init__(self, *types, **kwargs):
         super().__init__(**kwargs)
@@ -118,7 +118,7 @@ class Optional(Checker):
         checker.check([1, 2, 3])  # Passes, returns [1, 2, 3]
         checker.check({1, 2, 3})  # Passes, returns {1, 2, 3}
         checker.check(None)       # Passes, returns []
-        checker.check('string')   # Fails, raises TypeError
+        checker.check("string")   # Fails, raises TypeError ("string" is neither None nor a list or a set)
     """
     missing = Sentinel('<MISSING>')
 
@@ -161,7 +161,9 @@ class Optional(Checker):
 class Comparable(Checker):
     """
     Check if argument correctly compares to other value(s) using any of the following binary operators:
-    ``{<|<=|!=|==|>=|>}``.
+    ``{< | <= | != | == | >= | >}``.
+
+    Comparison need not necessarily be between numeric types, as can be seen in the example below.
 
     :param args: Used only for compatibility.
     :param lt: *Optional[Any]* – Argument must be less than ``lt``.
@@ -172,7 +174,7 @@ class Comparable(Checker):
     :param gt: *Optional[Any]* – Argument must be greater than ``gt``.
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – The above parameters will have to be of this type(s).
 
-    Examples:
+    Example:
 
     .. code-block:: python
 
@@ -183,8 +185,8 @@ class Comparable(Checker):
 
         checker.check(set())       # Passes, returns set()
         checker.check({'a'})       # Passes, returns {'a'}
-        checker.check({'a', 'b'})  # Fails, raises ValueError
-        checker.check('a')         # Fails, raises TypeError
+        checker.check({'a', 'b'})  # Fails, raises ValueError ({'a', 'b'} is equal to {'a', 'b'})
+        checker.check('a')         # Fails, raises TypeError (operator < is not supported between set and str)
     """
     comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
                        le=dict(comp_fn=operator.le, comp_name='less than or equal to'),

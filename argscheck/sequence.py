@@ -19,7 +19,10 @@ class Sequence(Sized, Typed):
         # TODO add `astype=None` option
         super().__init__(*self.types, **kwargs)
 
-        self.item_checker = self._validate_args(args)
+        if args:
+            self.item_checker = self._validate_args(args)
+        else:
+            self.item_checker = None
 
     def _get_items(self, name, value):
         items = []
@@ -54,6 +57,10 @@ class Sequence(Sized, Typed):
         passed, value = super().__call__(name, value)
         if not passed:
             return False, value
+
+        # If Sequence was constructed with an empty *args, no need to iterate over items in the sequence
+        if self.item_checker is None:
+            return True, value
 
         # Get all items in the sequence, check (and possibly convert) each one, arrange them in a list
         passed, items, modified = self._get_items(name, value)
@@ -94,8 +101,10 @@ class MutableSequence(Sequence):
 
     A mutable sequence is assumed to have the following properties:
 
-    1. All the properties of a sequence.
-    2. Has ``__setitem__()`` implemented, which accepts the same keys as ``__getitem__()``.
+    1. Has ``__len__()`` implemented.
+    2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
+       object's own length.
+    3. Has ``__setitem__()`` implemented, which accepts the same keys as ``__getitem__()``.
     """
     def _set_items(self, name, value, items):
         for i, item in enumerate(items):
