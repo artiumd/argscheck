@@ -30,6 +30,12 @@ class TestCollection(TestCaseArgscheck):
         self.assertOutputEqualsInput(MockCollection(['1', '2', '3']))
         self.assertOutputEquals(MockCollection(['1', '2', None]), MockCollection(['1', '2', '']))
 
+        self.checker = Collection(float, len_gt=0)
+        self.assertOutputEqualsInput({1.2, 3.4})
+        self.assertOutputEqualsInput([1.1, 2.2, 3.3])
+        self.assertRaisesOnCheck(ValueError, ())
+        self.assertRaisesOnCheck(TypeError, 'abcd')
+
 
 class TestSet(TestCaseArgscheck):
     def test_check(self):

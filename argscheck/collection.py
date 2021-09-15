@@ -1,6 +1,17 @@
 """
 Collections
 ===========
+
+This module contain checkers for using on collection objects.
+
+In this context, a collection is a class that:
+
+1. Has ``__len__()`` implemented.
+2. Has ``__next__()`` implemented, i.e. its instances are iterable.
+3. Its constructor takes a single iterable.
+
+Collection can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
+``*args`` parameter.
 """
 from .core import Typed, Comparable
 from .numeric import Sized
@@ -9,15 +20,23 @@ from .iter import Iterable
 
 class Collection(Sized, Typed):
     """
-    Check if argument is a homogenous collection, i.e. each item in the collection satisfies the same set of checkers.
-
-    A collection is assumed to have the following properties:
-
-    1. Has ``__len__()`` implemented.
-    2. Is iterable.
-    3. Can be instantiated from an iterable.
+    Check if argument is a collection.
 
     :param args: *Tuple[CheckerLike]* – Describes what each item in the collection must be.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import Collection
+
+        # Check if a non empty collection of floats
+        checker = Collection(float, len_gt=0)
+
+        checker.check({1.2, 3.4})       # Passes, returns {1.2, 3.4}
+        checker.check([1.1, 2.2, 3.3])  # Passes, returns [1.1, 2.2, 3.3]
+        checker.check(())               # Fails, raises ValueError (empty collection)
+        checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
     """
     types = (object,)
 
@@ -44,7 +63,8 @@ class Collection(Sized, Typed):
 
         # Create returned collection, any item yielded by the iterable that fails the check will raise an error
         try:
-            value = type_(self.iterable(name, value))
+            # Applying list() is necessary to make sure self.iterable is consumed before it is passed to the constructor
+            value = type_(list(self.iterable(name, value)))
 
             return True, value
         except Exception as e:
