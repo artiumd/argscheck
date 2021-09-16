@@ -1,22 +1,39 @@
 """
 Sequences
 =========
-"""
 
+This module contains checkers for using on sequence objects.
+
+In this context, a sequence is a class that:
+
+1. Has ``__len__()`` implemented.
+2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
+   object's own length.
+3. Can be instantiated from an iterable.
+
+Moreover, a mutable sequence is a class that:
+
+1. Has the properties of a sequence.
+2. Has ``__setitem__()`` implemented, which accepts the same keys as ``__getitem__()``.
+
+Sequences (mutable or otherwise) can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can
+be checked using the ``*args`` parameter:
+
+If a non-empty ``*args`` is provided, then, the resulting checker is applied to each item in the sequence.
+
+Checkers that convert values (like :class:`.Optional` for example) are applied as follows:
+
+1. For mutable sequences, converted items are set inplace.
+2. For (non mutable) sequences, a new sequence instance is created from the converted items (this will happen only if
+   actual conversion took place for at least one item).
+"""
 from .core import Typed
 from .numeric import Sized
 
 
 class Sequence(Sized, Typed):
     """
-    Check if argument is a homogeneous sequence, i.e. each item in the sequence satisfies the same set of checkers.
-
-    A sequence is assumed to have the following properties:
-
-    1. Has ``__len__()`` implemented.
-    2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
-       object's own length.
-    3. Can be instantiated from an iterable.
+    Check if argument is a sequence.
 
     :Example:
 
@@ -102,14 +119,14 @@ class Sequence(Sized, Typed):
 
 class Tuple(Sequence):
     """
-    Same as :class:`.Sequence`, and argument must be a ``tuple`` instance.
+    Same as :class:`.Sequence`, plus, argument must be a ``tuple`` instance.
     """
     types = (tuple,)
 
 
 class NonEmptyTuple(Tuple):
     """
-    Same as :class:`.Tuple`, and argument's length must be greater than zero.
+    Same as :class:`.Tuple`, plus, argument's length must be greater than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, len_gt=0, **kwargs)
@@ -117,15 +134,7 @@ class NonEmptyTuple(Tuple):
 
 class MutableSequence(Sequence):
     """
-    Check if argument is a homogeneous mutable sequence, i.e. each item in the sequence satisfies the same set of
-    checkers.
-
-    A mutable sequence is assumed to have the following properties:
-
-    1. Has ``__len__()`` implemented.
-    2. Has ``__getitem__()`` implemented, which accepts integers starting from zero and up to (and not including) the
-       object's own length.
-    3. Has ``__setitem__()`` implemented, which accepts the same keys as ``__getitem__()``.
+    Check if argument is a mutable sequence.
     """
     def _set_items(self, name, value, items):
         for i, item in enumerate(items):
@@ -140,14 +149,14 @@ class MutableSequence(Sequence):
 
 class List(MutableSequence):
     """
-    Same as :class:`.MutableSequence`, and argument must be a ``list`` instance.
+    Same as :class:`.MutableSequence`, plus, argument must be a ``list`` instance.
     """
     types = (list,)
 
 
 class NonEmptyList(List):
     """
-    Same as :class:`.List`, and argument's length must be greater than zero.
+    Same as :class:`.List`, plus, argument's length must be greater than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, len_gt=0, **kwargs)

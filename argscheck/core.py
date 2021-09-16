@@ -5,13 +5,7 @@ Core
 import operator
 from functools import partial
 
-
-class Sentinel:
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return self.name
+from .utils import Sentinel
 
 
 class Checker:

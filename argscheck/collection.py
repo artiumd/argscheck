@@ -2,15 +2,15 @@
 Collections
 ===========
 
-This module contain checkers for using on collection objects.
+This module contains checkers for using on collection objects.
 
 In this context, a collection is a class that:
 
 1. Has ``__len__()`` implemented.
 2. Has ``__next__()`` implemented, i.e. its instances are iterable.
-3. Its constructor takes a single iterable.
+3. Can be instantiated from an iterable.
 
-Collection can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
+Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
 ``*args`` parameter.
 """
 from .core import Typed, Comparable
@@ -22,7 +22,8 @@ class Collection(Sized, Typed):
     """
     Check if argument is a collection.
 
-    :param args: *Tuple[CheckerLike]* – Describes what each item in the collection must be.
+    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in the
+        collection.
 
     :Example:
 
@@ -64,7 +65,8 @@ class Collection(Sized, Typed):
         # Create returned collection, any item yielded by the iterable that fails the check will raise an error
         try:
             # Applying list() is necessary to make sure self.iterable is consumed before it is passed to the constructor
-            value = type_(list(self.iterable(name, value)))
+            iterable = list(self.iterable(name, value))
+            value = type_(iterable)
 
             return True, value
         except Exception as e:

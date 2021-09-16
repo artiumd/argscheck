@@ -61,7 +61,7 @@ class Iterator(Checker):
 
 class Iterable(Iterator):
     """
-    Same as :class:`.Iterator`, but argument can be a plain iterable (not necessarily an iterator).
+    Same as :class:`.Iterator`, plus, argument can be a plain iterable (not necessarily an iterator).
 
     :Example:
 

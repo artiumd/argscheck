@@ -25,7 +25,7 @@ class Number(Comparable, Typed):
 
 class Int(Comparable, Typed):
     """
-    Same as :class:`.Number`, and argument must be an ``int``.
+    Same as :class:`.Number`, plus, argument must be an ``int``.
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_ints, other_type=other_type, **kwargs)
@@ -33,7 +33,7 @@ class Int(Comparable, Typed):
 
 class Float(Comparable, Typed):
     """
-    Same as :class:`.Number`, and argument must be a ``float``.
+    Same as :class:`.Number`, plus, argument must be a ``float``.
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_floats, other_type=other_type, **kwargs)
@@ -46,7 +46,7 @@ Positive
 
 class PositiveNumber(Number):
     """
-    Same as :class:`.Number`, and argument must be greater than zero.
+    Same as :class:`.Number`, plus, argument must be greater than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -54,7 +54,7 @@ class PositiveNumber(Number):
 
 class PositiveInt(Int):
     """
-    Same as :class:`.Int`, and argument must be greater than zero.
+    Same as :class:`.Int`, plus, argument must be greater than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -62,7 +62,7 @@ class PositiveInt(Int):
 
 class PositiveFloat(Float):
     """
-    Same as :class:`.Float`, and argument must be greater than zero.
+    Same as :class:`.Float`, plus, argument must be greater than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -75,7 +75,7 @@ Non Negative
 
 class NonNegativeNumber(Number):
     """
-    Same as :class:`.Number`, and argument must be greater than or equal to zero.
+    Same as :class:`.Number`, plus, argument must be greater than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -83,7 +83,7 @@ class NonNegativeNumber(Number):
 
 class NonNegativeInt(Int):
     """
-    Same as :class:`.Int`, and argument must be greater than or equal to zero.
+    Same as :class:`.Int`, plus, argument must be greater than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -91,7 +91,7 @@ class NonNegativeInt(Int):
 
 class NonNegativeFloat(Float):
     """
-    Same as :class:`.Float`, and argument must be greater than or equal to zero.
+    Same as :class:`.Float`, plus, argument must be greater than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -104,7 +104,7 @@ Negative
 
 class NegativeNumber(Number):
     """
-    Same as :class:`.Number`, and argument must be less than zero.
+    Same as :class:`.Number`, plus, argument must be less than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -112,7 +112,7 @@ class NegativeNumber(Number):
 
 class NegativeInt(Int):
     """
-    Same as :class:`.Int`, and argument must be less than zero.
+    Same as :class:`.Int`, plus, argument must be less than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -120,7 +120,7 @@ class NegativeInt(Int):
 
 class NegativeFloat(Float):
     """
-    Same as :class:`.Float`, and argument must be less than zero.
+    Same as :class:`.Float`, plus, argument must be less than zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -133,7 +133,7 @@ Non Positive
 
 class NonPositiveNumber(Number):
     """
-    Same as :class:`.Number`, and argument must be less than or equal to zero.
+    Same as :class:`.Number`, plus, argument must be less than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -141,7 +141,7 @@ class NonPositiveNumber(Number):
 
 class NonPositiveInt(Int):
     """
-    Same as :class:`.Int`, and argument must be less than or equal to zero.
+    Same as :class:`.Int`, plus, argument must be less than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -149,7 +149,7 @@ class NonPositiveInt(Int):
 
 class NonPositiveFloat(Float):
     """
-    Same as :class:`.Float`, and argument must be less than or equal to zero.
+    Same as :class:`.Float`, plus, argument must be less than or equal to zero.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
