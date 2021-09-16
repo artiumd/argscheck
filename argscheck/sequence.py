@@ -28,7 +28,7 @@ Checkers that convert values (like :class:`.Optional` for example) are applied a
    actual conversion took place for at least one item).
 """
 from .core import Typed
-from .numeric import Sized
+from .numeric import Sized, NonEmpty
 
 
 class Sequence(Sized, Typed):
@@ -48,6 +48,7 @@ class Sequence(Sized, Typed):
         checker.check({'a', 'b'})    # Fails, raises TypeError (set is not a sequence)
         checker.check(['a'])         # Fails, raises ValueError (length is less than 2)
         checker.check(['a', 1])      # Fails, raises TypeError (not all items are str)
+
     """
     types = (object,)
 
@@ -120,21 +121,23 @@ class Sequence(Sized, Typed):
 class Tuple(Sequence):
     """
     Same as :class:`.Sequence`, plus, argument must be a ``tuple`` instance.
+
     """
     types = (tuple,)
 
 
-class NonEmptyTuple(Tuple):
+class NonEmptyTuple(NonEmpty, Tuple):
     """
     Same as :class:`.Tuple`, plus, argument's length must be greater than zero.
+
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, len_gt=0, **kwargs)
+    pass
 
 
 class MutableSequence(Sequence):
     """
     Check if argument is a mutable sequence.
+
     """
     def _set_items(self, name, value, items):
         for i, item in enumerate(items):
@@ -150,13 +153,14 @@ class MutableSequence(Sequence):
 class List(MutableSequence):
     """
     Same as :class:`.MutableSequence`, plus, argument must be a ``list`` instance.
+
     """
     types = (list,)
 
 
-class NonEmptyList(List):
+class NonEmptyList(NonEmpty, List):
     """
     Same as :class:`.List`, plus, argument's length must be greater than zero.
+
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, len_gt=0, **kwargs)
+    pass

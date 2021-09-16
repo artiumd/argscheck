@@ -19,7 +19,6 @@ from .iter import Iterable
 from .utils import extend_docstring
 
 
-@extend_docstring
 class Collection(Sized, Typed):
     """
     Check if argument is a collection.
@@ -76,7 +75,6 @@ class Collection(Sized, Typed):
             return False, e
 
 
-@extend_docstring
 class Set(Comparable, Collection):
     """
     Check if argument is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary

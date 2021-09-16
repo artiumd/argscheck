@@ -134,6 +134,7 @@ class PathLike(Typed):
 class ExistingDir(PathLike):
     """
     Same as :class:`.PathLike`, plus, argument must point to an existing directory.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_dir=True, **kwargs)
@@ -142,6 +143,7 @@ class ExistingDir(PathLike):
 class ExistingFile(PathLike):
     """
     Same as :class:`.PathLike`, plus, argument must point to an existing file.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_file=True, **kwargs)

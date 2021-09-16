@@ -30,6 +30,7 @@ class String(Typed):
 
         checker.check("app.exe")    # Passes, returns "app.exe"
         checker.check("script.sh")  # Fails, raises ValueError ("script.sh" does not end with ".exe")
+
     """
     def __init__(self, pattern=None, flags=0, method='match', **kwargs):
         super().__init__(str, **kwargs)

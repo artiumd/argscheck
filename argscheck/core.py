@@ -5,10 +5,16 @@ Core
 import operator
 from functools import partial
 
-from .utils import Sentinel
+from .utils import Sentinel, extend_docstring
 
 
-class Checker:
+class CheckerMeta(type):
+    def __init__(cls, name, bases, attrs, **kwargs):
+        super().__init__(name, bases, attrs, **kwargs)
+        extend_docstring(cls)
+
+
+class Checker(metaclass=CheckerMeta):
     def __repr__(self):
         return type(self).__qualname__
 
@@ -53,11 +59,9 @@ class Checker:
 
 class Typed(Checker):
     """
-    Check if argument is an instance of a given type (or types).
+    Check if argument is an instance of a given type (or types) using ``isinstance(x, args)``.
 
-    Internally, ``types`` is passed as a second argument to ``isinstance()``.
-
-    :param args: *Tuple[Type]* – One or more types which the argument must be an instance of.
+    :param args: *Tuple[Type]* – One or more types.
 
     :Example:
 
@@ -70,6 +74,7 @@ class Typed(Checker):
 
         checker.check(1.234)    # Passes, returns 1.234
         checker.check("1.234")  # Fails, raises TypeError (type is str and not int or float)
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
@@ -164,13 +169,14 @@ class Comparable(Checker):
     Comparison need not necessarily be between numeric types, as can be seen in the example below.
 
     :param args: Used only for compatibility.
-    :param lt: *Optional[Any]* – Argument must be less than ``lt``.
-    :param le: *Optional[Any]* – Argument must be less than or equal to ``le``.
-    :param ne: *Optional[Any]* – Argument must not be equal to ``ne``.
-    :param eq: *Optional[Any]* – Argument must be equal to ``eq``.
-    :param ge: *Optional[Any]* – Argument must be greater than or equal to ``ge``.
-    :param gt: *Optional[Any]* – Argument must be greater than ``gt``.
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – The above parameters will have to be of this type(s).
+    :param lt: *Optional[Any]* – Check if ``x < lt``.
+    :param le: *Optional[Any]* – Check if ``x <= le``.
+    :param ne: *Optional[Any]* – Check if ``x != ne``.
+    :param eq: *Optional[Any]* – Check if ``x == eq``.
+    :param ge: *Optional[Any]* – Check if ``x >= ge``.
+    :param gt: *Optional[Any]* – Check if ``x > gt``.
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which the argument can
+       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``.
 
     :Example:
 

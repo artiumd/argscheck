@@ -21,6 +21,7 @@ class ParamContainer:
         return self.values[item]
 
     def add(self, param):
+        assert param.startswith(':param '), param
         # e.g. ":param param_name: *Type* – description." -> "param param_name"
         key = param.split(':')[1]
 
@@ -49,10 +50,20 @@ def extract_params(cls):
         return []
 
     doc = doc.split(':Example:')[0]
-    doc = doc[doc.find(':param'):]
+
+    idx = doc.find(':param')
+
+    if idx == -1:
+        return []
+
+    doc = doc[idx:]
     params = split_and_keep(doc, ':param')
 
     return params
+
+
+def take_before(string, before):
+    return string[:string.find(before)]
 
 
 def insert_params(cls, params):
@@ -61,19 +72,36 @@ def insert_params(cls, params):
     if doc is None:
         return
 
-    prefix = doc.split(':param')[0]
-    suffix = ''.join(split_and_keep(doc, ':Example:'))
+    # Build prefix
+    # prefix = take_before(doc, ':Example:')
+    # prefix = take_before(prefix, ':param')
+
+    if ':param' not in doc:
+        idx = doc.find(':Example:')
+        prefix = doc[:idx]
+    else:
+        prefix = doc.split(':param')[0]
+
+    # Build suffix
+    if ':Example:' not in doc:
+        suffix = ''
+    else:
+        suffix = ''.join(split_and_keep(doc, ':Example:'))
+
     doc = prefix + ''.join(params) + suffix
 
     cls.__doc__ = doc
 
 
 def extend_docstring(cls):
+    doc = cls.__doc__
+
+    if doc is None or doc.startswith('\n    Same as :class:`'):
+        return
+
     params = ParamContainer()
 
     for base in inspect.getmro(cls):
         params.extend(extract_params(base))
 
     insert_params(cls, params)
-
-    return cls

@@ -15,9 +15,9 @@ class Number(Comparable, Typed):
     Check if argument is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
     any of the following binary operators: ``{< | <= | != | == | >= | >}``.
 
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – Argument can only be compared to this type(s), passing
-        values of other types for comparison will raise a ``TypeError``. By default, can only be compared to other
-        ``int`` or ``float`` objects.
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – restricts the types to which the argument can
+       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``. By default, argument can only be
+       compared to other ``int`` or ``float`` objects.
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_numbers, other_type=other_type, **kwargs)
@@ -46,7 +46,8 @@ Positive
 
 class PositiveNumber(Number):
     """
-    Same as :class:`.Number`, plus, argument must be greater than zero.
+    Same as :class:`.Number`, plus, ``x > 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -54,7 +55,8 @@ class PositiveNumber(Number):
 
 class PositiveInt(Int):
     """
-    Same as :class:`.Int`, plus, argument must be greater than zero.
+    Same as :class:`.Int`, plus, ``x > 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -62,7 +64,8 @@ class PositiveInt(Int):
 
 class PositiveFloat(Float):
     """
-    Same as :class:`.Float`, plus, argument must be greater than zero.
+    Same as :class:`.Float`, plus, ``x > 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -75,7 +78,8 @@ Non Negative
 
 class NonNegativeNumber(Number):
     """
-    Same as :class:`.Number`, plus, argument must be greater than or equal to zero.
+    Same as :class:`.Number`, plus, ``x >= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -83,7 +87,8 @@ class NonNegativeNumber(Number):
 
 class NonNegativeInt(Int):
     """
-    Same as :class:`.Int`, plus, argument must be greater than or equal to zero.
+    Same as :class:`.Int`, plus, ``x >= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -91,7 +96,8 @@ class NonNegativeInt(Int):
 
 class NonNegativeFloat(Float):
     """
-    Same as :class:`.Float`, plus, argument must be greater than or equal to zero.
+    Same as :class:`.Float`, plus, ``x >= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -104,7 +110,8 @@ Negative
 
 class NegativeNumber(Number):
     """
-    Same as :class:`.Number`, plus, argument must be less than zero.
+    Same as :class:`.Number`, plus, ``x < 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -112,7 +119,8 @@ class NegativeNumber(Number):
 
 class NegativeInt(Int):
     """
-    Same as :class:`.Int`, plus, argument must be less than zero.
+    Same as :class:`.Int`, plus, ``x < 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -120,7 +128,8 @@ class NegativeInt(Int):
 
 class NegativeFloat(Float):
     """
-    Same as :class:`.Float`, plus, argument must be less than zero.
+    Same as :class:`.Float`, plus, ``x < 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -133,7 +142,8 @@ Non Positive
 
 class NonPositiveNumber(Number):
     """
-    Same as :class:`.Number`, plus, argument must be less than or equal to zero.
+    Same as :class:`.Number`, plus, ``x <= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -141,7 +151,8 @@ class NonPositiveNumber(Number):
 
 class NonPositiveInt(Int):
     """
-    Same as :class:`.Int`, plus, argument must be less than or equal to zero.
+    Same as :class:`.Int`, plus, ``x <= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -149,7 +160,8 @@ class NonPositiveInt(Int):
 
 class NonPositiveFloat(Float):
     """
-    Same as :class:`.Float`, plus, argument must be less than or equal to zero.
+    Same as :class:`.Float`, plus, ``x <= 0`` must be ``True``.
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -162,13 +174,12 @@ class Sized(Checker):
     """
     Check argument's length (as returned from calling ``len()`` on it).
 
-    :param args: Used for compatibility only.
-    :param len_lt: *Optional[int]* – Argument's length must be less than ``len_lt``.
-    :param len_le: *Optional[int]* – Argument's length must be less than or equal to ``len_le``.
-    :param len_ne: *Optional[int]* – Argument's length must be not equal to ``len_ne``.
-    :param len_eq: *Optional[int]* – Argument's length must be equal to ``len_eq``.
-    :param len_ge: *Optional[int]* – Argument's length must greater than or equal to ``len_ge``.
-    :param len_gt: *Optional[int]* – Argument's length must greater than ``len_gt``.
+    :param len_lt: *Optional[int]* – Check if ``len(x) < len_lt``.
+    :param len_le: *Optional[int]* – Check if ``len(x) <= len_le``.
+    :param len_ne: *Optional[int]* – Check if ``len(x) != len_ne``.
+    :param len_eq: *Optional[int]* – Check if ``len(x) == len_eq``.
+    :param len_ge: *Optional[int]* – Check if ``len(x) >= len_ge``.
+    :param len_gt: *Optional[int]* – Check if ``len(x) > len_gt``.
 
     :Example:
 
@@ -183,6 +194,7 @@ class Sized(Checker):
         checker.check('abc')            # Passes, returns 'abc'
         checker.check({'a', 'b'})       # Fails, raises ValueError (length is 2 instead of 3)
         checker.check(123)              # Fails, raises TypeError (int does not have a length)
+
     """
     def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -214,3 +226,25 @@ class Sized(Checker):
             return False, e
 
         return True, value
+
+
+class NonEmpty(Sized):
+    """
+    Check if argument's length is greater than zero.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import NonEmpty
+
+        # Check if non empty
+        checker = NonEmpty()
+
+        checker.check(['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
+        checker.check('abc')            # Passes, returns 'abc'
+        checker.check('')               # Fails, raises ValueError (empty string)
+        checker.check([])               # Fails, raises ValueError (empty list)
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=0, **kwargs)
