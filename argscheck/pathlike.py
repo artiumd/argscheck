@@ -135,6 +135,7 @@ class ExistingDir(PathLike):
     """
     Same as :class:`.PathLike`, plus, argument must point to an existing directory.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_dir=True, **kwargs)
@@ -144,6 +145,7 @@ class ExistingFile(PathLike):
     """
     Same as :class:`.PathLike`, plus, argument must point to an existing file.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_file=True, **kwargs)

@@ -26,6 +26,8 @@ class Number(Comparable, Typed):
 class Int(Comparable, Typed):
     """
     Same as :class:`.Number`, plus, argument must be an ``int``.
+
+    :meta skip-docstring-extend:
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_ints, other_type=other_type, **kwargs)
@@ -34,6 +36,8 @@ class Int(Comparable, Typed):
 class Float(Comparable, Typed):
     """
     Same as :class:`.Number`, plus, argument must be a ``float``.
+
+    :meta skip-docstring-extend:
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_floats, other_type=other_type, **kwargs)
@@ -48,6 +52,7 @@ class PositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x > 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -57,6 +62,7 @@ class PositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x > 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -66,6 +72,7 @@ class PositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x > 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -80,6 +87,7 @@ class NonNegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x >= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -89,6 +97,7 @@ class NonNegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x >= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -98,6 +107,7 @@ class NonNegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x >= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -112,6 +122,7 @@ class NegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x < 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -121,6 +132,7 @@ class NegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x < 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -130,6 +142,7 @@ class NegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x < 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -144,6 +157,7 @@ class NonPositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x <= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -153,6 +167,7 @@ class NonPositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x <= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -162,6 +177,7 @@ class NonPositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x <= 0`` must be ``True``.
 
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -245,6 +261,8 @@ class NonEmpty(Sized):
         checker.check('abc')            # Passes, returns 'abc'
         checker.check('')               # Fails, raises ValueError (empty string)
         checker.check([])               # Fails, raises ValueError (empty list)
+
+    :meta skip-docstring-extend:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=0, **kwargs)

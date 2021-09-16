@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import inspect
 
 
@@ -9,99 +10,75 @@ class Sentinel:
         return self.name
 
 
-class ParamContainer:
-    def __init__(self):
-        self.keys = []
-        self.values = []
+class DocString:
+    def __init__(self, doc):
+        self.prefix = ''
+        self.params = OrderedDict()
+        self.suffix = ''
+        self.skip_extend = False
+        self._parse_docstring(doc)
 
-    def __len__(self):
-        return len(self.values)
+    @classmethod
+    def from_class(cls, cls_):
+        return cls(cls_.__doc__)
 
-    def __getitem__(self, item):
-        return self.values[item]
+    @staticmethod
+    def _split_and_keep(string, sep):
+        parts = string.split(sep)[1:]
+        parts = [sep + part for part in parts]
 
-    def add(self, param):
-        assert param.startswith(':param '), param
-        # e.g. ":param param_name: *Type* – description." -> "param param_name"
-        key = param.split(':')[1]
+        return parts
 
-        if key in self.keys:
+    def _parse_params(self, params_doc):
+        for param in self._split_and_keep(params_doc, ':param'):
+            # e.g. ":param param_name: *Type* – description." -> "param param_name"
+            key = param.split(':')[1]
+            self.params[key] = param
+
+    def _parse_docstring(self, doc):
+        if doc is None:
             return
 
-        self.keys.append(key)
-        self.values.append(param)
+        self.skip_extend = ':meta skip-docstring-extend:' in doc
 
-    def extend(self, params):
-        for param in params:
-            self.add(param)
+        examples_start = doc.find(':Example:')
+        params_start = doc.find(':param')
 
+        if examples_start == -1 and params_start == -1:
+            # No parameters and no examples were found
+            self.prefix = doc
 
-def split_and_keep(string, sep):
-    parts = string.split(sep)[1:]
-    parts = [sep + part for part in parts]
+        elif examples_start == -1 and params_start != -1:
+            # Only parameters were found
+            self.prefix = doc[:params_start]
+            self._parse_params(doc[params_start:])
 
-    return parts
+        elif examples_start != -1 and params_start == -1:
+            # Only examples were found
+            self.prefix = doc[:examples_start]
+            self.suffix = doc[examples_start:]
 
+        else:  # examples_start != -1 and params_start != -1
+            # Both parameters and examples were found
+            self.prefix = doc[:params_start]
+            self._parse_params(doc[params_start: examples_start])
+            self.suffix = doc[examples_start:]
 
-def extract_params(cls):
-    doc = cls.__doc__
+    def to_string(self):
+        return self.prefix + ''.join(self.params.values()) + self.suffix
 
-    if doc is None:
-        return []
+    def extend_params(self, others):
+        if self.skip_extend:
+            return
 
-    doc = doc.split(':Example:')[0]
-
-    idx = doc.find(':param')
-
-    if idx == -1:
-        return []
-
-    doc = doc[idx:]
-    params = split_and_keep(doc, ':param')
-
-    return params
-
-
-def take_before(string, before):
-    return string[:string.find(before)]
-
-
-def insert_params(cls, params):
-    doc = cls.__doc__
-
-    if doc is None:
-        return
-
-    # Build prefix
-    # prefix = take_before(doc, ':Example:')
-    # prefix = take_before(prefix, ':param')
-
-    if ':param' not in doc:
-        idx = doc.find(':Example:')
-        prefix = doc[:idx]
-    else:
-        prefix = doc.split(':param')[0]
-
-    # Build suffix
-    if ':Example:' not in doc:
-        suffix = ''
-    else:
-        suffix = ''.join(split_and_keep(doc, ':Example:'))
-
-    doc = prefix + ''.join(params) + suffix
-
-    cls.__doc__ = doc
+        for other in others:
+            for key, value in other.params.items():
+                if key not in self.params:
+                    self.params[key] = value
 
 
 def extend_docstring(cls):
-    doc = cls.__doc__
+    cls_doc, *bases_docs = [DocString.from_class(base) for base in inspect.getmro(cls)]
+    cls_doc.extend_params(bases_docs)
 
-    if doc is None or doc.startswith('\n    Same as :class:`'):
-        return
-
-    params = ParamContainer()
-
-    for base in inspect.getmro(cls):
-        params.extend(extract_params(base))
-
-    insert_params(cls, params)
+    cls.__doc__ = cls_doc.to_string()
