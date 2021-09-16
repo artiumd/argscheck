@@ -57,7 +57,7 @@ class Typed(Checker):
 
     Internally, ``types`` is passed as a second argument to ``isinstance()``.
 
-    :param types: *Tuple[Type]* – One or more types which the argument must be an instance of.
+    :param args: *Tuple[Type]* – One or more types which the argument must be an instance of.
 
     :Example:
 
@@ -71,16 +71,16 @@ class Typed(Checker):
         checker.check(1.234)    # Passes, returns 1.234
         checker.check("1.234")  # Fails, raises TypeError (type is str and not int or float)
     """
-    def __init__(self, *types, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
-        if not types:
+        if not args:
             raise TypeError(f'{self!r}() expects at least one positional argument.')
 
-        if not all(isinstance(typ, type) for typ in types):
-            raise TypeError(f'Argument types={types!r} of {self!r}() is expected to be one or more types.')
+        if not all(isinstance(arg, type) for arg in args):
+            raise TypeError(f'Argument args={args!r} of {self!r}() is expected to be one or more types.')
 
-        self.types = types
+        self.types = args
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

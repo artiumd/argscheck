@@ -16,8 +16,10 @@ Collections can be homogeneous, i.e. all items in it have some shared properties
 from .core import Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable
+from .utils import extend_docstring
 
 
+@extend_docstring
 class Collection(Sized, Typed):
     """
     Check if argument is a collection.
@@ -38,6 +40,7 @@ class Collection(Sized, Typed):
         checker.check([1.1, 2.2, 3.3])  # Passes, returns [1.1, 2.2, 3.3]
         checker.check(())               # Fails, raises ValueError (empty collection)
         checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
+
     """
     types = (object,)
 
@@ -73,6 +76,7 @@ class Collection(Sized, Typed):
             return False, e
 
 
+@extend_docstring
 class Set(Comparable, Collection):
     """
     Check if argument is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
@@ -92,6 +96,7 @@ class Set(Comparable, Collection):
         checker.check(['a', 'b'])    # Fails, raises TypeError (type is list and not set)
         checker.check({'a'})         # Fails, raises ValueError (length is 1 and not 2 or greater)
         checker.check({'b', 'c'})    # Fails, raises ValueError ({'b', 'c'} is not a superset of {'a'})
+
     """
     types = (set,)
 
