@@ -12,12 +12,12 @@ _numbers = _ints + _floats
 
 class Number(Comparable, Typed):
     """
-    Check if argument is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
+    Check if ``x`` is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
     any of the following binary operators: ``{< | <= | != | == | >= | >}``.
 
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – restricts the types to which the argument can
-       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``. By default, argument can only be
-       compared to other ``int`` or ``float`` objects.
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – restricts the types to which ``x`` can be compared, e.g.
+       ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``. By default, ``x`` can only be compared to
+       other ``int`` or ``float`` objects.
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_numbers, other_type=other_type, **kwargs)
@@ -25,9 +25,9 @@ class Number(Comparable, Typed):
 
 class Int(Comparable, Typed):
     """
-    Same as :class:`.Number`, plus, argument must be an ``int``.
+    Same as :class:`.Number`, plus, ``x`` must be an ``int``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_ints, other_type=other_type, **kwargs)
@@ -35,9 +35,9 @@ class Int(Comparable, Typed):
 
 class Float(Comparable, Typed):
     """
-    Same as :class:`.Number`, plus, argument must be a ``float``.
+    Same as :class:`.Number`, plus, ``x`` must be a ``float``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*_floats, other_type=other_type, **kwargs)
@@ -52,7 +52,7 @@ class PositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x > 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -62,7 +62,7 @@ class PositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x > 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -72,7 +72,7 @@ class PositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x > 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
@@ -87,7 +87,7 @@ class NonNegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x >= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -97,7 +97,7 @@ class NonNegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x >= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -107,7 +107,7 @@ class NonNegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x >= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
@@ -122,7 +122,7 @@ class NegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x < 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -132,7 +132,7 @@ class NegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x < 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -142,7 +142,7 @@ class NegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x < 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
@@ -157,7 +157,7 @@ class NonPositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x <= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -167,7 +167,7 @@ class NonPositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x <= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -177,7 +177,7 @@ class NonPositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x <= 0`` must be ``True``.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, le=0, **kwargs)
@@ -188,7 +188,7 @@ _optional_non_neg = Optional(NonNegativeInt)
 
 class Sized(Checker):
     """
-    Check argument's length (as returned from calling ``len()`` on it).
+    Check the length of ``x`` (as returned from ``len(x)``).
 
     :param len_lt: *Optional[int]* – Check if ``len(x) < len_lt``.
     :param len_le: *Optional[int]* – Check if ``len(x) <= len_le``.
@@ -246,7 +246,7 @@ class Sized(Checker):
 
 class NonEmpty(Sized):
     """
-    Check if argument's length is greater than zero.
+    Check if length of ``x`` is greater than zero.
 
     :Example:
 
@@ -262,7 +262,7 @@ class NonEmpty(Sized):
         checker.check('')               # Fails, raises ValueError (empty string)
         checker.check([])               # Fails, raises ValueError (empty list)
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=0, **kwargs)

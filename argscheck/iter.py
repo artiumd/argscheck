@@ -7,11 +7,10 @@ from .core import Checker
 
 class Iterator(Checker):
     """
-    Check if argument is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
+    Check if ``x`` is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
 
-    The usage of the ``Iterator`` checker is a little different than the rest: calling ``check()`` returns a wrapper
-    around the argument, and calling ``next()`` on it will call ``next()`` on the argument and check each item before
-    it is returned.
+    The usage of the ``Iterator`` checker is a little different than the rest: calling ``check(x)`` returns a wrapper
+    around ``x``, and calling ``next()`` on it will call ``next()`` on ``x`` and check each item before it is returned.
 
     :param args: *Tuple[CheckerLike]* – Describes what each item from the iterator must be.
 
@@ -62,13 +61,13 @@ class Iterator(Checker):
 
 class Iterable(Iterator):
     """
-    Same as :class:`.Iterator`, plus, argument can be a plain iterable (not necessarily an iterator).
+    Same as :class:`.Iterator`, plus, ``x`` can be a plain iterable (not necessarily an iterator).
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Iterator
+        from argscheck import Iterable
 
         # Each item must be an str or bool instance
         checker = Iterable(str, bool)

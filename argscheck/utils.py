@@ -31,15 +31,14 @@ class DocString:
 
     def _parse_params(self, params_doc):
         for param in self._split_and_keep(params_doc, ':param'):
-            # e.g. ":param param_name: *Type* – description." -> "param param_name"
-            key = param.split(':')[1]
+            key = param.split(':')[1].split('param ')[1]
             self.params[key] = param
 
     def _parse_docstring(self, doc):
         if doc is None:
             return
 
-        self.skip_extend = ':meta skip-docstring-extend:' in doc
+        self.skip_extend = ':meta skip-extend-docstring:' in doc
 
         examples_start = doc.find(':Example:')
         params_start = doc.find(':param')
@@ -73,8 +72,15 @@ class DocString:
 
         for other in others:
             for key, value in other.params.items():
-                if key not in self.params:
-                    self.params[key] = value
+                # Skip if parameter has already been added by a previous base class
+                if key in self.params:
+                    continue
+
+                # Skip the ``args`` parameter, it should only be taken from the docstring of ``self``
+                if key == 'args':
+                    continue
+
+                self.params[key] = value
 
 
 def extend_docstring(cls):

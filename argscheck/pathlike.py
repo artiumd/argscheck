@@ -68,19 +68,19 @@ class _Suffix:
 
 class PathLike(Typed):
     """
-    Check if argument is of a path-like type (``str`` or ``pathlib.Path``).
+    Check if ``x`` is of a path-like type (``str`` or ``pathlib.Path``).
 
     Additional checks and conversions can be performed by changing some of the default parameters.
 
-    :param is_dir: *bool* – If ``True``, argument must point to an existing directory.
-    :param is_file: *bool* – If ``True``, argument must point to an existing file.
-    :param suffix: *Optional[str]* – Argument must have this suffix (wildcards and regex are not supported).
-    :param suffixes: *Optional[List[str]]* – Argument must have these suffixes (wildcards and regex are not supported).
-       If both ``suffix`` and ``suffixes`` are provided, then, argument's suffix(es) must match at least one of them.
+    :param is_dir: *bool* – If ``True``, ``x`` must point to an existing directory.
+    :param is_file: *bool* – If ``True``, ``x`` must point to an existing file.
+    :param suffix: *Optional[str]* – ``x`` must have this suffix (wildcards and regex are not supported).
+    :param suffixes: *Optional[List[str]]* – ``x`` must have these suffixes (wildcards and regex are not supported).
+       If both ``suffix`` and ``suffixes`` are provided, then, ``x``'s suffix(es) must match at least one of them.
     :param ignore_suffix_case: *bool* – Whether or not the suffix's case should be ignored. Only relevant if
         ``suffix`` or ``suffixes`` are provided.
-    :param as_str: *bool* – If ``True``, argument will be converted to ``str`` before it is returned.
-    :param as_path: *bool* – If ``True``, argument will be converted to ``pathlib.Path`` before it is returned.
+    :param as_str: *bool* – If ``True``, ``x`` will be converted to ``str`` before it is returned.
+    :param as_path: *bool* – If ``True``, ``x`` will be converted to ``pathlib.Path`` before it is returned.
     """
     def __init__(self, is_dir=False, is_file=False, suffix=None, suffixes=None, ignore_suffix_case=True, as_str=False,
                  as_path=False, **kwargs):
@@ -133,9 +133,9 @@ class PathLike(Typed):
 
 class ExistingDir(PathLike):
     """
-    Same as :class:`.PathLike`, plus, argument must point to an existing directory.
+    Same as :class:`.PathLike`, plus, ``x`` must point to an existing directory.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_dir=True, **kwargs)
@@ -143,9 +143,9 @@ class ExistingDir(PathLike):
 
 class ExistingFile(PathLike):
     """
-    Same as :class:`.PathLike`, plus, argument must point to an existing file.
+    Same as :class:`.PathLike`, plus, ``x`` must point to an existing file.
 
-    :meta skip-docstring-extend:
+    :meta skip-extend-docstring:
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, is_file=True, **kwargs)

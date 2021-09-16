@@ -33,7 +33,7 @@ from .numeric import Sized, NonEmpty
 
 class Sequence(Sized, Typed):
     """
-    Check if argument is a sequence.
+    Check if ``x`` is a sequence.
 
     :Example:
 
@@ -41,7 +41,7 @@ class Sequence(Sized, Typed):
 
         from argscheck import Sequence
 
-        # Check if a set of length at least 2 and is a superset of {'a'}
+        # Check if a set of length at least 2
         checker = Sequence(str, len_ge=2)
 
         checker.check(['a', 'b'])    # Passes, returns ['a', 'b']
@@ -120,23 +120,25 @@ class Sequence(Sized, Typed):
 
 class Tuple(Sequence):
     """
-    Same as :class:`.Sequence`, plus, argument must be a ``tuple`` instance.
+    Same as :class:`.Sequence`, plus, ``x`` must be a ``tuple``.
 
+    :meta skip-extend-docstring:
     """
     types = (tuple,)
 
 
 class NonEmptyTuple(NonEmpty, Tuple):
     """
-    Same as :class:`.Tuple`, plus, argument's length must be greater than zero.
+    Same as :class:`.Tuple`, plus, the length of ``x`` must be greater than zero.
 
+    :meta skip-extend-docstring:
     """
     pass
 
 
 class MutableSequence(Sequence):
     """
-    Check if argument is a mutable sequence.
+    Check if ``x`` is a mutable sequence.
 
     """
     def _set_items(self, name, value, items):
@@ -152,15 +154,17 @@ class MutableSequence(Sequence):
 
 class List(MutableSequence):
     """
-    Same as :class:`.MutableSequence`, plus, argument must be a ``list`` instance.
+    Same as :class:`.MutableSequence`, plus, ``x`` must be a ``list``.
 
+    :meta skip-extend-docstring:
     """
     types = (list,)
 
 
 class NonEmptyList(NonEmpty, List):
     """
-    Same as :class:`.List`, plus, argument's length must be greater than zero.
+    Same as :class:`.List`, plus, he length of ``x`` must be greater than zero.
 
+    :meta skip-extend-docstring:
     """
     pass

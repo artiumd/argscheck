@@ -9,15 +9,15 @@ from .core import Typed
 
 class String(Typed):
     """
-    Check if argument is a string and optionally, if it matches a particular regex pattern.
+    Check if ``x`` is a string and optionally, if it matches a particular regex pattern.
 
     Regex matching is delegated to the builtin ``re`` module.
 
-    :param pattern: *Optional[str]* – Argument must match this regex pattern.
+    :param pattern: *Optional[str]* – ``x`` must match this regex pattern.
     :param flags: *Optional[re.RegexFlag]* – Flags used for modifying the matching behaviour. Only relevant if
        ``pattern`` is provided.
-    :param method: *str* – Name of ``re.Pattern`` method that will be used to match the argument against the regex
-        pattern. Must be ``"match"``, ``"fullmatch"`` or ``"search"``. Only relevant if ``pattern`` is provided.
+    :param method: *str* – Name of ``re.Pattern`` method that will be used to match ``x`` against the regex pattern.
+       Must be ``"match"``, ``"fullmatch"`` or ``"search"``. Only relevant if ``pattern`` is provided.
 
     :Example:
 

@@ -16,15 +16,13 @@ Collections can be homogeneous, i.e. all items in it have some shared properties
 from .core import Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable
-from .utils import extend_docstring
 
 
 class Collection(Sized, Typed):
     """
-    Check if argument is a collection.
+    Check if ``x`` is a collection.
 
-    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in the
-        collection.
+    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in ``x``.
 
     :Example:
 
@@ -77,8 +75,8 @@ class Collection(Sized, Typed):
 
 class Set(Comparable, Collection):
     """
-    Check if argument is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
-    operators, e.g. using ``gt`` will check if argument is a superset of the other set.
+    Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
+    operators, e.g. using ``gt=other`` will check if ``x`` is a superset of ``other`` (which must also be a ``set``).
 
     :Example:
 

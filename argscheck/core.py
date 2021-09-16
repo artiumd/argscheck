@@ -59,7 +59,7 @@ class Checker(metaclass=CheckerMeta):
 
 class Typed(Checker):
     """
-    Check if argument is an instance of a given type (or types) using ``isinstance(x, args)``.
+    Check if ``x`` is an instance of a given type (or types) using ``isinstance(x, args)``.
 
     :param args: *Tuple[Type]* – One or more types.
 
@@ -100,13 +100,13 @@ class Typed(Checker):
 
 class Optional(Checker):
     """
-    Check if argument is ``None`` or something else, similarly to ``typing.Optional``.
+    Check if ``x`` is ``None`` or something else, similarly to ``typing.Optional``.
 
-    :param args: *Tuple[CheckerLike]* – Specifies what the argument may be (other than ``None``).
-    :param default_value: *Optional[Any]* – If argument is ``None``, it will be replaced by ``default_value``.
-    :param default_factory: *Optional[Callable]* – if argument is ``None``, it will be replaced by ``default_factory()``.
+    :param args: *Tuple[CheckerLike]* – Specifies what ``x`` may be (other than ``None``).
+    :param default_value: *Optional[Any]* – If ``x is None``, it will be replaced by ``default_value``.
+    :param default_factory: *Optional[Callable]* – if ``x is None``, it will be replaced by ``default_factory()``.
         This is useful for setting default values that are of mutable types.
-    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the argument is missing, instead of
+    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the ``x`` is missing, instead of
         ``x is None``.
 
     :Example:
@@ -163,19 +163,18 @@ class Optional(Checker):
 
 class Comparable(Checker):
     """
-    Check if argument correctly compares to other value(s) using any of the following binary operators:
+    Check if ``x`` correctly compares to other value(s) using any of the following binary operators:
     ``{< | <= | != | == | >= | >}``.
 
     Comparison need not necessarily be between numeric types, as can be seen in the example below.
 
-    :param args: Used only for compatibility.
     :param lt: *Optional[Any]* – Check if ``x < lt``.
     :param le: *Optional[Any]* – Check if ``x <= le``.
     :param ne: *Optional[Any]* – Check if ``x != ne``.
     :param eq: *Optional[Any]* – Check if ``x == eq``.
     :param ge: *Optional[Any]* – Check if ``x >= ge``.
     :param gt: *Optional[Any]* – Check if ``x > gt``.
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which the argument can
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which ``x`` can
        be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``.
 
     :Example:
@@ -274,7 +273,7 @@ class Comparable(Checker):
 
 class One(Checker):
     """
-    Check if argument matches exactly one of a set of checkers.
+    Check if ``x`` matches exactly one of a set of checkers.
 
     :param args: *Tuple[CheckerLike]* – At least two checker-like object(s) out of which exactly one must pass.
 
