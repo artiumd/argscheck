@@ -2,7 +2,7 @@
 Collections
 ===========
 
-This module contains checkers for using on collection objects.
+This module contains checkers for collection objects.
 
 In this context, a collection is a class that:
 

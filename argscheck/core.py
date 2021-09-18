@@ -15,6 +15,9 @@ class CheckerMeta(type):
 
 
 class Checker(metaclass=CheckerMeta):
+    """
+    Base class for all checkers.
+    """
     def __repr__(self):
         return type(self).__qualname__
 
@@ -46,6 +49,24 @@ class Checker(metaclass=CheckerMeta):
             return next(iter(kwargs.items()))
 
     def check(self, *args, **kwargs):
+        """
+        Check an argument (and possibly convert it, depending on the particular checker instance).
+
+        A call to ``check()`` will have one of two possible outcomes:
+
+        1. Check passes, the checked (and possibly converted) argument will be returned.
+        2. Check fails, an appropriate exception with an error message will be raised.
+
+        Also, there are two possible calling signatures:
+
+        .. code-block:: python
+
+            checker.check(value)
+            checker.check(name=value)
+
+        The only difference is that in the second call, ``name`` will appear in the error message in case the check
+        fails.
+        """
         name, value = self._resolve_name_value(*args, **kwargs)
 
         # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
@@ -55,6 +76,11 @@ class Checker(metaclass=CheckerMeta):
             return value_or_excp
         else:
             raise value_or_excp
+
+    def validator(self, name, **kwargs):
+        import pydantic
+
+        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
 
 
 class Typed(Checker):

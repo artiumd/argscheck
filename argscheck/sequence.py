@@ -2,7 +2,7 @@
 Sequences
 =========
 
-This module contains checkers for using on sequence objects.
+This module contains checkers for sequence objects.
 
 In this context, a sequence is a class that:
 
@@ -163,7 +163,7 @@ class List(MutableSequence):
 
 class NonEmptyList(NonEmpty, List):
     """
-    Same as :class:`.List`, plus, he length of ``x`` must be greater than zero.
+    Same as :class:`.List`, plus, the length of ``x`` must be greater than zero.
 
     :meta skip-extend-docstring:
     """
