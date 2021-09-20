@@ -27,7 +27,7 @@ Checkers that convert values (like :class:`.Optional` for example) are applied a
 2. For (non mutable) sequences, a new sequence instance is created from the converted items (this will happen only if
    actual conversion took place for at least one item).
 """
-from .core import Typed
+from .core import Checker, Typed
 from .numeric import Sized, NonEmpty
 
 
@@ -57,7 +57,7 @@ class Sequence(Sized, Typed):
         super().__init__(*self.types, **kwargs)
 
         if args:
-            self.item_checker = self._validate_args(args)
+            self.item_checker = Checker.from_checker_likes(args)
         else:
             self.item_checker = None
 

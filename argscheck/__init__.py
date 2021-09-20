@@ -1,4 +1,4 @@
-from .core import Checker, Typed, One, Optional, Comparable
+from .core import check_args, Checker, Typed, One, Optional, Comparable
 from .numeric import Int, Float, Number, PositiveInt, PositiveNumber, PositiveFloat, NonNegativeInt,\
     NonNegativeNumber, NonNegativeFloat, NegativeInt, NegativeNumber, NegativeFloat, NonPositiveInt, \
     NonPositiveNumber, NonPositiveFloat, Sized, NonEmpty

@@ -3,9 +3,48 @@ Core
 ====
 """
 import operator
-from functools import partial
+from functools import partial, wraps
+import inspect
 
 from .utils import Sentinel, extend_docstring
+
+
+def check_args(fn):
+    """
+    Decorator that when applied to a function:
+
+    1. Gathers checkers from parameter annotations in function's signature.
+    2. Performs argument checking (and possibly conversion) on each function call.
+    """
+    checkers = {}
+
+    # Extract signature, iterate over parameters and create checkers from annotations
+    signature = inspect.signature(fn)
+
+    for name, parameter in signature.parameters.items():
+        annotation = parameter.annotation
+
+        # Skip parameters without annotations
+        if annotation == parameter.empty:
+            continue
+
+        checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')
+
+    # Build a function that performs argument checking, then, calls original function
+    @wraps(fn)
+    def checked_fn(*args, **kwargs):
+        # Bind arguments to parameters so we can associate checkers with argument values
+        bound_args = signature.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+
+        # Check each argument for which a checker was defined, then, call original function with checked values
+        for name, checker in checkers.items():
+            value = bound_args.arguments[name]
+            bound_args.arguments[name] = checker._check(name, value)
+
+        return fn(*bound_args.args, **bound_args.kwargs)
+
+    return checked_fn
 
 
 class CheckerMeta(type):
@@ -24,9 +63,10 @@ class Checker(metaclass=CheckerMeta):
     def __call__(self, name, value):
         return True, value
 
-    def _validate_args(self, value, name='args'):
+    @classmethod
+    def from_checker_likes(cls, value, name='args'):
         if isinstance(value, tuple) and len(value) == 1:
-            return self._validate_args(value[0], name=f'{name}[0]')
+            return cls.from_checker_likes(value[0], name=f'{name}[0]')
         if isinstance(value, tuple) and len(value) > 1:
             return One(*value)
         if isinstance(value, Checker):
@@ -36,7 +76,7 @@ class Checker(metaclass=CheckerMeta):
         if isinstance(value, type):
             return Typed(value)
 
-        raise TypeError(f'{self!r} expects that {name}={value!r} is a checker-like.')
+        raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
 
     def _resolve_name_value(self, *args, **kwargs):
         # Make sure method is called properly and unpack argument's name and value
@@ -48,6 +88,17 @@ class Checker(metaclass=CheckerMeta):
         else:
             return next(iter(kwargs.items()))
 
+    def _check(self, name, value):
+        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+        # exception.
+        passed, value_or_excp = self(name, value)
+
+        if passed:
+            return value_or_excp
+        else:
+            raise value_or_excp
+
+    # TODO create _check(name, value)
     def check(self, *args, **kwargs):
         """
         Check an argument (and possibly convert it, depending on the particular checker instance).
@@ -69,18 +120,19 @@ class Checker(metaclass=CheckerMeta):
         """
         name, value = self._resolve_name_value(*args, **kwargs)
 
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = self(name, value)
-        if passed:
-            return value_or_excp
-        else:
-            raise value_or_excp
+        return self._check(name, value)
 
     def validator(self, name, **kwargs):
+        """
+        Create a validator for a field in a ``pydantic`` model. The validator will perform the checking and conversion
+        by calling the ``check()`` method.
+
+        :param name: *str* – Name of field for which validator is created.
+        :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
+        """
         import pydantic
 
-        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
+        return pydantic.validator(name, **kwargs)(lambda value: self._check(name, value))
 
 
 class Typed(Checker):
@@ -132,7 +184,7 @@ class Optional(Checker):
     :param default_value: *Optional[Any]* – If ``x is None``, it will be replaced by ``default_value``.
     :param default_factory: *Optional[Callable]* – if ``x is None``, it will be replaced by ``default_factory()``.
         This is useful for setting default values that are of mutable types.
-    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to tell if the ``x`` is missing, instead of
+    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to determine if the ``x`` is missing, instead of
         ``x is None``.
 
     :Example:
@@ -167,7 +219,7 @@ class Optional(Checker):
         else:
             self.default_factory = lambda: sentinel
 
-        self.checker = self._validate_args(args)
+        self.checker = Checker.from_checker_likes(args)
         self.sentinel = sentinel
 
     def __call__(self, name, value):
@@ -318,7 +370,7 @@ class One(Checker):
             raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
 
         # Validate checker-like positional arguments
-        self.checkers = [self._validate_args(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
+        self.checkers = [Checker.from_checker_likes(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

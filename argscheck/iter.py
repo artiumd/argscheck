@@ -32,7 +32,7 @@ class Iterator(Checker):
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
-        self.item_checker = self._validate_args(args)
+        self.item_checker = Checker.from_checker_likes(args)
         self.name = self.i = self.iterator = None
 
     def check(self, *args, **kwargs):

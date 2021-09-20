@@ -22,7 +22,7 @@ Example:
     positives.check(pos_nums=(1, 2, None))  # Returns (1, 2, 0)
     positives.check([1, 2, -3])             # Raises ValueError
 
-For a more details see here: :meth:`argscheck.core.Checker.check`
+For a more details see: :meth:`argscheck.core.Checker.check`
 
 Decorator
 ---------
@@ -34,7 +34,7 @@ Example:
 
 .. code-block:: python
 
-    from argscheck import Sequence, PositiveInt, check_args
+    from argscheck import Sequence, Optional, PositiveInt, check_args
 
 
     @check_args
@@ -45,10 +45,34 @@ Example:
     add((1, 2, None))  # Returns 3
     add([1, 2, -3])    # Raises ValueError
 
-For a more details see here: :func:`argscheck.core.check_args`
+For a more details see: :func:`argscheck.core.check_args`
 
 
 ``pydantic`` Validator
 ----------------------
 
-For a more details see here: :meth:`argscheck.core.Checker.validator`
+This method allows us to use :mod:`argscheck` together with `pydantic <https://pydantic-docs.helpmanual.io/>`_.
+
+Using the ``validator()`` method, we can create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_
+just like with a ``pydantic.validator`` decorator.
+
+Example:
+
+.. code-block:: python
+
+    from typing import Any
+
+    from pydantic import BaseModel
+    from argscheck import Sequence, PositiveInt, Optional
+
+
+    class UserModel(BaseModel):
+        positives: Any
+        check_positives = Sequence(Optional(PositiveInt, default_value=0)).validator('positives')
+
+
+    UserModel(positives=[1, 2, 3]).positives     # Returns [1, 2, 3]
+    UserModel(positives=(1, 2, None)).positives  # Returns (1, 2, 0)
+    UserModel(positives=[1, 2, -3]).positives    # Raises ValueError
+
+For a more details see: :meth:`argscheck.core.Checker.validator`

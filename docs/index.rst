@@ -10,5 +10,6 @@ Welcome to argscheck's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   overview
    usage
    api/index
