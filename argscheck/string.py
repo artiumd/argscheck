@@ -32,7 +32,7 @@ class String(Typed):
         checker.check("script.sh")  # Fails, raises ValueError ("script.sh" does not end with ".exe")
 
     """
-    def __init__(self, pattern=None, flags=0, method='match', **kwargs):
+    def __init__(self, pattern=None, flags=0, method='fullmatch', **kwargs):
         super().__init__(str, **kwargs)
 
         if method not in {'match', 'fullmatch', 'search'}:
@@ -49,6 +49,21 @@ class String(Typed):
         self.method = method
         self.pattern = pattern
 
+    def expected_str(self):
+        if self.pattern is not None:
+            s = f' matching the "{self.pattern}" regex pattern via `re.{self.method}`'
+        else:
+            s = ''
+
+        s_ = super().expected_str()
+
+        if s and s_:
+            s = ', '.join([s_, s])
+        else:
+            s = s or s_
+
+        return s
+
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -56,7 +71,6 @@ class String(Typed):
 
         # Check if value matches the regex pattern, if not, return an error
         if self.re_matcher(value) is None:
-            return False, ValueError(f'Argument {name}={value} is expected to match this regex pattern: '
-                                     f'"{self.pattern}" via the re.{self.method} method.')
+            return False, self._make_error(ValueError, name, value)
 
         return True, value

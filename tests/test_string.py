@@ -27,9 +27,10 @@ class TestString(TestCaseArgscheck):
 
         self.checker = String('.bcd')
         self.assertOutputIsInput('abcd')
-        self.assertOutputIsInput('abcde')
+        self.assertOutputIsInput('abcd')
         self.assertOutputIsInput('1bcd')
         self.assertRaisesOnCheck(ValueError, '111abcde')
+        self.assertRaisesOnCheck(ValueError, 'abcde')
         self.assertRaisesOnCheck(ValueError, 'ABCDE')
 
         self.checker = String('.bcd', method='search')
@@ -37,8 +38,8 @@ class TestString(TestCaseArgscheck):
         self.assertOutputIsInput('abcde')
 
         self.checker = String('.bcd', flags=re.IGNORECASE)
-        self.assertOutputIsInput('abcde')
-        self.assertOutputIsInput('ABCDE')
+        self.assertOutputIsInput('abcd')
+        self.assertOutputIsInput('ABCD')
 
         self.checker = String('.bcd', method='fullmatch')
         self.assertRaisesOnCheck(ValueError, 'abcde')

@@ -88,3 +88,15 @@ def extend_docstring(cls):
     cls_doc.extend_params(bases_docs)
 
     cls.__doc__ = cls_doc.to_string()
+
+
+def partition(sequence, condition):
+    true, false = [], []
+
+    for item in sequence:
+        if condition(item):
+            true.append(item)
+        else:
+            false.append(item)
+
+    return true, false

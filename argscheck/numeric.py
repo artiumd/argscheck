@@ -2,7 +2,7 @@
 Numeric
 =======
 """
-from .core import Checker, Typed, Comparable, Optional
+from .core import Checker, Typed, Comparable
 
 
 _ints = (int,)
@@ -183,9 +183,6 @@ class NonPositiveFloat(Float):
         super().__init__(*args, le=0, **kwargs)
 
 
-_optional_non_neg = Optional(NonNegativeInt)
-
-
 class Sized(Checker):
     """
     Check the length of ``x`` (as returned from ``len(x)``).
@@ -218,12 +215,24 @@ class Sized(Checker):
         self.len_checker = Int(lt=len_lt, le=len_le, ne=len_ne, eq=len_eq, ge=len_ge, gt=len_gt, other_type=_ints)
 
         # Check that no negative values were provided
-        _optional_non_neg.check(len_lt=len_lt)
-        _optional_non_neg.check(len_le=len_le)
-        _optional_non_neg.check(len_ne=len_ne)
-        _optional_non_neg.check(len_eq=len_eq)
-        _optional_non_neg.check(len_ge=len_ge)
-        _optional_non_neg.check(len_gt=len_gt)
+        self._check_len_argument('len_lt', len_lt)
+        self._check_len_argument('len_le', len_le)
+        self._check_len_argument('len_ne', len_ne)
+        self._check_len_argument('len_eq', len_eq)
+        self._check_len_argument('len_ge', len_ge)
+        self._check_len_argument('len_gt', len_gt)
+
+    @staticmethod
+    def _check_len_argument(name, value):
+        if value is not None and value < 0:
+            raise ValueError(f'Argument {name}={value!r} is expected to be None or a non-negative int.')
+
+    def expected_str(self):
+        s = self.len_checker.expected_str()
+        s = ', '.join(s.split(', ')[1:])
+        s = 'has length ' + s
+
+        return s
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -237,9 +246,9 @@ class Sized(Checker):
             return False, e
 
         # Check length
-        passed, e = self.len_checker(f'length of {name}', len_value)
+        passed, e = self.len_checker(name, len_value)
         if not passed:
-            return False, e
+            return False, self._make_error(ValueError, name, value)
 
         return True, value
 

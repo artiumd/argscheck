@@ -1,4 +1,4 @@
-from argscheck import Checker, Typed, Sized, One, Optional, Comparable
+from argscheck import Checker, Typed, Sized, One, Optional, Comparable, String, Int
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -117,7 +117,6 @@ class TestOptional(TestCaseArgscheck):
 class TestOne(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
-        One(int, float)
         One(Comparable(), Sized())
         One(Comparable, Sized)
         One(Comparable, int)
@@ -125,17 +124,18 @@ class TestOne(TestCaseArgscheck):
         # Bad arguments
         self.assertRaises(TypeError, One)
         self.assertRaises(TypeError, One, int)
+        self.assertRaises(TypeError, One, int, float)
         self.assertRaises(TypeError, One, int, None)
         self.assertRaises(TypeError, One, str, 2)
 
     def test_check(self):
-        self.checker = One(int, str)
+        self.checker = One(int, String)
         self.assertOutputIsInput('abcd')
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput(True)
         self.assertRaisesOnCheck(Exception, 1.1)
 
-        self.checker = One(int, bool)
+        self.checker = One(Int, bool)
         self.assertOutputIsInput(int(1e5))
         self.assertRaisesOnCheck(Exception, True)  # True is both an int and a bool
 

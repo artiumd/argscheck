@@ -6,7 +6,7 @@ import operator
 from functools import partial, wraps
 import inspect
 
-from .utils import Sentinel, extend_docstring
+from .utils import Sentinel, extend_docstring, partition
 
 
 def check_args(fn):
@@ -67,12 +67,27 @@ class Checker(metaclass=CheckerMeta):
     def from_checker_likes(cls, value, name='args'):
         if isinstance(value, tuple) and len(value) == 1:
             return cls.from_checker_likes(value[0], name=f'{name}[0]')
+
         if isinstance(value, tuple) and len(value) > 1:
-            return One(*value)
+            # Partition tuple into non-Checker types and everything else
+            types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
+
+            if types and others:
+                others.insert(0, Typed(*types))
+                checker = One(*others)
+            elif types:
+                checker = Typed(*types)
+            else:
+                checker = One(*others)
+
+            return checker
+
         if isinstance(value, Checker):
             return value
+
         if isinstance(value, type) and issubclass(value, Checker):
             return value()
+
         if isinstance(value, type):
             return Typed(value)
 
@@ -88,6 +103,22 @@ class Checker(metaclass=CheckerMeta):
         else:
             return next(iter(kwargs.items()))
 
+    def expected_str(self):
+        return ''
+
+    def _make_error(self, err_type, name, value):
+        title = 'encountered an error when checking argument'
+
+        if name != '':
+            title += f' `{name}`'
+
+        title += ':\n'
+
+        actual = f'ACTUAL: {value!r}\n'
+        expected = f'EXPECTED: {self.expected_str()}'
+
+        return err_type(title + actual + expected)
+
     def _check(self, name, value):
         # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
         # exception.
@@ -98,7 +129,6 @@ class Checker(metaclass=CheckerMeta):
         else:
             raise value_or_excp
 
-    # TODO create _check(name, value)
     def check(self, *args, **kwargs):
         """
         Check an argument (and possibly convert it, depending on the particular checker instance).
@@ -154,6 +184,12 @@ class Typed(Checker):
         checker.check("1.234")  # Fails, raises TypeError (type is str and not int or float)
 
     """
+    def __new__(cls, *args, **kwargs):
+        if cls is Typed and object in args:
+            return object.__new__(Checker)
+        else:
+            return object.__new__(cls)
+
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
@@ -165,6 +201,15 @@ class Typed(Checker):
 
         self.types = args
 
+    def expected_str(self):
+        s = ", ".join(map(repr, self.types))
+        s = f'({s})' if len(self.types) > 1 else s
+        s = f'an instance of {s}'
+        s_ = super().expected_str()
+        s = ', '.join([s_, s]) if s_ else s
+
+        return s
+
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -173,7 +218,7 @@ class Typed(Checker):
         if isinstance(value, self.types):
             return True, value
         else:
-            return False, TypeError(f'Argument {name}={value!r} is expected to be of type {self.types!r}.')
+            return False, self._make_error(TypeError, name, value)
 
 
 class Optional(Checker):
@@ -222,6 +267,13 @@ class Optional(Checker):
         self.checker = Checker.from_checker_likes(args)
         self.sentinel = sentinel
 
+    def expected_str(self):
+        s = f'missing or {self.checker.expected_str()}'
+        s_ = super().expected_str()
+        s = ', '.join([s_, s]) if s_ else s
+
+        return s
+
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -234,9 +286,7 @@ class Optional(Checker):
         elif value is self.sentinel:
             return True, self.default_factory()
         else:
-            Error = type(value_)
-
-            return False, Error(f'Argument {name}={value!r} is expected to be missing or {self.checker!r}.')
+            return False, self._make_error(type(value_), name, value)
 
 
 class Comparable(Checker):
@@ -306,10 +356,23 @@ class Comparable(Checker):
             raise ValueError(f'Lower bound {lb!r} of {self!r} must be lower than the upper bound {ub!r}.')
 
         # Create comparator functions for the arguments that are not None
-        self.comparators = [partial(self._compare, other=other, **self.comparisons[name])
+        self.comparators = [partial(self._compare, other=other, comp_fn=self.comparisons[name]['comp_fn'])
                             for name, other
                             in others.items()
                             if other is not None]
+
+        expected = []
+
+        for name, other in others.items():
+            if other is None:
+                continue
+
+            expected.append(f'{self.comparisons[name]["comp_name"]} {other!r}')
+
+        if expected:
+            self._expected_str = ', '.join(expected)
+        else:
+            self._expected_str = ''
 
     @staticmethod
     def _get_not_none(x, y):
@@ -320,8 +383,7 @@ class Comparable(Checker):
 
         return None
 
-    @classmethod
-    def _compare(cls, name, value, other, comp_fn, comp_name):
+    def _compare(self, name, value, other, comp_fn):
         # Compare value, if comparison fails, return the caught exception
         try:
             ret = comp_fn(value, other)
@@ -334,7 +396,14 @@ class Comparable(Checker):
         if ret:
             return True, value
         else:
-            return False, ValueError(f'Argument {name}={value!r} is expected to be {comp_name} {other!r}.')
+            return False, self._make_error(ValueError, name, value)
+
+    def expected_str(self):
+        s = self._expected_str
+        s_ = super().expected_str()
+        s = ', '.join([s_, s]) if s_ else s
+
+        return s
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -369,8 +438,27 @@ class One(Checker):
         if len(args) < 2:
             raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
 
+        # Partition tuple into non-Checker types and everything else
+        types, others = partition(args, lambda x: isinstance(x, type) and not issubclass(x, Checker))
+
+        if not others:
+            raise TypeError(f'`One` checker got only plain types: {args}, in this case `Typed` should be used instead.')
+
+        if types:
+            others.insert(0, Typed(*types))
+
         # Validate checker-like positional arguments
-        self.checkers = [Checker.from_checker_likes(arg, name=f'args[{i}]') for i, arg in enumerate(args)]
+        self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
+
+    def expected_str(self):
+        indent = ' ' * len('EXPECTED: ')
+        options = [f'{indent}{i}. {checker.expected_str()}' for i, checker in enumerate(self.checkers, start=1)]
+        s = '\n'.join(options)
+        s = 'exactly one of the following:\n' + s
+        s_ = super().expected_str()
+        s = ', '.join([s_, s]) if s_ else s
+
+        return s
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -391,5 +479,4 @@ class One(Checker):
         if passed_count == 1:
             return True, ret_value
         else:
-            checkers = ', '.join(map(repr, self.checkers))
-            return False, Exception(f'Argument {name}={value!r} is expected to pass exactly one of: {checkers}.')
+            return False, self._make_error(Exception, name, value)

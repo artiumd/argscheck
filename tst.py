@@ -1,24 +1,6 @@
-from typing import Any
+from argscheck import Typed, Optional, String, One, Sized, Comparable, Int, NonEmpty
 
-from pydantic import BaseModel, ValidationError, validator
-from argscheck import Typed
-
-
-class UserModel(BaseModel):
-    name: Any
-
-    check_name = Typed(str).validator('name')
-
-
-# model = UserModel(name=1234)
-
-
-from uuid import UUID
-from typing import Union
-from pydantic import BaseModel
-
-class User(BaseModel):
-    id: Union[list, str]
-    name: str
-
-print(User(id=1, name='asd').id)
+# Optional(int, float, String('.')).check(arg='a/')
+# Typed(int, str).check(None)
+# Int(gt=0, ne=1).check('')
+NonEmpty().check([])
