@@ -62,6 +62,9 @@ class Collection(Sized, Typed):
         # Determine returned collection type
         type_ = type(value)
 
+        if not name:
+            name = repr(self).lower()
+
         # Create returned collection, any item yielded by the iterable that fails the check will raise an error
         try:
             # Applying list() is necessary to make sure self.iterable is consumed before it is passed to the constructor
@@ -96,6 +99,6 @@ class Set(Comparable, Collection):
     """
     types = (set,)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, other_type=None, **kwargs):
         # Sets should only be compared to other sets, hence: other_type=set
         super().__init__(*args, other_type=set, **kwargs)

@@ -51,18 +51,11 @@ class String(Typed):
 
     def expected_str(self):
         if self.pattern is not None:
-            s = f' matching the "{self.pattern}" regex pattern via `re.{self.method}`'
+            s = f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
         else:
             s = ''
 
-        s_ = super().expected_str()
-
-        if s and s_:
-            s = ', '.join([s_, s])
-        else:
-            s = s or s_
-
-        return s
+        return super().expected_str() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

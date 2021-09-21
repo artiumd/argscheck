@@ -41,7 +41,10 @@ class Iterator(Checker):
         return self.__call__(name, value)
 
     def __call__(self, name, value):
-        self.name = "{}'th item from " + str(name)
+        if not name:
+            name = repr(self).lower()
+
+        self.name = 'item {} from ' + name
         self.iterator = value
         self.i = 0
 
@@ -81,5 +84,6 @@ class Iterable(Iterator):
     """
     def __iter__(self):
         self.iterator = iter(self.iterator)
+        self.i = 0
 
         return self

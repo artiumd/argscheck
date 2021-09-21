@@ -104,10 +104,10 @@ class Checker(metaclass=CheckerMeta):
             return next(iter(kwargs.items()))
 
     def expected_str(self):
-        return ''
+        return []
 
     def _make_error(self, err_type, name, value):
-        title = 'encountered an error when checking argument'
+        title = 'encountered an error while checking'
 
         if name != '':
             title += f' `{name}`'
@@ -115,7 +115,7 @@ class Checker(metaclass=CheckerMeta):
         title += ':\n'
 
         actual = f'ACTUAL: {value!r}\n'
-        expected = f'EXPECTED: {self.expected_str()}'
+        expected = f'EXPECTED: {", ".join(self.expected_str())}'
 
         return err_type(title + actual + expected)
 
@@ -205,10 +205,8 @@ class Typed(Checker):
         s = ", ".join(map(repr, self.types))
         s = f'({s})' if len(self.types) > 1 else s
         s = f'an instance of {s}'
-        s_ = super().expected_str()
-        s = ', '.join([s_, s]) if s_ else s
 
-        return s
+        return super().expected_str() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -268,11 +266,7 @@ class Optional(Checker):
         self.sentinel = sentinel
 
     def expected_str(self):
-        s = f'missing or {self.checker.expected_str()}'
-        s_ = super().expected_str()
-        s = ', '.join([s_, s]) if s_ else s
-
-        return s
+        return super().expected_str() + ['missing or'] + self.checker.expected_str()
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -319,91 +313,63 @@ class Comparable(Checker):
         checker.check({'a', 'b'})  # Fails, raises ValueError ({'a', 'b'} is equal to {'a', 'b'})
         checker.check('a')         # Fails, raises TypeError (< is not supported between set and str)
     """
-    comparisons = dict(lt=dict(comp_fn=operator.lt, comp_name='less than'),
-                       le=dict(comp_fn=operator.le, comp_name='less than or equal to'),
-                       ne=dict(comp_fn=operator.ne, comp_name='not equal to'),
-                       eq=dict(comp_fn=operator.eq, comp_name='equal to'),
-                       ge=dict(comp_fn=operator.ge, comp_name='greater than or equal to'),
-                       gt=dict(comp_fn=operator.gt, comp_name='greater than'))
+    comp_fns = dict(lt=operator.lt, le=operator.le, ne=operator.ne, eq=operator.eq, ge=operator.ge, gt=operator.gt)
+    comp_names = dict(lt='less than', le='less than or equal to', ne='not equal to', eq='equal to',
+                      ge='greater than or equal to', gt='greater than')
 
     def __init__(self, *args, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, other_type=object, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Arrange arguments in a dictionary for convenience
+        # Arrange arguments in a dictionary for convenience, keep only those that are not None
         others = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
+        others = {name: value for name, value in others.items() if value is not None}
 
         # Check that arguments are numbers or None
         for name, value in others.items():
-            if value is not None and not isinstance(value, other_type):
+            if not isinstance(value, other_type):
                 raise TypeError(f'Argument {name}={value!r} of {self!r}() must be {other_type!r} or None.')
 
-        if (lt is not None) and (le is not None):
+        if 'lt' in others and 'le' in others:
             raise TypeError(f'Arguments lt={lt!r} and le={le!r} of {self!r}() must not be both provided.')
 
-        if (ne is not None) and (eq is not None):
+        if 'ne' in others and 'eq' in others:
             raise TypeError(f'Arguments ne={ne!r} and eq={eq!r} of {self!r}() must not be both provided.')
 
-        if (ge is not None) and (gt is not None):
+        if 'ge' in others and 'gt' in others:
             raise TypeError(f'Arguments ge={ge!r} and gt={gt!r} of {self!r}() must not be both provided.')
 
-        if (eq is not None) and any(p is not None for p in {lt, le, ne, ge, gt}):
+        if 'eq' in others and len(others) > 1:
             raise TypeError(f'Argument eq={eq!r} excludes all other arguments of {self!r}.')
 
         # Check that lower bound is indeed lower than upper bound (if both are provided)
-        lb = self._get_not_none(ge, gt)
-        ub = self._get_not_none(le, lt)
+        lb = ge if ge is not None else gt
+        ub = le if le is not None else lt
         if (lb is not None) and (ub is not None) and (lb > ub):
             raise ValueError(f'Lower bound {lb!r} of {self!r} must be lower than the upper bound {ub!r}.')
 
         # Create comparator functions for the arguments that are not None
-        self.comparators = [partial(self._compare, other=other, comp_fn=self.comparisons[name]['comp_fn'])
+        self.comparators = [partial(self._compare, other=other, comp_fn=self.comp_fns[name])
                             for name, other
-                            in others.items()
-                            if other is not None]
+                            in others.items()]
 
-        expected = []
-
-        for name, other in others.items():
-            if other is None:
-                continue
-
-            expected.append(f'{self.comparisons[name]["comp_name"]} {other!r}')
-
-        if expected:
-            self._expected_str = ', '.join(expected)
-        else:
-            self._expected_str = ''
-
-    @staticmethod
-    def _get_not_none(x, y):
-        if x is not None:
-            return x
-        if y is not None:
-            return y
-
-        return None
+        # Build the "expected" string
+        expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
+        self._expected_str = ', '.join(expected)
 
     def _compare(self, name, value, other, comp_fn):
         # Compare value, if comparison fails, return the caught exception
         try:
-            ret = comp_fn(value, other)
-        except Exception as e:
-            # TODO add verbose message
-            return False, e
+            result = comp_fn(value, other)
+        except TypeError:
+            return False, self._make_error(TypeError, name, value)
 
-        # TODO check if bool
-
-        if ret:
+        if result:
             return True, value
         else:
             return False, self._make_error(ValueError, name, value)
 
     def expected_str(self):
-        s = self._expected_str
-        s_ = super().expected_str()
-        s = ', '.join([s_, s]) if s_ else s
-
-        return s
+        return super().expected_str() + [self._expected_str]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -452,13 +418,11 @@ class One(Checker):
 
     def expected_str(self):
         indent = ' ' * len('EXPECTED: ')
-        options = [f'{indent}{i}. {checker.expected_str()}' for i, checker in enumerate(self.checkers, start=1)]
-        s = '\n'.join(options)
-        s = 'exactly one of the following:\n' + s
-        s_ = super().expected_str()
-        s = ', '.join([s_, s]) if s_ else s
+        options = [', '.join(checker.expected_str()) for checker in self.checkers]
+        options = [f'{indent}{i}. {option}' for i, option in enumerate(options, start=1)]
+        s = 'exactly one of the following:\n' + '\n'.join(options)
 
-        return s
+        return super().expected_str() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

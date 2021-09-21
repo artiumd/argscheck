@@ -54,7 +54,7 @@ class PositiveNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, gt=None, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -64,7 +64,7 @@ class PositiveInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, gt=None, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -74,7 +74,7 @@ class PositiveFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, gt=None, **kwargs):
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -89,7 +89,7 @@ class NonNegativeNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ge=None, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -99,7 +99,7 @@ class NonNegativeInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ge=None, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -109,7 +109,7 @@ class NonNegativeFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ge=None, **kwargs):
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -124,7 +124,7 @@ class NegativeNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lt=None, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -134,7 +134,7 @@ class NegativeInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lt=None, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -144,7 +144,7 @@ class NegativeFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lt=None, **kwargs):
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -159,7 +159,7 @@ class NonPositiveNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, le=None, **kwargs):
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -169,7 +169,7 @@ class NonPositiveInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, le=None, **kwargs):
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -179,7 +179,7 @@ class NonPositiveFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, le=None, **kwargs):
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -229,10 +229,10 @@ class Sized(Checker):
 
     def expected_str(self):
         s = self.len_checker.expected_str()
-        s = ', '.join(s.split(', ')[1:])
-        s = 'has length ' + s
+        s = ', '.join(s[1:])
+        s = ' '.join(['has length', s])
 
-        return s
+        return super().expected_str() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -242,8 +242,8 @@ class Sized(Checker):
         # Get value's length, if it fails, return the caught exception
         try:
             len_value = len(value)
-        except Exception as e:
-            return False, e
+        except TypeError:
+            return False, self._make_error(TypeError, name, value)
 
         # Check length
         passed, e = self.len_checker(name, len_value)
@@ -273,5 +273,5 @@ class NonEmpty(Sized):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=0, **kwargs)
+    def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
+        super().__init__(*args, len_gt=0, **kwargs)
