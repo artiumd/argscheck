@@ -32,16 +32,22 @@ class String(Typed):
         checker.check("script.sh")  # Fails, raises ValueError ("script.sh" does not end with ".exe")
 
     """
+    _allowed_methods = {'match', 'fullmatch', 'search'}
+
     def __init__(self, pattern=None, flags=0, method='fullmatch', **kwargs):
         super().__init__(str, **kwargs)
 
-        if method not in {'match', 'fullmatch', 'search'}:
-            raise ValueError(f'{self!r}(method={method!r}) must be "match", "fullmatch" or "search".')
+        if pattern is not None and not isinstance(pattern, str):
+            raise TypeError(f'{self!r}(pattern={pattern!r}) must be None or str.')
+
+        if method not in self._allowed_methods:
+            raise ValueError(f'{self!r}(method={method!r}) must be one of {", ".join(self._allowed_methods)}.')
 
         # Create a callable that will return None if value does not match the given pattern
         if pattern is not None:
             re_obj = re.compile(pattern, flags)
-            self.re_matcher = getattr(re_obj, method)
+            re_method = getattr(re_obj, method)
+            self.re_matcher = lambda string: re_method(string)
         else:
             self.re_matcher = lambda string: True
 

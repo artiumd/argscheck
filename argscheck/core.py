@@ -11,7 +11,7 @@ from .utils import Sentinel, extend_docstring, partition
 
 def check_args(fn):
     """
-    Decorator that when applied to a function:
+    A decorator, that when applied to a function:
 
     1. Gathers checkers from parameter annotations in function's signature.
     2. Performs argument checking (and possibly conversion) on each function call.
@@ -107,17 +107,13 @@ class Checker(metaclass=CheckerMeta):
         return []
 
     def _make_error(self, err_type, name, value):
-        title = 'encountered an error while checking'
-
-        if name != '':
-            title += f' `{name}`'
-
-        title += ':\n'
-
-        actual = f'ACTUAL: {value!r}\n'
+        name = f' `{name}`' if name else ''
+        title = f'encountered an error while checking{name}:'
+        actual = f'ACTUAL: {value!r}'
         expected = f'EXPECTED: {", ".join(self.expected_str())}'
+        err_msg = '\n'.join([title, actual, expected])
 
-        return err_type(title + actual + expected)
+        return err_type(err_msg)
 
     def _check(self, name, value):
         # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
@@ -249,12 +245,18 @@ class Optional(Checker):
     def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
         super().__init__(**kwargs)
 
+        # `default_value` and `default_factory` are mutually exclusive
         if default_value is not self.missing and default_factory is not self.missing:
             raise TypeError(f'{self!r}() expects that default_value and default_factory are not both provided.')
 
+        # `default_factory` must be a callable if provided
         if default_factory is not self.missing and not callable(default_factory):
             raise TypeError(f'{self!r}() expects that if default_factory is provided, it must be a callable.')
 
+        # Create a checker from `*args`
+        self.checker = Checker.from_checker_likes(args)
+
+        # Set the default factory function
         if default_factory is not self.missing:
             self.default_factory = default_factory
         elif default_value is not self.missing:
@@ -262,7 +264,6 @@ class Optional(Checker):
         else:
             self.default_factory = lambda: sentinel
 
-        self.checker = Checker.from_checker_likes(args)
         self.sentinel = sentinel
 
     def expected_str(self):
@@ -324,20 +325,26 @@ class Comparable(Checker):
         others = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
         others = {name: value for name, value in others.items() if value is not None}
 
-        # Check that arguments are numbers or None
+        # `other_type` must be a type or tuple of types
+        if not isinstance(other_type, tuple):
+            other_type = (other_type,)
+        if not all(isinstance(item, type) for item in other_type):
+            raise TypeError(f'{self!r}(other_type={other_type!r}) must be a type or tuple of types.')
+
+        # Check "other" argument types according to `other_type`
         for name, value in others.items():
             if not isinstance(value, other_type):
                 raise TypeError(f'Argument {name}={value!r} of {self!r}() must be {other_type!r} or None.')
 
+        # `lt` and `le` are mutually exclusive
         if 'lt' in others and 'le' in others:
             raise TypeError(f'Arguments lt={lt!r} and le={le!r} of {self!r}() must not be both provided.')
 
-        if 'ne' in others and 'eq' in others:
-            raise TypeError(f'Arguments ne={ne!r} and eq={eq!r} of {self!r}() must not be both provided.')
-
+        # `ge` and `gt` are mutually exclusive
         if 'ge' in others and 'gt' in others:
             raise TypeError(f'Arguments ge={ge!r} and gt={gt!r} of {self!r}() must not be both provided.')
 
+        # `eq` exclude all other arguments
         if 'eq' in others and len(others) > 1:
             raise TypeError(f'Argument eq={eq!r} excludes all other arguments of {self!r}.')
 
@@ -408,7 +415,7 @@ class One(Checker):
         types, others = partition(args, lambda x: isinstance(x, type) and not issubclass(x, Checker))
 
         if not others:
-            raise TypeError(f'`One` checker got only plain types: {args}, in this case `Typed` should be used instead.')
+            raise TypeError(f'`One` checker got only plain types: {args!r}, in this case `Typed` should be used instead.')
 
         if types:
             others.insert(0, Typed(*types))

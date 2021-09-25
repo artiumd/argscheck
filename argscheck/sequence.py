@@ -53,7 +53,6 @@ class Sequence(Sized, Typed):
     types = (object,)
 
     def __init__(self, *args, **kwargs):
-        # TODO add `astype=None` option
         super().__init__(*self.types, **kwargs)
 
         if args:
@@ -65,13 +64,18 @@ class Sequence(Sized, Typed):
         items = []
         modified = False
 
+        item_name, seq_name = ((name + '[{}]', name)
+                               if name
+                               else ('sequence item {}', 'it'))
+
         for i in range(len(value)):
             try:
                 pre_check_item = value[i]
-            except Exception:
-                return False, TypeError(f'Failed when getting {name}[{i}], make sure {name} is a sequence.'), modified
+            except TypeError:
+                return False, TypeError(f'Failed getting {item_name.format(i)}, make sure {seq_name} is a sequence.'), \
+                       modified
 
-            passed, post_check_item = self.item_checker(f'{name}[{i}]', pre_check_item)
+            passed, post_check_item = self.item_checker(item_name.format(i), pre_check_item)
             if not passed:
                 return False, post_check_item, modified
 
@@ -86,7 +90,7 @@ class Sequence(Sized, Typed):
         # Otherwise, create a new sequence of the same type, with the modified items
         try:
             return True, type(value)(items)
-        except Exception:
+        except TypeError:
             return False, TypeError(f'Failed on {type(value).__qualname__}(), make sure this type can be instantiated '
                                     f'from an iterable.')
 
@@ -112,8 +116,6 @@ class Sequence(Sized, Typed):
         passed, value = self._set_items(name, value, items)
         if not passed:
             return False, value
-
-        # TODO astype goes here
 
         return True, value
 
@@ -142,12 +144,16 @@ class MutableSequence(Sequence):
 
     """
     def _set_items(self, name, value, items):
+        item_name, seq_name = ((name + '[{}]', name)
+                               if name
+                               else ('sequence item {}', 'it'))
+
         for i, item in enumerate(items):
             try:
                 value[i] = item
-            except Exception as e:
-                return False, TypeError(f'The following exception was raised while setting {name}[{i}]:\n{e}\n'
-                                        f'Make sure {name} is a mutable sequence.')
+            except TypeError:
+                return False, TypeError(f'Failed setting {item_name.format(i)}, make sure {seq_name} is a mutable '
+                                        f'sequence.')
 
         return True, value
 

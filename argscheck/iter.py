@@ -53,7 +53,12 @@ class Iterator(Checker):
     def __next__(self):
         name = self.name.format(self.i)
         self.i += 1
-        value = next(self.iterator)
+
+        try:
+            value = next(self.iterator)
+        except TypeError as e:
+            raise e
+
         passed, value = self.item_checker(name, value)
 
         if not passed:
@@ -83,7 +88,11 @@ class Iterable(Iterator):
 
     """
     def __iter__(self):
-        self.iterator = iter(self.iterator)
+        try:
+            self.iterator = iter(self.iterator)
+        except TypeError as e:
+            raise e
+
         self.i = 0
 
         return self

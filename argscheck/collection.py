@@ -42,7 +42,6 @@ class Collection(Sized, Typed):
     types = (object,)
 
     def __init__(self, *args, **kwargs):
-        # TODO add `astype=None` option
         super().__init__(*self.types, **kwargs)
 
         if args:

@@ -1,2 +1,2 @@
 # argscheck
-Simple Yet Comprehensive Argument Checking For Python
+Simple yet comprehensive argument checking for Python

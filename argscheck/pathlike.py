@@ -2,26 +2,32 @@
 PathLike
 ========
 """
+import re
 from pathlib import Path
 
-from .core import Typed, Optional
-from .sequence import List
-from .string import String
-
-
-_bool_typed = Typed(bool)
-# A suffix is an empty string or a dot followed by one or more "non-dot" characters
-_suffix = String(r'(|\.[^\.]+)', method='fullmatch')
-_optional_suffix = Optional(_suffix)
-_optional_suffix_list = Optional(List(_suffix))
+from .core import Typed
 
 
 class _Suffix:
-    def __init__(self, suffix, suffixes, ignore_case):
-        # Check and set arguments
-        self.ignore_case = _bool_typed.check(ignore_suffix_case=ignore_case)
-        self.suffix = _optional_suffix.check(suffix=suffix)
-        self.suffixes = _optional_suffix_list.check(suffixes=suffixes)
+    def __init__(self, suffix, suffixes, ignore_case, *, parent):
+        # ignore_case must be a bool
+        if not isinstance(ignore_case, bool):
+            raise TypeError(f'{parent!r}(ignore_case={ignore_case!r}) is expected to be a bool.')
+
+        self.ignore_case = ignore_case
+
+        # suffix must be None or a string starting with a "."
+        if suffix is not None:
+            self._validate_suffix(parent, 'suffix', suffix)
+
+        self.suffix = suffix
+
+        # suffixes must be None or a list of strings starting with a "."
+        if suffixes is not None:
+            for i, sfx in enumerate(suffixes):
+                self._validate_suffix(parent, f'suffixes[{i}]', sfx)
+
+        self.suffixes = suffixes
 
         # Create indicators for whether suffix / suffixes should be checked
         self.suffix_is_provided = self.suffix is not None
@@ -40,6 +46,13 @@ class _Suffix:
 
         # If both suffix and suffixes are provided, it is sufficient that only one of them passes
         self.max_fail_count = int(self.suffix_is_provided or self.suffixes_is_provided)
+
+    def _validate_suffix(self, parent, name, value):
+        if not isinstance(value, str):
+            raise TypeError(f'{parent!r}({name}={value!r}) is expected to be None or str.')
+
+        if re.fullmatch(r'(|\.[^\.]+)', value) is not None:
+            raise ValueError(f'{parent!r}({name}={value!r}) must start with a dot (if provided).')
 
     def _check_suffix(self, actual, expected):
         if self.ignore_case:
@@ -87,10 +100,10 @@ class PathLike(Typed):
         super().__init__(str, Path, **kwargs)
 
         # Check and set boolean attributes
-        self.is_dir = _bool_typed.check(is_dir=is_dir)
-        self.is_file = _bool_typed.check(is_file=is_file)
-        self.as_str = _bool_typed.check(as_str=as_str)
-        self.as_path = _bool_typed.check(as_path=as_path)
+        self.is_dir = self._validate_bool('is_dir', is_dir)
+        self.is_file = self._validate_bool('is_file', is_file)
+        self.as_str = self._validate_bool('as_str', as_str)
+        self.as_path = self._validate_bool('as_path', as_path)
 
         # is_dir and is_file are mutually exclusive
         if self.is_dir and self.is_file:
@@ -100,7 +113,13 @@ class PathLike(Typed):
         if self.as_str and self.as_path:
             raise ValueError('PathLike() got both as_str=True and as_path=True')
 
-        self.suffix = _Suffix(suffix, suffixes, ignore_suffix_case)
+        self.suffix = _Suffix(suffix, suffixes, ignore_suffix_case, parent=self)
+
+    def _validate_bool(self, name, value):
+        if not isinstance(value, bool):
+            raise TypeError(f'{self!r}({name}={value!r}) is expected to be a bool.')
+
+        return value
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

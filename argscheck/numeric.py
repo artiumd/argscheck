@@ -215,24 +215,24 @@ class Sized(Checker):
         self.len_checker = Int(lt=len_lt, le=len_le, ne=len_ne, eq=len_eq, ge=len_ge, gt=len_gt, other_type=_ints)
 
         # Check that no negative values were provided
-        self._check_len_argument('len_lt', len_lt)
-        self._check_len_argument('len_le', len_le)
-        self._check_len_argument('len_ne', len_ne)
-        self._check_len_argument('len_eq', len_eq)
-        self._check_len_argument('len_ge', len_ge)
-        self._check_len_argument('len_gt', len_gt)
+        self._validate_len('len_lt', len_lt)
+        self._validate_len('len_le', len_le)
+        self._validate_len('len_ne', len_ne)
+        self._validate_len('len_eq', len_eq)
+        self._validate_len('len_ge', len_ge)
+        self._validate_len('len_gt', len_gt)
 
     @staticmethod
-    def _check_len_argument(name, value):
+    def _validate_len(name, value):
+        # At this point, value is None or int
         if value is not None and value < 0:
             raise ValueError(f'Argument {name}={value!r} is expected to be None or a non-negative int.')
 
     def expected_str(self):
         s = self.len_checker.expected_str()
-        s = ', '.join(s[1:])
-        s = ' '.join(['has length', s])
+        s = ', '.join(s[1:])  # [1:] to discard "an instance of <class 'int'>" that comes from Int
 
-        return super().expected_str() + [s]
+        return super().expected_str() + ['has length ' + s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
