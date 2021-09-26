@@ -25,6 +25,9 @@ class _Suffix:
 
         # suffixes must be None or a list of strings starting with a "."
         if suffixes is not None:
+            if not isinstance(suffixes, list):
+                raise TypeError(f'{parent!r}(suffixes={suffixes!r}) is expected to be None or a list of strings.')
+
             for i, sfx in enumerate(suffixes):
                 self._validate_suffix(parent, f'suffixes[{i}]', sfx)
 
@@ -58,7 +61,7 @@ class _Suffix:
     def expected_str(self):
         suffixes = self.suffix_is_provided * [self.suffix] + self.suffixes_is_provided * [self.suffixes]
         suffixes = ' or '.join(suffixes)
-        parts = ['with suffix', suffixes, f'(case {"i" if self.ignore_case else ""}sensitive)']
+        parts = ['with suffix', suffixes, f'(case {"in" if self.ignore_case else ""}sensitive)']
         suffixes = join(' ', parts, on_empty='abort')
 
         return suffixes
@@ -67,18 +70,19 @@ class _Suffix:
         if self.ignore_case:
             actual = actual.lower()
 
-        return expected != actual
+        return expected == actual
 
     def __call__(self, name, value):
         # Check suffix
-        suffix_failed = self.suffix_is_provided and self._check_suffix(actual=value.suffix,
-                                                                       expected=self.suffix)
+        suffix_passed = self.suffix_is_provided * [self._check_suffix(actual=value.suffix,
+                                                                      expected=self.suffix)]
         # Check suffixes
-        suffixes_failed = self.suffixes_is_provided and self._check_suffix(actual=''.join(value.suffixes),
-                                                                           expected=self.suffixes)
+        suffixes_passed = self.suffixes_is_provided * [self._check_suffix(actual=''.join(value.suffixes),
+                                                                          expected=self.suffixes)]
 
-        # Return error if both suffix and suffixes do not match
-        return suffix_failed + suffixes_failed < self.max_fail_count
+        passed = suffix_passed + suffixes_passed
+
+        return not passed or True in passed
 
 
 class PathLike(Typed):

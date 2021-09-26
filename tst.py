@@ -1,34 +1,44 @@
-from argscheck import Optional,Sequence
+import inspect
 
 
-class Descriptor:
-    __slots__ = ('checker', 'name')
+def greatest_common_base(*types):
+    types = set(types)
 
-    def __init__(self, checker):
-        self.checker = checker
+    mros = [reversed(inspect.getmro(typ)) for typ in types]
 
-    def __set_name__(self, owner, name):
-        self.name = name
+    common = None
 
-    def __get__(self, instance, owner):
-        return instance.__dict__[self.name]
+    for bases in zip(*mros):
+        bases_set = set(bases)
 
-    def __set__(self, instance, value):
-        instance.__dict__[self.name] = self.checker._check(self.name, value)
+        if len(bases_set) == 1:
+            common = bases[0]
+        else:
+            break
+
+    return common
+
+
+def greatest_common_base(*types):
+    return sorted(types, key=lambda a, b: issubclass(a, b))
+
+
+from collections import defaultdict
 
 
 class A:
-    a = Descriptor(Optional(int, default_value=55))
-    b = Optional(int, default_value=55)
+    pass
 
-    def __init__(self, a):
-        self.a = a
+class B(A):
+    pass
 
+class C(A):
+    pass
 
-a = A(1)
-print(a.a)
-a = A(None)
-print(a.a)
-# A('a')
+class D(B):
+    pass
 
-Sequence(int).check(zzz=[1,2,'a'])
+class E(D):
+    pass
+
+print(greatest_common_base(D, E))

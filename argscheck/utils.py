@@ -106,6 +106,8 @@ def join(string, iterable, *, on_empty=None):
     """
     A functional version of ``str.join()`` providing more flexibility via the ``on_empty`` parameter.
 
+    Arguments are not checked.
+
     :param string:
     :param iterable:
     :param on_empty:
@@ -118,3 +120,21 @@ def join(string, iterable, *, on_empty=None):
         return ''
 
     return string.join(iterable)
+
+
+def greatest_common_base(types):
+    types = set(types)
+
+    mros = [reversed(inspect.getmro(typ)) for typ in types]
+
+    common = None
+
+    for bases in zip(*mros):
+        bases_set = set(bases)
+
+        if len(bases_set) == 1:
+            common = bases[0]
+        else:
+            break
+
+    return common

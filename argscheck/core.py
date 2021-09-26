@@ -109,7 +109,7 @@ class Checker(metaclass=CheckerMeta):
     def _make_error(self, err_type, name, value):
         title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
         actual = f'ACTUAL: {value!r}'
-        expected = f'EXPECTED: {", ".join(self.expected_str())}'
+        expected = 'EXPECTED: ' + join(", ", self.expected_str(), on_empty="drop")
         err_msg = '\n'.join([title, actual, expected])
 
         return err_type(err_msg)
