@@ -56,10 +56,7 @@ class String(Typed):
         self.pattern = pattern
 
     def expected_str(self):
-        if self.pattern is not None:
-            s = f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
-        else:
-            s = ''
+        s = '' if self.pattern is None else f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
 
         return super().expected_str() + [s]
 

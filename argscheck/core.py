@@ -6,7 +6,7 @@ import operator
 from functools import partial, wraps
 import inspect
 
-from .utils import Sentinel, extend_docstring, partition
+from .utils import Sentinel, extend_docstring, partition, join
 
 
 def check_args(fn):
@@ -107,8 +107,7 @@ class Checker(metaclass=CheckerMeta):
         return []
 
     def _make_error(self, err_type, name, value):
-        name = f' `{name}`' if name else ''
-        title = f'encountered an error while checking{name}:'
+        title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
         actual = f'ACTUAL: {value!r}'
         expected = f'EXPECTED: {", ".join(self.expected_str())}'
         err_msg = '\n'.join([title, actual, expected])
@@ -181,6 +180,8 @@ class Typed(Checker):
 
     """
     def __new__(cls, *args, **kwargs):
+        # In case ``Typed(*types)`` and ``types`` contains ``object``, return a ``Checker`` instance, which will always
+        # pass without the need to call ``isinstance()``.
         if cls is Typed and object in args:
             return object.__new__(Checker)
         else:

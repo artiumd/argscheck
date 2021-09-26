@@ -68,7 +68,14 @@ class Sequence(Sized, Typed):
                                if name
                                else ('sequence item {}', 'it'))
 
-        for i in range(len(value)):
+        # Get length
+        try:
+            length = len(value)
+        except TypeError:
+            return False, TypeError(f'Failed calling len(), make sure {seq_name} is a sequence.'), modified
+
+        # Form a list of returned items by getting each item by its integer index, and applying the item checker on it
+        for i in range(length):
             try:
                 pre_check_item = value[i]
             except TypeError:
@@ -87,7 +94,7 @@ class Sequence(Sized, Typed):
         return True, items, modified
 
     def _set_items(self, name, value, items):
-        # Otherwise, create a new sequence of the same type, with the modified items
+        # Create a new sequence of the same type, with the modified items
         try:
             return True, type(value)(items)
         except TypeError:
@@ -108,16 +115,26 @@ class Sequence(Sized, Typed):
         if not passed:
             return False, items
 
+        # If none of the items were modified, can return now without setting them
         if not modified:
             return True, value
 
-        # Prepare return value, for an immutable sequence, a new sequence instance is created and returned, for a
+        # Prepare return value. For an immutable sequence, a new sequence instance is created and returned, for a
         # mutable sequence, items are set inplace and the original sequence is returned.
         passed, value = self._set_items(name, value, items)
         if not passed:
             return False, value
 
         return True, value
+
+
+class NonEmptySequence(NonEmpty, Sequence):
+    """
+    Same as :class:`.Sequence`, plus, the length of ``x`` must be greater than zero.
+
+    :meta skip-extend-docstring:
+    """
+    pass
 
 
 class Tuple(Sequence):
@@ -148,6 +165,7 @@ class MutableSequence(Sequence):
                                if name
                                else ('sequence item {}', 'it'))
 
+        # Iterate over checked items, set each one to the mutable sequence by its integer index
         for i, item in enumerate(items):
             try:
                 value[i] = item
@@ -156,6 +174,15 @@ class MutableSequence(Sequence):
                                         f'sequence.')
 
         return True, value
+
+
+class NonEmptyMutableSequence(NonEmpty, MutableSequence):
+    """
+    Same as :class:`.MutableSequence`, plus, the length of ``x`` must be greater than zero.
+
+    :meta skip-extend-docstring:
+    """
+    pass
 
 
 class List(MutableSequence):

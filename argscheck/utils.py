@@ -100,3 +100,21 @@ def partition(sequence, condition):
             false.append(item)
 
     return true, false
+
+
+def join(string, iterable, *, on_empty=None):
+    """
+    A functional version of ``str.join()`` providing more flexibility via the ``on_empty`` parameter.
+
+    :param string:
+    :param iterable:
+    :param on_empty:
+    :return:
+    """
+    if on_empty == 'drop':
+        return string.join(item for item in iterable if item)
+
+    if on_empty == 'abort' and '' in iterable:
+        return ''
+
+    return string.join(iterable)

@@ -5,6 +5,7 @@ PathLike
 import re
 from pathlib import Path
 
+from .utils import join
 from .core import Typed
 
 
@@ -51,8 +52,16 @@ class _Suffix:
         if not isinstance(value, str):
             raise TypeError(f'{parent!r}({name}={value!r}) is expected to be None or str.')
 
-        if re.fullmatch(r'(|\.[^\.]+)', value) is not None:
+        if re.fullmatch(r'(|\.[^\.]+)', value) is None:
             raise ValueError(f'{parent!r}({name}={value!r}) must start with a dot (if provided).')
+
+    def expected_str(self):
+        suffixes = self.suffix_is_provided * [self.suffix] + self.suffixes_is_provided * [self.suffixes]
+        suffixes = ' or '.join(suffixes)
+        parts = ['with suffix', suffixes, f'(case {"i" if self.ignore_case else ""}sensitive)']
+        suffixes = join(' ', parts, on_empty='abort')
+
+        return suffixes
 
     def _check_suffix(self, actual, expected):
         if self.ignore_case:
@@ -69,14 +78,7 @@ class _Suffix:
                                                                            expected=self.suffixes)
 
         # Return error if both suffix and suffixes do not match
-        if suffix_failed + suffixes_failed > self.max_fail_count:
-            expected_suffixes = self.suffix_is_provided * [f'suffix {self.suffix}'] + \
-                                self.suffixes_is_provided * [f'suffixes {self.suffixes}']
-            expected_suffixes = ' or '.join(expected_suffixes)
-
-            return False, ValueError(f'Expected {name} = {value} to to have {expected_suffixes}')
-        else:
-            return True, value
+        return suffix_failed + suffixes_failed < self.max_fail_count
 
 
 class PathLike(Typed):
@@ -121,6 +123,13 @@ class PathLike(Typed):
 
         return value
 
+    def expected_str(self):
+        existing = self.is_dir * 'pointing to an existing directory' + self.is_file * 'pointing to an existing file'
+        suffixes = self.suffix.expected_str()
+        s = join(', ', [existing, suffixes], on_empty='drop')
+
+        return super().expected_str() + [s]
+
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -130,16 +139,16 @@ class PathLike(Typed):
 
         # Check if directory
         if self.is_dir and not path.is_dir():
-            return False, ValueError(f'Expected {name} = {path} to be an existing directory.')
+            return False, self._make_error(ValueError, name, value)
 
         # Check if file
         if self.is_file and not path.is_file():
-            return False, ValueError(f'Expected {name} = {path} to be an existing file.')
+            return False, self._make_error(ValueError, name, value)
 
         # Check suffix(es)
-        passed, e = self.suffix(name, path)
+        passed = self.suffix(name, path)
         if not passed:
-            return False, e
+            return False, self._make_error(ValueError, name, value)
 
         # Return possibly converted value
         if self.as_path:
@@ -156,7 +165,7 @@ class ExistingDir(PathLike):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, is_dir=None, **kwargs):
         super().__init__(*args, is_dir=True, **kwargs)
 
 
@@ -166,5 +175,5 @@ class ExistingFile(PathLike):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, is_file=None, **kwargs):
         super().__init__(*args, is_file=True, **kwargs)
