@@ -54,13 +54,17 @@ class Iterator(Checker):
         name = self.name.format(self.i)
         self.i += 1
 
+        # Get next item from iterator
         try:
             value = next(self.iterator)
-        except TypeError as e:
-            raise e
+        except TypeError:
+            raise TypeError(f'Failed calling next() on {self.iterator!r}, make sure this object is an iterator.')
+        except StopIteration as stop:
+            # This clause is purely for readability
+            raise stop
 
+        # Check next item from iterator
         passed, value = self.item_checker(name, value)
-
         if not passed:
             raise value
 
@@ -88,10 +92,11 @@ class Iterable(Iterator):
 
     """
     def __iter__(self):
+        # Create iterator from iterable
         try:
             self.iterator = iter(self.iterator)
-        except TypeError as e:
-            raise e
+        except TypeError:
+            raise TypeError(f'Failed calling iter() on {self.iterator!r}, make sure this object is iterable.')
 
         self.i = 0
 

@@ -15,27 +15,25 @@ class _Suffix:
         if not isinstance(ignore_case, bool):
             raise TypeError(f'{parent!r}(ignore_case={ignore_case!r}) is expected to be a bool.')
 
+        self.suffix = suffix
+        self.suffixes = suffixes
         self.ignore_case = ignore_case
 
+        # Create indicators for whether suffix / suffixes should be checked
+        self.suffix_is_provided = self.suffix is not None
+        self.suffixes_is_provided = self.suffixes is not None
+
         # suffix must be None or a string starting with a "."
-        if suffix is not None:
+        if self.suffix_is_provided:
             self._validate_suffix(parent, 'suffix', suffix)
 
-        self.suffix = suffix
-
         # suffixes must be None or a list of strings starting with a "."
-        if suffixes is not None:
+        if self.suffixes_is_provided:
             if not isinstance(suffixes, list):
                 raise TypeError(f'{parent!r}(suffixes={suffixes!r}) is expected to be None or a list of strings.')
 
             for i, sfx in enumerate(suffixes):
                 self._validate_suffix(parent, f'suffixes[{i}]', sfx)
-
-        self.suffixes = suffixes
-
-        # Create indicators for whether suffix / suffixes should be checked
-        self.suffix_is_provided = self.suffix is not None
-        self.suffixes_is_provided = self.suffixes is not None
 
         # Suffixes list of strings is converted to a plain string for convenience
         if self.suffixes_is_provided:
@@ -47,9 +45,6 @@ class _Suffix:
                 self.suffix = self.suffix.lower()
             if self.suffixes_is_provided:
                 self.suffixes = self.suffixes.lower()
-
-        # If both suffix and suffixes are provided, it is sufficient that only one of them passes
-        self.max_fail_count = int(self.suffix_is_provided or self.suffixes_is_provided)
 
     def _validate_suffix(self, parent, name, value):
         if not isinstance(value, str):
@@ -73,15 +68,15 @@ class _Suffix:
         return expected == actual
 
     def __call__(self, name, value):
-        # Check suffix
-        suffix_passed = self.suffix_is_provided * [self._check_suffix(actual=value.suffix,
-                                                                      expected=self.suffix)]
-        # Check suffixes
-        suffixes_passed = self.suffixes_is_provided * [self._check_suffix(actual=''.join(value.suffixes),
-                                                                          expected=self.suffixes)]
+        passed = []
 
-        passed = suffix_passed + suffixes_passed
+        if self.suffix_is_provided:
+            passed.append(self._check_suffix(actual=value.suffix, expected=self.suffix))
 
+        if self.suffixes_is_provided:
+            passed.append(self._check_suffix(actual=''.join(value.suffixes), expected=self.suffixes))
+
+        # The suffix(es) check passes if no suffix(es) were provided or at least one of them passes
         return not passed or True in passed
 
 

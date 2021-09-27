@@ -58,21 +58,18 @@ class Collection(Sized, Typed):
         if self.iterable is None:
             return True, value
 
-        # Determine returned collection type
-        type_ = type(value)
-
         if not name:
             name = repr(self).lower()
 
-        # Create returned collection, any item yielded by the iterable that fails the check will raise an error
-        try:
-            # Applying list() is necessary to make sure self.iterable is consumed before it is passed to the constructor
-            iterable = list(self.iterable(name, value))
-            value = type_(iterable)
+        items = list(self.iterable(name, value))
 
-            return True, value
-        except Exception as e:
-            return False, e
+        try:
+            value = type(value)(items)
+        except TypeError:
+            return False, TypeError(f'Failed on {type(value).__qualname__}(), make sure this type can be instantiated '
+                                    f'from an iterable.')
+
+        return True, value
 
 
 class Set(Comparable, Collection):
