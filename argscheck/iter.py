@@ -1,6 +1,14 @@
 """
 Iterator and Iterable
 =====================
+
+This module contains checkers for iterator and iterable arguments.
+
+In this context, an iterator is a class that has ``__next__()`` implemented, so each call to ``next()`` produces an item,
+until finally ``StopIteration`` is raised.
+
+An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
+creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
 """
 from .core import Checker
 
@@ -83,9 +91,13 @@ class Iterable(Iterator):
 
         # Each item must be an str or bool instance
         checker = Iterable(str, bool)
-        iterable = checker.check(['a', True, 1.1])
 
-        iterator = iter(iterable)
+        # Can be iterated over with a for loop
+        for item in checker.check(['a', True, 1.1]):
+            print(item)     # prints "a\\n", "True\\n", then raises TypeError (1.1 is not an str or bool).
+
+        # Can be iterated over manually
+        iterator = iter(checker.check(['a', True, 1.1]))
         next(iterator)  # Passes, returns 'a'
         next(iterator)  # Passes, returns True
         next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).

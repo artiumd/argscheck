@@ -1,6 +1,8 @@
 """
 PathLike
 ========
+
+This module contains checkers for arguments that represent filesystem paths.
 """
 import re
 from pathlib import Path

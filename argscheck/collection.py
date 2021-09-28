@@ -7,7 +7,7 @@ This module contains checkers for collection objects.
 In this context, a collection is a class that:
 
 1. Has ``__len__()`` implemented.
-2. Has ``__next__()`` implemented, i.e. its instances are iterable.
+2. Its instances are iterable.
 3. Can be instantiated from an iterable.
 
 Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
@@ -77,6 +77,8 @@ class Set(Comparable, Collection):
     Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
     operators, e.g. using ``gt=other`` will check if ``x`` is a superset of ``other`` (which must also be a ``set``).
 
+    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in ``x``.
+
     :Example:
 
     .. code-block:: python
@@ -95,6 +97,6 @@ class Set(Comparable, Collection):
     """
     types = (set,)
 
-    def __init__(self, *args, other_type=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         # Sets should only be compared to other sets, hence: other_type=set
         super().__init__(*args, other_type=set, **kwargs)

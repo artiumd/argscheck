@@ -1,6 +1,9 @@
 """
 Core
 ====
+
+This module contains the :class:`.Checker` base class, the :func:`.check_args` function decorator, as well as other
+basic checkers that do not correspond to a particular type or protocol.
 """
 import operator
 from functools import partial, wraps
@@ -15,6 +18,22 @@ def check_args(fn):
 
     1. Gathers checkers from parameter annotations in function's signature.
     2. Performs argument checking (and possibly conversion) on each function call.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import check_args, Number, Float
+
+        # Check if a, b are numbers and alpha is a float in range [0,1]
+        @check_args
+        def convex_sum(a: Number, b: Number, alpha: Float(ge=0.0, le=1.0)):
+            return alpha * a + (1.0 - alpha) * b
+
+        convex_sum(0, 2, 0.0)    # Passes, returns 2.0
+        convex_sum(0, 2, 1.1)    # Fails, raises ValueError (1.1 is greater than 1.0)
+        convex_sum(0, [2], 0.5)  # Fails, raises TypeError ([2] is not a number)
+
     """
     checkers = {}
 
@@ -55,7 +74,7 @@ class CheckerMeta(type):
 
 class Checker(metaclass=CheckerMeta):
     """
-    Base class for all checkers.
+    Base class for all checkers. This is presented mainly for the user-facing methods described below.
     """
     def __repr__(self):
         return type(self).__qualname__
@@ -73,7 +92,7 @@ class Checker(metaclass=CheckerMeta):
             types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
 
             if types and others:
-                others.insert(0, Typed(*types))
+                others.append(Typed(*types))
                 checker = One(*others)
             elif types:
                 checker = Typed(*types)
@@ -149,8 +168,9 @@ class Checker(metaclass=CheckerMeta):
 
     def validator(self, name, **kwargs):
         """
-        Create a validator for a field in a ``pydantic`` model. The validator will perform the checking and conversion
-        by calling the ``check()`` method.
+        Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
+        ``pydantic`` model. The validator will perform the checking and conversion by calling the
+        :meth:`.Checker.check` method.
 
         :param name: *str* – Name of field for which validator is created.
         :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
@@ -222,8 +242,8 @@ class Optional(Checker):
 
     :param args: *Tuple[CheckerLike]* – Specifies what ``x`` may be (other than ``None``).
     :param default_value: *Optional[Any]* – If ``x is None``, it will be replaced by ``default_value``.
-    :param default_factory: *Optional[Callable]* – if ``x is None``, it will be replaced by ``default_factory()``.
-        This is useful for setting default values that are of mutable types.
+    :param default_factory: *Optional[Callable]* – if ``x is None``, it will be replaced by a value freshly returned
+        from ``default_factory()``. This is useful for setting default values that are of mutable types.
     :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to determine if the ``x`` is missing, instead of
         ``x is None``.
 
@@ -288,7 +308,7 @@ class Optional(Checker):
 class Comparable(Checker):
     """
     Check if ``x`` correctly compares to other value(s) using any of the following binary operators:
-    ``{< | <= | != | == | >= | >}``.
+    ``<``, ``<=``, ``!=``, ``==``, ``>=`` or ``>``.
 
     Comparison need not necessarily be between numeric types, as can be seen in the example below.
 
@@ -299,7 +319,8 @@ class Comparable(Checker):
     :param ge: *Optional[Any]* – Check if ``x >= ge``.
     :param gt: *Optional[Any]* – Check if ``x > gt``.
     :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which ``x`` can
-       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``.
+       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError`` (because ``1.0`` is not an
+       ``int``).
 
     :Example:
 
@@ -419,7 +440,7 @@ class One(Checker):
             raise TypeError(f'`One` checker got only plain types: {args!r}, in this case `Typed` should be used instead.')
 
         if types:
-            others.insert(0, Typed(*types))
+            others.append(Typed(*types))
 
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]

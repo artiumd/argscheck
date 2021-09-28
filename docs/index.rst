@@ -12,4 +12,4 @@ Welcome to argscheck's documentation!
 
    overview
    usage
-   reference/index
+   api_reference/index

@@ -1,6 +1,8 @@
 """
 Numeric
 =======
+
+This module contains checkers for numeric arguments, as well as for sized arguments.
 """
 from .core import Checker, Typed, Comparable
 

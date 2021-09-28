@@ -1,6 +1,8 @@
 """
 String
 ======
+
+This module contains a checker for string arguments.
 """
 import re
 
