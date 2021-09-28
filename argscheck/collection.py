@@ -100,4 +100,5 @@ class Set(Comparable, Collection):
 
     def __init__(self, *args, **kwargs):
         # Sets should only be compared to other sets, hence: other_type=set
+        self._assert_not_in_kwargs('other_type', **kwargs)
         super().__init__(*args, other_type=set, **kwargs)

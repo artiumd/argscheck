@@ -112,6 +112,11 @@ class Checker(metaclass=CheckerMeta):
 
         raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
 
+    def _assert_not_in_kwargs(self, *names, **kwargs):
+        for name in names:
+            if name in kwargs:
+                raise ValueError(f'{self!r}() got an unexpected argument {name}={kwargs[name]!r}.')
+
     def _resolve_name_value(self, *args, **kwargs):
         # Make sure method is called properly and unpack argument's name and value
         if len(args) + len(kwargs) != 1:

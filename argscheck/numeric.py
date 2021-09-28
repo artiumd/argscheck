@@ -56,7 +56,8 @@ class PositiveNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, gt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('gt', **kwargs)
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -66,7 +67,8 @@ class PositiveInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, gt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('gt', **kwargs)
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -76,7 +78,8 @@ class PositiveFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, gt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('gt', **kwargs)
         super().__init__(*args, gt=0, **kwargs)
 
 
@@ -91,7 +94,8 @@ class NonNegativeNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, ge=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('ge', **kwargs)
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -101,7 +105,8 @@ class NonNegativeInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, ge=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('ge', **kwargs)
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -111,7 +116,8 @@ class NonNegativeFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, ge=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('ge', **kwargs)
         super().__init__(*args, ge=0, **kwargs)
 
 
@@ -126,7 +132,8 @@ class NegativeNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, lt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('lt', **kwargs)
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -136,7 +143,8 @@ class NegativeInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, lt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('lt', **kwargs)
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -146,7 +154,8 @@ class NegativeFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, lt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('lt', **kwargs)
         super().__init__(*args, lt=0, **kwargs)
 
 
@@ -161,7 +170,8 @@ class NonPositiveNumber(Number):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, le=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('le', **kwargs)
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -171,7 +181,8 @@ class NonPositiveInt(Int):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, le=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('le', **kwargs)
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -181,7 +192,8 @@ class NonPositiveFloat(Float):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, le=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('le', **kwargs)
         super().__init__(*args, le=0, **kwargs)
 
 
@@ -271,5 +283,6 @@ class NonEmpty(Sized):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('len_lt', 'len_le', 'len_ne', 'len_eq', 'len_ge', 'len_gt', **kwargs)
         super().__init__(*args, len_gt=0, **kwargs)

@@ -166,7 +166,8 @@ class ExistingDir(PathLike):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, is_dir=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('is_dir', **kwargs)
         super().__init__(*args, is_dir=True, **kwargs)
 
 
@@ -176,5 +177,6 @@ class ExistingFile(PathLike):
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, *args, is_file=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._assert_not_in_kwargs('is_file', **kwargs)
         super().__init__(*args, is_file=True, **kwargs)
