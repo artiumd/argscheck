@@ -2,6 +2,16 @@ from collections import OrderedDict
 import inspect
 
 
+class ContainsAll:
+    def __contains__(self, item):
+        return True
+
+
+class ContainsNone:
+    def __contains__(self, item):
+        return False
+
+
 class Sentinel:
     def __init__(self, name):
         self.name = name
@@ -15,7 +25,7 @@ class DocString:
         self.prefix = ''
         self.params = OrderedDict()
         self.suffix = ''
-        self.skip_extend = False
+        self.skipped_params = ContainsNone()
         self._parse_docstring(doc)
 
     @classmethod
@@ -38,7 +48,17 @@ class DocString:
         if doc is None:
             return
 
-        self.skip_extend = ':meta skip-extend-docstring:' in doc
+        # Parse ":meta skip-extend-docstring-param_1-param_2-..." directive
+        start = doc.find(':meta skip-extend-docstring')
+        if start != -1:
+            end = doc.find(':', start + 1)
+            assert end != -1
+            params = doc[start: end].split('-')[3:]
+
+            if params:
+                self.skipped_params = set(params)
+            else:
+                self.skipped_params = ContainsAll()
 
         examples_start = doc.find(':Example:')
         params_start = doc.find(':param')
@@ -67,13 +87,13 @@ class DocString:
         return self.prefix + ''.join(self.params.values()) + self.suffix
 
     def extend_params(self, others):
-        if self.skip_extend:
-            return
-
         for other in others:
             for key, value in other.params.items():
                 # Skip if parameter has already been added by a previous base class
                 if key in self.params:
+                    continue
+
+                if key in self.skipped_params:
                     continue
 
                 # Skip the ``args`` parameter, it should only be taken from the docstring of ``self``

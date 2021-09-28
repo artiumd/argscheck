@@ -94,6 +94,7 @@ class Set(Comparable, Collection):
         checker.check({'a'})         # Fails, raises ValueError (length is 1 and not 2 or greater)
         checker.check({'b', 'c'})    # Fails, raises ValueError ({'b', 'c'} is not a superset of {'a'})
 
+    :meta skip-extend-docstring-other_type:
     """
     types = (set,)
 
