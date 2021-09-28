@@ -52,3 +52,11 @@ class TestPathLike(TestCaseArgscheck):
         self.assertRaisesOnCheck(ValueError, Path('abcd.exe.gz'))
         self.assertRaisesOnCheck(ValueError, 'abcd.tar')
         self.assertRaisesOnCheck(ValueError, Path('abcd.exe.gz'))
+
+        self.checker = PathLike(as_str=True)
+        self.assertOutputEquals('/some/path', '/some/path')
+        self.assertOutputEquals(Path('/some/path'), str(Path('/some/path')))
+
+        self.checker = PathLike(as_path=True)
+        self.assertOutputEquals('/some/path', Path('/some/path'))
+        self.assertOutputEqualsInput(Path('/some/path'))

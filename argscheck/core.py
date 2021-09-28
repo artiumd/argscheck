@@ -130,7 +130,21 @@ class Checker(metaclass=CheckerMeta):
     def expected_str(self):
         return []
 
-    def _make_error(self, err_type, name, value):
+    def _raise_init_error(self, err_type, desc, *args, **kwargs):
+        args = [f'{value!r}' for value in args]
+        kwargs = [f'{name}={value!r}' for name, value in kwargs.items()]
+        arguments = ', '.join(args + kwargs)
+        err_msg = f'{self!r}({arguments}): {desc}.'
+
+        raise err_type(err_msg)
+
+    def _raise_init_type_error(self, desc, *args, **kwargs):
+        self._raise_init_error(TypeError, desc, *args, **kwargs)
+
+    def _raise_init_value_error(self, desc, *args, **kwargs):
+        self._raise_init_error(ValueError, desc, *args, **kwargs)
+
+    def _make_check_error(self, err_type, name, value):
         title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
         actual = f'ACTUAL: {value!r}'
         expected = 'EXPECTED: ' + join(", ", self.expected_str(), on_empty="drop")
@@ -216,15 +230,15 @@ class Typed(Checker):
         super().__init__(**kwargs)
 
         if not args:
-            raise TypeError(f'{self!r}() expects at least one positional argument.')
+            self._raise_init_type_error('at least one type must be present', *args)
 
         if not all(isinstance(arg, type) for arg in args):
-            raise TypeError(f'Argument args={args!r} of {self!r}() is expected to be one or more types.')
+            self._raise_init_type_error('only types must be present', *args)
 
         self.types = args
 
     def expected_str(self):
-        s = ", ".join(map(repr, self.types))
+        s = ', '.join(map(repr, self.types))
         s = f'({s})' if len(self.types) > 1 else s
         s = f'an instance of {s}'
 
@@ -238,7 +252,7 @@ class Typed(Checker):
         if isinstance(value, self.types):
             return True, value
         else:
-            return False, self._make_error(TypeError, name, value)
+            return False, self._make_check_error(TypeError, name, value)
 
 
 class Optional(Checker):
@@ -273,11 +287,13 @@ class Optional(Checker):
 
         # `default_value` and `default_factory` are mutually exclusive
         if default_value is not self.missing and default_factory is not self.missing:
-            raise TypeError(f'{self!r}() expects that default_value and default_factory are not both provided.')
+            self._raise_init_type_error('must not be both present',
+                                        default_value=default_value,
+                                        default_factory=default_factory)
 
         # `default_factory` must be a callable if provided
         if default_factory is not self.missing and not callable(default_factory):
-            raise TypeError(f'{self!r}() expects that if default_factory is provided, it must be a callable.')
+            self._raise_init_type_error('must be a callable (if present)', default_factory=default_factory)
 
         # Create a checker from `*args`
         self.checker = Checker.from_checker_likes(args)
@@ -307,7 +323,7 @@ class Optional(Checker):
         elif value is self.sentinel:
             return True, self.default_factory()
         else:
-            return False, self._make_error(type(value_), name, value)
+            return False, self._make_check_error(type(value_), name, value)
 
 
 class Comparable(Checker):
@@ -356,30 +372,32 @@ class Comparable(Checker):
         if not isinstance(other_type, tuple):
             other_type = (other_type,)
         if not all(isinstance(item, type) for item in other_type):
-            raise TypeError(f'{self!r}(other_type={other_type!r}) must be a type or tuple of types.')
+            self._raise_init_type_error('must be a type or tuple of types', other_type=other_type)
 
         # Check "other" argument types according to `other_type`
         for name, value in others.items():
             if not isinstance(value, other_type):
-                raise TypeError(f'Argument {name}={value!r} of {self!r}() must be {other_type!r} or None.')
+                other_type = other_type[0] if len(other_type) == 1 else other_type
+                self._raise_init_type_error(f'must have type {other_type!r} if present', **{name: value})
 
         # `lt` and `le` are mutually exclusive
         if 'lt' in others and 'le' in others:
-            raise TypeError(f'Arguments lt={lt!r} and le={le!r} of {self!r}() must not be both provided.')
+            self._raise_init_type_error('must not be both present', lt=lt, le=le)
 
         # `ge` and `gt` are mutually exclusive
         if 'ge' in others and 'gt' in others:
-            raise TypeError(f'Arguments ge={ge!r} and gt={gt!r} of {self!r}() must not be both provided.')
+            self._raise_init_type_error('must not be both present', ge=ge, gt=gt)
 
         # `eq` exclude all other arguments
         if 'eq' in others and len(others) > 1:
-            raise TypeError(f'Argument eq={eq!r} excludes all other arguments of {self!r}.')
+            del others['eq']
+            self._raise_init_type_error(f'must not be present if eq={eq!r} is present', **others)
 
         # Check that lower bound is indeed lower than upper bound (if both are provided)
-        lb = ge if ge is not None else gt
-        ub = le if le is not None else lt
-        if (lb is not None) and (ub is not None) and (lb > ub):
-            raise ValueError(f'Lower bound {lb!r} of {self!r} must be lower than the upper bound {ub!r}.')
+        lb = ('ge', ge) if ge is not None else ('gt', gt)
+        ub = ('le', le) if le is not None else ('lt', lt)
+        if (lb[1] is not None) and (ub[1] is not None) and (lb[1] > ub[1]):
+            self._raise_init_value_error('lower bound must be lower than upper bound', **dict([lb, ub]))
 
         # Create comparator functions for the arguments that are not None
         self.comparators = [partial(self._compare, other=other, comp_fn=self.comp_fns[name])
@@ -395,12 +413,12 @@ class Comparable(Checker):
         try:
             result = comp_fn(value, other)
         except TypeError:
-            return False, self._make_error(TypeError, name, value)
+            return False, self._make_check_error(TypeError, name, value)
 
         if result:
             return True, value
         else:
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
     def expected_str(self):
         return super().expected_str() + [self._expected_str]
@@ -436,13 +454,13 @@ class One(Checker):
         super().__init__(**kwargs)
 
         if len(args) < 2:
-            raise TypeError(f'{self!r}() must be called with at least two positional arguments, got {args!r}.')
+            self._raise_init_type_error('must be called with at least two positional arguments', *args)
 
         # Partition tuple into non-Checker types and everything else
         types, others = partition(args, lambda x: isinstance(x, type) and not issubclass(x, Checker))
 
         if not others:
-            raise TypeError(f'`One` checker got only plain types: {args!r}, in this case `Typed` should be used instead.')
+            self._raise_init_type_error('must not contain only plain types. in this case `Typed` should be used', *args)
 
         if types:
             others.append(Typed(*types))
@@ -477,4 +495,4 @@ class One(Checker):
         if passed_count == 1:
             return True, ret_value
         else:
-            return False, self._make_error(Exception, name, value)
+            return False, self._make_check_error(Exception, name, value)

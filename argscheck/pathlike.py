@@ -15,7 +15,7 @@ class _Suffix:
     def __init__(self, suffix, suffixes, ignore_case, *, parent):
         # ignore_case must be a bool
         if not isinstance(ignore_case, bool):
-            raise TypeError(f'{parent!r}(ignore_case={ignore_case!r}) is expected to be a bool.')
+            parent._raise_init_type_error('must be a bool', ignore_case=ignore_case)
 
         self.suffix = suffix
         self.suffixes = suffixes
@@ -32,7 +32,7 @@ class _Suffix:
         # suffixes must be None or a list of strings starting with a "."
         if self.suffixes_is_provided:
             if not isinstance(suffixes, list):
-                raise TypeError(f'{parent!r}(suffixes={suffixes!r}) is expected to be None or a list of strings.')
+                parent._raise_init_type_error('must be a list of strings (if present)', suffixes=suffixes)
 
             for i, sfx in enumerate(suffixes):
                 self._validate_suffix(parent, f'suffixes[{i}]', sfx)
@@ -50,10 +50,10 @@ class _Suffix:
 
     def _validate_suffix(self, parent, name, value):
         if not isinstance(value, str):
-            raise TypeError(f'{parent!r}({name}={value!r}) is expected to be None or str.')
+            parent._raise_init_type_error('must be a string (if present)', **{name: value})
 
         if re.fullmatch(r'(|\.[^\.]+)', value) is None:
-            raise ValueError(f'{parent!r}({name}={value!r}) must start with a dot (if provided).')
+            parent._raise_init_value_error('must start with a dot (if present)', **{name: value})
 
     def expected_str(self):
         suffixes = self.suffix_is_provided * [self.suffix] + self.suffixes_is_provided * [self.suffixes]
@@ -110,17 +110,17 @@ class PathLike(Typed):
 
         # is_dir and is_file are mutually exclusive
         if self.is_dir and self.is_file:
-            raise ValueError('PathLike() got both is_dir=True and is_file=True')
+            self._raise_init_value_error('must not be both True', is_dir=is_dir, is_file=is_file)
 
         # as_str and as_path are mutually exclusive
         if self.as_str and self.as_path:
-            raise ValueError('PathLike() got both as_str=True and as_path=True')
+            self._raise_init_value_error('must not be both True', as_str=as_str, as_path=as_path)
 
         self.suffix = _Suffix(suffix, suffixes, ignore_suffix_case, parent=self)
 
     def _validate_bool(self, name, value):
         if not isinstance(value, bool):
-            raise TypeError(f'{self!r}({name}={value!r}) is expected to be a bool.')
+            self._raise_init_type_error('must be a bool', **{name: value})
 
         return value
 
@@ -140,16 +140,16 @@ class PathLike(Typed):
 
         # Check if directory
         if self.is_dir and not path.is_dir():
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
         # Check if file
         if self.is_file and not path.is_file():
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
         # Check suffix(es)
         passed = self.suffix(name, path)
         if not passed:
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
         # Return possibly converted value
         if self.as_path:

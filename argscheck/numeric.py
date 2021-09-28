@@ -231,12 +231,11 @@ class Sized(Checker):
         # Check that no negative values were provided
         self._validate_lengths(len_lt=len_lt, len_le=len_le, len_ne=len_ne, len_eq=len_eq, len_ge=len_ge, len_gt=len_gt)
 
-    @staticmethod
-    def _validate_lengths(**kwargs):
+    def _validate_lengths(self, **kwargs):
         # At this point, values are None or int
         for name, value in kwargs.items():
             if value is not None and value < 0:
-                raise ValueError(f'Argument {name}={value!r} is expected to be None or a non-negative int.')
+                self._raise_init_value_error('must be non-negative if present', **{name: value})
 
     def expected_str(self):
         s = self.len_checker.expected_str()
@@ -253,12 +252,12 @@ class Sized(Checker):
         try:
             length = len(value)
         except TypeError:
-            return False, self._make_error(TypeError, name, value)
+            return False, self._make_check_error(TypeError, name, value)
 
         # Check length
         passed, e = self.len_checker(name, length)
         if not passed:
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
         return True, value
 

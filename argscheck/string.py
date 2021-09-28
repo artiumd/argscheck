@@ -40,10 +40,11 @@ class String(Typed):
         super().__init__(str, **kwargs)
 
         if pattern is not None and not isinstance(pattern, str):
-            raise TypeError(f'{self!r}(pattern={pattern!r}) must be None or str.')
+            self._raise_init_type_error('must be a string (if present)', pattern=pattern)
 
         if method not in self._allowed_methods:
-            raise ValueError(f'{self!r}(method={method!r}) must be one of {", ".join(self._allowed_methods)}.')
+            allowed_methods = [f'"{method}"' for method in self._allowed_methods]
+            self._raise_init_value_error(f'must be one of: {", ".join(allowed_methods)}', method=method)
 
         # Create a callable that will return None if value does not match the given pattern
         if pattern is not None:
@@ -69,6 +70,6 @@ class String(Typed):
 
         # Check if value matches the regex pattern, if not, return an error
         if self.re_matcher(value) is None:
-            return False, self._make_error(ValueError, name, value)
+            return False, self._make_check_error(ValueError, name, value)
 
         return True, value
