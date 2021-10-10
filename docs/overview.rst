@@ -1,7 +1,7 @@
 Overview
 ========
 
-The :mod:`argscheck` library provides means for simple yet comprehensive argument checking for Python.
+The :mod:`argscheck` library provides means for simple but comprehensive argument checking for Python.
 
 The main benefits are:
 

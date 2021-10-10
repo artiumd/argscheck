@@ -4,8 +4,8 @@ Iterator and Iterable
 
 This module contains checkers for iterator and iterable arguments.
 
-In this context, an iterator is a class that has ``__next__()`` implemented, so each call to ``next()`` produces an item,
-until finally ``StopIteration`` is raised.
+In this context, an iterator is a class that has ``__next__()`` implemented, so each call to ``next()`` produces an
+item, until finally ``StopIteration`` is raised.
 
 An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
 creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
