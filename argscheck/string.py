@@ -6,9 +6,11 @@ This module contains a checker for string arguments.
 """
 import re
 
+from . import export
 from .core import Typed
 
 
+@export
 class String(Typed):
     """
     Check if ``x`` is a string and optionally, if it matches a particular regex pattern.

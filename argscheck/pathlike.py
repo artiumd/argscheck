@@ -7,6 +7,7 @@ This module contains checkers for arguments that represent filesystem paths.
 import re
 from pathlib import Path
 
+from . import export
 from .utils import join
 from .core import Typed
 
@@ -82,6 +83,7 @@ class _Suffix:
         return not passed or True in passed
 
 
+@export
 class PathLike(Typed):
     """
     Check if ``x`` is of a path-like type (``str`` or ``pathlib.Path``).
@@ -160,6 +162,7 @@ class PathLike(Typed):
             return True, value
 
 
+@export
 class ExistingDir(PathLike):
     """
     Same as :class:`.PathLike`, plus, ``x`` must point to an existing directory.
@@ -171,6 +174,7 @@ class ExistingDir(PathLike):
         super().__init__(*args, is_dir=True, **kwargs)
 
 
+@export
 class ExistingFile(PathLike):
     """
     Same as :class:`.PathLike`, plus, ``x`` must point to an existing file.

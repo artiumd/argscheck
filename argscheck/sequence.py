@@ -27,10 +27,12 @@ Checkers that convert values (like :class:`.Optional` for example) are applied a
 2. For (non mutable) sequences, a new sequence instance is created from the converted items (this will happen only if
    actual conversion took place for at least one item).
 """
+from . import export
 from .core import Checker, Typed
 from .numeric import Sized, NonEmpty
 
 
+@export
 class Sequence(Sized, Typed):
     """
     Check if ``x`` is a sequence.
@@ -128,6 +130,7 @@ class Sequence(Sized, Typed):
         return True, value
 
 
+@export
 class NonEmptySequence(NonEmpty, Sequence):
     """
     Same as :class:`.Sequence`, plus, the length of ``x`` must be greater than zero.
@@ -137,6 +140,7 @@ class NonEmptySequence(NonEmpty, Sequence):
     pass
 
 
+@export
 class Tuple(Sequence):
     """
     Same as :class:`.Sequence`, plus, ``x`` must be a ``tuple``.
@@ -146,6 +150,7 @@ class Tuple(Sequence):
     types = (tuple,)
 
 
+@export
 class NonEmptyTuple(NonEmpty, Tuple):
     """
     Same as :class:`.Tuple`, plus, the length of ``x`` must be greater than zero.
@@ -155,6 +160,7 @@ class NonEmptyTuple(NonEmpty, Tuple):
     pass
 
 
+@export
 class MutableSequence(Sequence):
     """
     Check if ``x`` is a mutable sequence.
@@ -176,6 +182,7 @@ class MutableSequence(Sequence):
         return True, value
 
 
+@export
 class NonEmptyMutableSequence(NonEmpty, MutableSequence):
     """
     Same as :class:`.MutableSequence`, plus, the length of ``x`` must be greater than zero.
@@ -185,6 +192,7 @@ class NonEmptyMutableSequence(NonEmpty, MutableSequence):
     pass
 
 
+@export
 class List(MutableSequence):
     """
     Same as :class:`.MutableSequence`, plus, ``x`` must be a ``list``.
@@ -194,6 +202,7 @@ class List(MutableSequence):
     types = (list,)
 
 
+@export
 class NonEmptyList(NonEmpty, List):
     """
     Same as :class:`.List`, plus, the length of ``x`` must be greater than zero.

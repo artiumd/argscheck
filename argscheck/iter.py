@@ -10,9 +10,11 @@ until finally ``StopIteration`` is raised.
 An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
 creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
 """
+from . import export
 from .core import Checker
 
 
+@export
 class Iterator(Checker):
     """
     Check if ``x`` is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
@@ -79,6 +81,7 @@ class Iterator(Checker):
         return value
 
 
+@export
 class Iterable(Iterator):
     """
     Same as :class:`.Iterator`, plus, ``x`` can be a plain iterable (not necessarily an iterator).

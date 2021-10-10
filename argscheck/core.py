@@ -9,9 +9,11 @@ import operator
 from functools import partial, wraps
 import inspect
 
+from . import export
 from .utils import Sentinel, extend_docstring, partition, join
 
 
+@export
 def check_args(fn):
     """
     A decorator, that when applied to a function:
@@ -72,6 +74,7 @@ class CheckerMeta(type):
         extend_docstring(cls)
 
 
+@export
 class Checker(metaclass=CheckerMeta):
     """
     Base class for all checkers. This is presented mainly for the user-facing methods described below.
@@ -199,6 +202,7 @@ class Checker(metaclass=CheckerMeta):
         return pydantic.validator(name, **kwargs)(lambda value: self._check(name, value))
 
 
+@export
 class Typed(Checker):
     """
     Check if ``x`` is an instance of a given type (or types) using ``isinstance(x, args)``.
@@ -255,6 +259,7 @@ class Typed(Checker):
             return False, self._make_check_error(TypeError, name, value)
 
 
+@export
 class Optional(Checker):
     """
     Check if ``x`` is ``None`` or something else, similarly to ``typing.Optional``.
@@ -326,6 +331,7 @@ class Optional(Checker):
             return False, self._make_check_error(type(value_), name, value)
 
 
+@export
 class Comparable(Checker):
     """
     Check if ``x`` correctly compares to other value(s) using any of the following binary operators:
@@ -436,6 +442,7 @@ class Comparable(Checker):
         return True, value
 
 
+@export
 class One(Checker):
     """
     Check if ``x`` matches exactly one of a set of checkers.

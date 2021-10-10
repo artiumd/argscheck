@@ -13,11 +13,13 @@ In this context, a collection is a class that:
 Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
 ``*args`` parameter.
 """
+from . import export
 from .core import Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable
 
 
+@export
 class Collection(Sized, Typed):
     """
     Check if ``x`` is a collection.
@@ -72,6 +74,7 @@ class Collection(Sized, Typed):
         return True, value
 
 
+@export
 class Set(Comparable, Collection):
     """
     Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary

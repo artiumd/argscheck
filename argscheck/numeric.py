@@ -4,6 +4,7 @@ Numeric
 
 This module contains checkers for numeric arguments, as well as for sized arguments.
 """
+from . import export
 from .core import Checker, Typed, Comparable
 
 
@@ -12,6 +13,7 @@ _floats = (float,)
 _numbers = _ints + _floats
 
 
+@export
 class Number(Comparable, Typed):
     """
     Check if ``x`` is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
@@ -25,6 +27,7 @@ class Number(Comparable, Typed):
         super().__init__(*_numbers, other_type=other_type, **kwargs)
 
 
+@export
 class Int(Comparable, Typed):
     """
     Same as :class:`.Number`, plus, ``x`` must be an ``int``.
@@ -35,6 +38,7 @@ class Int(Comparable, Typed):
         super().__init__(*_ints, other_type=other_type, **kwargs)
 
 
+@export
 class Float(Comparable, Typed):
     """
     Same as :class:`.Number`, plus, ``x`` must be a ``float``.
@@ -50,6 +54,7 @@ Positive
 """
 
 
+@export
 class PositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x > 0`` must be ``True``.
@@ -61,6 +66,7 @@ class PositiveNumber(Number):
         super().__init__(*args, gt=0, **kwargs)
 
 
+@export
 class PositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x > 0`` must be ``True``.
@@ -72,6 +78,7 @@ class PositiveInt(Int):
         super().__init__(*args, gt=0, **kwargs)
 
 
+@export
 class PositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x > 0`` must be ``True``.
@@ -88,6 +95,7 @@ Non Negative
 """
 
 
+@export
 class NonNegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x >= 0`` must be ``True``.
@@ -99,6 +107,7 @@ class NonNegativeNumber(Number):
         super().__init__(*args, ge=0, **kwargs)
 
 
+@export
 class NonNegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x >= 0`` must be ``True``.
@@ -110,6 +119,7 @@ class NonNegativeInt(Int):
         super().__init__(*args, ge=0, **kwargs)
 
 
+@export
 class NonNegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x >= 0`` must be ``True``.
@@ -126,6 +136,7 @@ Negative
 """
 
 
+@export
 class NegativeNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x < 0`` must be ``True``.
@@ -137,6 +148,7 @@ class NegativeNumber(Number):
         super().__init__(*args, lt=0, **kwargs)
 
 
+@export
 class NegativeInt(Int):
     """
     Same as :class:`.Int`, plus, ``x < 0`` must be ``True``.
@@ -148,6 +160,7 @@ class NegativeInt(Int):
         super().__init__(*args, lt=0, **kwargs)
 
 
+@export
 class NegativeFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x < 0`` must be ``True``.
@@ -164,6 +177,7 @@ Non Positive
 """
 
 
+@export
 class NonPositiveNumber(Number):
     """
     Same as :class:`.Number`, plus, ``x <= 0`` must be ``True``.
@@ -175,6 +189,7 @@ class NonPositiveNumber(Number):
         super().__init__(*args, le=0, **kwargs)
 
 
+@export
 class NonPositiveInt(Int):
     """
     Same as :class:`.Int`, plus, ``x <= 0`` must be ``True``.
@@ -186,6 +201,7 @@ class NonPositiveInt(Int):
         super().__init__(*args, le=0, **kwargs)
 
 
+@export
 class NonPositiveFloat(Float):
     """
     Same as :class:`.Float`, plus, ``x <= 0`` must be ``True``.
@@ -197,6 +213,7 @@ class NonPositiveFloat(Float):
         super().__init__(*args, le=0, **kwargs)
 
 
+@export
 class Sized(Checker):
     """
     Check the length of ``x`` (as returned from ``len(x)``).
@@ -262,6 +279,7 @@ class Sized(Checker):
         return True, value
 
 
+@export
 class NonEmpty(Sized):
     """
     Check if length of ``x`` is greater than zero.
