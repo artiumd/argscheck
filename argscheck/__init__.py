@@ -27,4 +27,4 @@ __all__ = ['check_args', 'Checker', 'Typed', 'One', 'Optional', 'Comparable',
 
            'PathLike', 'ExistingDir', 'ExistingFile']
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
