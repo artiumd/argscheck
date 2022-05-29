@@ -124,12 +124,12 @@ class PathLike(Typed):
 
         return value
 
-    def expected_str(self):
+    def expected(self):
         existing = self.is_dir * 'pointing to an existing directory' + self.is_file * 'pointing to an existing file'
         suffixes = self.suffix.expected_str()
         s = join(', ', [existing, suffixes], on_empty='drop')
 
-        return super().expected_str() + [s]
+        return super().expected() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

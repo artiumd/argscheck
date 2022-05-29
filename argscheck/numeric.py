@@ -237,11 +237,11 @@ class Sized(Checker):
             if value is not None and value < 0:
                 self._raise_init_value_error('must be non-negative if present', **{name: value})
 
-    def expected_str(self):
-        s = self.len_checker.expected_str()
+    def expected(self):
+        s = self.len_checker.expected()
         s = 'has length ' + ', '.join(s[1:])  # [1:] to discard "an instance of <class 'int'>" that comes from Int
 
-        return super().expected_str() + [s]
+        return super().expected() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

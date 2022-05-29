@@ -58,10 +58,10 @@ class String(Typed):
         self.method = method
         self.pattern = pattern
 
-    def expected_str(self):
+    def expected(self):
         s = '' if self.pattern is None else f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
 
-        return super().expected_str() + [s]
+        return super().expected() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)

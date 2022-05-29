@@ -127,7 +127,7 @@ class Checker(metaclass=CheckerMeta):
         else:
             return next(iter(kwargs.items()))
 
-    def expected_str(self):
+    def expected(self):
         return []
 
     def _raise_init_error(self, err_type, desc, *args, **kwargs):
@@ -147,7 +147,7 @@ class Checker(metaclass=CheckerMeta):
     def _make_check_error(self, err_type, name, value):
         title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
         actual = f'ACTUAL: {value!r}'
-        expected = 'EXPECTED: ' + join(", ", self.expected_str(), on_empty="drop")
+        expected = 'EXPECTED: ' + join(", ", self.expected(), on_empty="drop")
         err_msg = '\n'.join([title, actual, expected])
 
         return err_type(err_msg)
@@ -237,12 +237,12 @@ class Typed(Checker):
 
         self.types = args
 
-    def expected_str(self):
+    def expected(self):
         s = ', '.join(map(repr, self.types))
         s = f'({s})' if len(self.types) > 1 else s
         s = f'an instance of {s}'
 
-        return super().expected_str() + [s]
+        return super().expected() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -349,8 +349,8 @@ class Comparable(Checker):
         else:
             return False, self._make_check_error(ValueError, name, value)
 
-    def expected_str(self):
-        return super().expected_str() + [self._expected_str]
+    def expected(self):
+        return super().expected() + [self._expected_str]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
@@ -397,13 +397,13 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def expected_str(self):
+    def expected(self):
         indent = ' ' * len('EXPECTED: ')
-        options = [', '.join(checker.expected_str()) for checker in self.checkers]
+        options = [', '.join(checker.expected()) for checker in self.checkers]
         options = [f'{indent}{i}. {option}' for i, option in enumerate(options, start=1)]
         s = 'exactly one of the following:\n' + '\n'.join(options)
 
-        return super().expected_str() + [s]
+        return super().expected() + [s]
 
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
