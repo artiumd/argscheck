@@ -112,56 +112,6 @@ class Checker(metaclass=CheckerMeta):
 
         raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
 
-    def _assert_not_in_kwargs(self, *names, **kwargs):
-        for name in names:
-            if name in kwargs:
-                raise ValueError(f'{self!r}() got an unexpected argument {name}={kwargs[name]!r}.')
-
-    def _resolve_name_value(self, *args, **kwargs):
-        # Make sure method is called properly and unpack argument's name and value
-        if len(args) + len(kwargs) != 1:
-            raise TypeError(f'{self!r}.check() must be called with a single positional or keyword argument.'
-                            f' Got {len(args)} positional arguments and {len(kwargs)} keyword arguments.')
-        if args:
-            return '', args[0]
-        else:
-            return next(iter(kwargs.items()))
-
-    def expected(self):
-        return []
-
-    def _raise_init_error(self, err_type, desc, *args, **kwargs):
-        args = [f'{value!r}' for value in args]
-        kwargs = [f'{name}={value!r}' for name, value in kwargs.items()]
-        arguments = ', '.join(args + kwargs)
-        err_msg = f'{self!r}({arguments}): {desc}.'
-
-        raise err_type(err_msg)
-
-    def _raise_init_type_error(self, desc, *args, **kwargs):
-        self._raise_init_error(TypeError, desc, *args, **kwargs)
-
-    def _raise_init_value_error(self, desc, *args, **kwargs):
-        self._raise_init_error(ValueError, desc, *args, **kwargs)
-
-    def _make_check_error(self, err_type, name, value):
-        title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
-        actual = f'ACTUAL: {value!r}'
-        expected = 'EXPECTED: ' + join(", ", self.expected(), on_empty="drop")
-        err_msg = '\n'.join([title, actual, expected])
-
-        return err_type(err_msg)
-
-    def _check(self, name, value):
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = self(name, value)
-
-        if passed:
-            return value_or_excp
-        else:
-            raise value_or_excp
-
     def check(self, *args, **kwargs):
         """
         Check an argument (and possibly convert it, depending on the particular checker instance).
@@ -197,6 +147,56 @@ class Checker(metaclass=CheckerMeta):
         import pydantic
 
         return pydantic.validator(name, **kwargs)(lambda value: self._check(name, value))
+
+    def expected(self):
+        return []
+
+    def _assert_not_in_kwargs(self, *names, **kwargs):
+        for name in names:
+            if name in kwargs:
+                raise ValueError(f'{self!r}() got an unexpected argument {name}={kwargs[name]!r}.')
+
+    def _resolve_name_value(self, *args, **kwargs):
+        # Make sure method is called properly and unpack argument's name and value
+        if len(args) + len(kwargs) != 1:
+            raise TypeError(f'{self!r}.check() must be called with a single positional or keyword argument.'
+                            f' Got {len(args)} positional arguments and {len(kwargs)} keyword arguments.')
+        if args:
+            return '', args[0]
+        else:
+            return next(iter(kwargs.items()))
+
+    def _raise_init_error(self, err_type, desc, *args, **kwargs):
+        args = [f'{value!r}' for value in args]
+        kwargs = [f'{name}={value!r}' for name, value in kwargs.items()]
+        arguments = ', '.join(args + kwargs)
+        err_msg = f'{self!r}({arguments}): {desc}.'
+
+        raise err_type(err_msg)
+
+    def _raise_init_type_error(self, desc, *args, **kwargs):
+        self._raise_init_error(TypeError, desc, *args, **kwargs)
+
+    def _raise_init_value_error(self, desc, *args, **kwargs):
+        self._raise_init_error(ValueError, desc, *args, **kwargs)
+
+    def _make_check_error(self, err_type, name, value):
+        title = join(' ', ['encountered an error while checking', name], on_empty='drop') + ':'
+        actual = f'ACTUAL: {value!r}'
+        expected = 'EXPECTED: ' + join(", ", self.expected(), on_empty="drop")
+        err_msg = '\n'.join([title, actual, expected])
+
+        return err_type(err_msg)
+
+    def _check(self, name, value):
+        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+        # exception.
+        passed, value_or_excp = self(name, value)
+
+        if passed:
+            return value_or_excp
+        else:
+            raise value_or_excp
 
 
 class Typed(Checker):
@@ -237,13 +237,6 @@ class Typed(Checker):
 
         self.types = args
 
-    def expected(self):
-        s = ', '.join(map(repr, self.types))
-        s = f'({s})' if len(self.types) > 1 else s
-        s = f'an instance of {s}'
-
-        return super().expected() + [s]
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -253,6 +246,13 @@ class Typed(Checker):
             return True, value
         else:
             return False, self._make_check_error(TypeError, name, value)
+
+    def expected(self):
+        s = ', '.join(map(repr, self.types))
+        s = f'({s})' if len(self.types) > 1 else s
+        s = f'an instance of {s}'
+
+        return super().expected() + [s]
 
 
 class Comparable(Checker):
@@ -337,21 +337,6 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def _compare(self, name, value, other, comp_fn):
-        # Compare value, if comparison fails, return the caught exception
-        try:
-            result = comp_fn(value, other)
-        except TypeError:
-            return False, self._make_check_error(TypeError, name, value)
-
-        if result:
-            return True, value
-        else:
-            return False, self._make_check_error(ValueError, name, value)
-
-    def expected(self):
-        return super().expected() + [self._expected_str]
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -363,6 +348,21 @@ class Comparable(Checker):
                 return False, value
 
         return True, value
+
+    def expected(self):
+        return super().expected() + [self._expected_str]
+
+    def _compare(self, name, value, other, comp_fn):
+        # Compare value, if comparison fails, return the caught exception
+        try:
+            result = comp_fn(value, other)
+        except TypeError:
+            return False, self._make_check_error(TypeError, name, value)
+
+        if result:
+            return True, value
+        else:
+            return False, self._make_check_error(ValueError, name, value)
 
 
 class One(Checker):
@@ -397,14 +397,6 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def expected(self):
-        indent = ' ' * len('EXPECTED: ')
-        options = [', '.join(checker.expected()) for checker in self.checkers]
-        options = [f'{indent}{i}. {option}' for i, option in enumerate(options, start=1)]
-        s = 'exactly one of the following:\n' + '\n'.join(options)
-
-        return super().expected() + [s]
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -425,3 +417,11 @@ class One(Checker):
             return True, ret_value
         else:
             return False, self._make_check_error(Exception, name, value)
+
+    def expected(self):
+        indent = ' ' * len('EXPECTED: ')
+        options = [', '.join(checker.expected()) for checker in self.checkers]
+        options = [f'{indent}{i}. {option}' for i, option in enumerate(options, start=1)]
+        s = 'exactly one of the following:\n' + '\n'.join(options)
+
+        return super().expected() + [s]

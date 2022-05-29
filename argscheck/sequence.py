@@ -60,6 +60,32 @@ class Sequence(Sized, Typed):
         else:
             self.item_checker = None
 
+    def __call__(self, name, value):
+        passed, value = super().__call__(name, value)
+        if not passed:
+            return False, value
+
+        # If Sequence was constructed with an empty *args, no need to iterate over items in the sequence
+        if self.item_checker is None:
+            return True, value
+
+        # Get all items in the sequence, check (and possibly convert) each one, arrange them in a list
+        passed, items, modified = self._get_items(name, value)
+        if not passed:
+            return False, items
+
+        # If none of the items were modified, can return now without setting them
+        if not modified:
+            return True, value
+
+        # Prepare return value. For an immutable sequence, a new sequence instance is created and returned, for a
+        # mutable sequence, items are set inplace and the original sequence is returned.
+        passed, value = self._set_items(name, value, items)
+        if not passed:
+            return False, value
+
+        return True, value
+
     def _get_items(self, name, value):
         items = []
         modified = False
@@ -100,32 +126,6 @@ class Sequence(Sized, Typed):
         except TypeError:
             return False, TypeError(f'Failed on {type(value).__qualname__}(), make sure this type can be instantiated '
                                     f'from an iterable.')
-
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
-        if not passed:
-            return False, value
-
-        # If Sequence was constructed with an empty *args, no need to iterate over items in the sequence
-        if self.item_checker is None:
-            return True, value
-
-        # Get all items in the sequence, check (and possibly convert) each one, arrange them in a list
-        passed, items, modified = self._get_items(name, value)
-        if not passed:
-            return False, items
-
-        # If none of the items were modified, can return now without setting them
-        if not modified:
-            return True, value
-
-        # Prepare return value. For an immutable sequence, a new sequence instance is created and returned, for a
-        # mutable sequence, items are set inplace and the original sequence is returned.
-        passed, value = self._set_items(name, value, items)
-        if not passed:
-            return False, value
-
-        return True, value
 
 
 class NonEmptySequence(NonEmpty, Sequence):

@@ -58,11 +58,6 @@ class String(Typed):
         self.method = method
         self.pattern = pattern
 
-    def expected(self):
-        s = '' if self.pattern is None else f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
-
-        return super().expected() + [s]
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -73,3 +68,8 @@ class String(Typed):
             return False, self._make_check_error(ValueError, name, value)
 
         return True, value
+
+    def expected(self):
+        s = '' if self.pattern is None else f'matching the "{self.pattern}" regex pattern via `re.{self.method}()`'
+
+        return super().expected() + [s]

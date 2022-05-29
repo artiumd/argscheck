@@ -231,18 +231,6 @@ class Sized(Checker):
         # Check that no negative values were provided
         self._validate_lengths(len_lt=len_lt, len_le=len_le, len_ne=len_ne, len_eq=len_eq, len_ge=len_ge, len_gt=len_gt)
 
-    def _validate_lengths(self, **kwargs):
-        # At this point, values are None or int
-        for name, value in kwargs.items():
-            if value is not None and value < 0:
-                self._raise_init_value_error('must be non-negative if present', **{name: value})
-
-    def expected(self):
-        s = self.len_checker.expected()
-        s = 'has length ' + ', '.join(s[1:])  # [1:] to discard "an instance of <class 'int'>" that comes from Int
-
-        return super().expected() + [s]
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -260,6 +248,18 @@ class Sized(Checker):
             return False, self._make_check_error(ValueError, name, value)
 
         return True, value
+
+    def expected(self):
+        s = self.len_checker.expected()
+        s = 'has length ' + ', '.join(s[1:])  # [1:] to discard "an instance of <class 'int'>" that comes from Int
+
+        return super().expected() + [s]
+
+    def _validate_lengths(self, **kwargs):
+        # At this point, values are None or int
+        for name, value in kwargs.items():
+            if value is not None and value < 0:
+                self._raise_init_value_error('must be non-negative if present', **{name: value})
 
 
 class NonEmpty(Sized):

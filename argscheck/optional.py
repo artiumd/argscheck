@@ -55,9 +55,6 @@ class Optional(Checker):
 
         self.sentinel = sentinel
 
-    def expected(self):
-        return super().expected() + ['missing or'] + self.checker.expected()
-
     def __call__(self, name, value):
         passed, value = super().__call__(name, value)
         if not passed:
@@ -71,3 +68,6 @@ class Optional(Checker):
             return True, self.default_factory()
         else:
             return False, self._make_check_error(type(value_), name, value)
+
+    def expected(self):
+        return super().expected() + ['missing or'] + self.checker.expected()
