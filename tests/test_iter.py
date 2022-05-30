@@ -1,4 +1,4 @@
-from argscheck import Iterator, Iterable, Optional, check_args
+from argscheck import Iterator, Iterable, Optional, check_args, check
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -29,8 +29,8 @@ class MockIterator:
 class TestIterable(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
-        Iterable(str).check(MockIterable('ret'))
-        Iterable(Optional(int, default_value=66)).check([1, 2, None, 3])
+        check(Iterable(str), MockIterable('ret'))
+        check(Iterable(Optional(int, default_value=66)), [1, 2, None, 3])
 
         # Bad arguments
         self.assertRaises(TypeError, Iterable, None)
@@ -38,7 +38,7 @@ class TestIterable(TestCaseArgscheck):
 
     def test_check(self):
         values = ([], [], [])
-        iter_checker = Iterable(list).check(MockIterable(values))
+        iter_checker = check(Iterable(list), MockIterable(values))
 
         i = 0
         for item, value in zip(iter_checker, values):
@@ -49,14 +49,14 @@ class TestIterable(TestCaseArgscheck):
         values = [1, 2, None, 3]
         checker = Iterable(Optional(int, default_value=66))
 
-        ret = list(checker.check(values))
+        ret = list(check(checker, values))
         self.assertEqual(ret, [1, 2, 66, 3])
 
-        iter_checker = Iterable(int).check(MockIterable('ret'))
+        iter_checker = check(Iterable(int), MockIterable('ret'))
         self.assertRaises(TypeError, list, iter_checker)
 
         checker = Iterable(str, bool)
-        iterable = checker.check(['a', True, 1.1])
+        iterable = check(checker, ['a', True, 1.1])
 
         iterator = iter(iterable)
         self.assertEqual(next(iterator), 'a')
@@ -73,7 +73,7 @@ class TestIterable(TestCaseArgscheck):
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
-        Iterator(str).check(MockIterator('ret'))
+        check(Iterator(str), MockIterator('ret'))
 
         self.assertRaises(TypeError, Iterator, None)
         self.assertRaises(TypeError, Iterator, None)
@@ -82,7 +82,7 @@ class TestIterator(TestCaseArgscheck):
         values = ([], [], [])
         iterator = MockIterator(values)
         checker = Iterator(list)
-        checker.check(iterator)
+        check(checker, iterator)
 
         for value in values:
             ret = next(checker)
@@ -93,7 +93,7 @@ class TestIterator(TestCaseArgscheck):
 
         # Each item must be an str or bool instance
         checker = Iterator(str, bool)
-        iterator = checker.check(iter(['a', True, 1.1]))
+        iterator = check(checker, iter(['a', True, 1.1]))
 
         self.assertEqual(next(iterator), 'a')
         self.assertEqual(next(iterator), True)

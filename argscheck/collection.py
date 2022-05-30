@@ -13,7 +13,7 @@ In this context, a collection is a class that:
 Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
 ``*args`` parameter.
 """
-from .core import Typed, Comparable
+from .core import check, Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable
 
@@ -62,7 +62,7 @@ class Collection(Sized, Typed):
         if not name:
             name = repr(self).lower()
 
-        items = list(self.iterable._check(name, value))
+        items = list(check(self.iterable, value, name))
 
         try:
             value = type(value)(items)

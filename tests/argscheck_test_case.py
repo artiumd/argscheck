@@ -1,6 +1,7 @@
 import unittest
+from functools import partial
 
-from argscheck import Checker
+from argscheck import check, Checker
 
 
 class TestCaseArgscheck(unittest.TestCase):
@@ -23,20 +24,20 @@ class TestCaseArgscheck(unittest.TestCase):
     checker = property(get_checker, set_checker)
 
     def assertOutputIsInput(self, value):
-        ret = self.checker.check(value)
+        ret = check(self.checker, value)
         self.assertIs(ret, value)
 
     def assertOutputEqualsInput(self, value):
-        ret = self.checker.check(value)
+        ret = check(self.checker, value)
         self.assertEqual(ret, value)
 
     def assertOutputIs(self, value, exp_output):
-        ret = self.checker.check(value)
+        ret = check(self.checker, value)
         self.assertIs(ret, exp_output)
 
     def assertOutputEquals(self, value, exp_output):
-        ret = self.checker.check(value)
+        ret = check(self.checker, value)
         self.assertEqual(ret, exp_output)
 
     def assertRaisesOnCheck(self, expected_exception, *args, **kwargs):
-        return self.assertRaises(expected_exception, self.checker.check, *args, **kwargs)
+        return self.assertRaises(expected_exception, partial(check, self.checker), *args, **kwargs)

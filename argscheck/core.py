@@ -12,6 +12,40 @@ import inspect
 from .utils import extend_docstring, partition, join
 
 
+def check(checker_like, value, name=''):
+    """
+    Check an argument (and possibly convert it, depending on the particular checker instance).
+
+    A call to ``check()`` will have one of two possible outcomes:
+
+    1. Check passes, the checked (and possibly converted) argument will be returned.
+    2. Check fails, an appropriate exception with an error message will be raised.
+
+    Also, there are two possible calling signatures:
+
+    .. code-block:: python
+
+        checker.check(value)
+        checker.check(name=value)
+
+    The only difference is that in the second call, ``name`` will appear in the error message in case the check
+    fails.
+    """
+    checker = Checker.from_checker_likes(checker_like)
+
+    if checker.deferred:
+        return checker._check(name, value)
+    else:
+        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+        # exception.
+        passed, value_or_excp = checker._check(name, value)
+
+        if passed:
+            return value_or_excp
+        else:
+            raise value_or_excp
+
+
 def check_args(fn):
     """
     A decorator, that when applied to a function:
@@ -52,14 +86,14 @@ def check_args(fn):
     # Build a function that performs argument checking, then, calls original function
     @wraps(fn)
     def checked_fn(*args, **kwargs):
-        # Bind arguments to parameters so we can associate checkers with argument values
+        # Bind arguments to parameters, so we can associate checkers with argument values
         bound_args = signature.bind(*args, **kwargs)
         bound_args.apply_defaults()
 
         # Check each argument for which a checker was defined, then, call original function with checked values
         for name, checker in checkers.items():
             value = bound_args.arguments[name]
-            bound_args.arguments[name] = checker.check(**{name: value})
+            bound_args.arguments[name] = check(checker, value, name)
 
         return fn(*bound_args.args, **bound_args.kwargs)
 
@@ -92,22 +126,24 @@ class Checker(metaclass=CheckerMeta):
 
     @classmethod
     def from_checker_likes(cls, value, name='args'):
-        if isinstance(value, tuple) and len(value) == 1:
-            return cls.from_checker_likes(value[0], name=f'{name}[0]')
+        if isinstance(value, tuple):
+            if len(value) == 1:
+                value = value[0]
+            elif len(value) > 1:
+                # Partition tuple into non-Checker types and everything else
+                types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
 
-        if isinstance(value, tuple) and len(value) > 1:
-            # Partition tuple into non-Checker types and everything else
-            types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
+                if types and others:
+                    others.append(Typed(*types))
+                    checker = One(*others)
+                elif types:
+                    checker = Typed(*types)
+                else:
+                    checker = One(*others)
 
-            if types and others:
-                others.append(Typed(*types))
-                checker = One(*others)
-            elif types:
-                checker = Typed(*types)
+                return checker
             else:
-                checker = One(*others)
-
-            return checker
+                pass
 
         if isinstance(value, Checker):
             return value
@@ -120,39 +156,6 @@ class Checker(metaclass=CheckerMeta):
 
         raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
 
-    def check(self, *args, **kwargs):
-        """
-        Check an argument (and possibly convert it, depending on the particular checker instance).
-
-        A call to ``check()`` will have one of two possible outcomes:
-
-        1. Check passes, the checked (and possibly converted) argument will be returned.
-        2. Check fails, an appropriate exception with an error message will be raised.
-
-        Also, there are two possible calling signatures:
-
-        .. code-block:: python
-
-            checker.check(value)
-            checker.check(name=value)
-
-        The only difference is that in the second call, ``name`` will appear in the error message in case the check
-        fails.
-        """
-        name, value = self._resolve_name_value(*args, **kwargs)
-
-        if self.deferred:
-            return self._check(name, value)
-        else:
-            # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-            # exception.
-            passed, value_or_excp = self._check(name, value)
-
-            if passed:
-                return value_or_excp
-            else:
-                raise value_or_excp
-
     def validator(self, name, **kwargs):
         """
         Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
@@ -164,7 +167,7 @@ class Checker(metaclass=CheckerMeta):
         """
         import pydantic
 
-        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
+        return pydantic.validator(name, **kwargs)(lambda value: check(self, value, name))
 
     def expected(self):
         return []
@@ -176,16 +179,6 @@ class Checker(metaclass=CheckerMeta):
         for name in names:
             if name in kwargs:
                 raise ValueError(f'{self!r}() got an unexpected argument {name}={kwargs[name]!r}.')
-
-    def _resolve_name_value(self, *args, **kwargs):
-        # Make sure method is called properly and unpack argument's name and value
-        if len(args) + len(kwargs) != 1:
-            raise TypeError(f'{self!r}.check() must be called with a single positional or keyword argument.'
-                            f' Got {len(args)} positional arguments and {len(kwargs)} keyword arguments.')
-        if args:
-            return '', args[0]
-        else:
-            return next(iter(kwargs.items()))
 
     def _raise_init_error(self, err_type, desc, *args, **kwargs):
         args = [f'{value!r}' for value in args]
