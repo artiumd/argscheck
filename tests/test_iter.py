@@ -1,4 +1,4 @@
-from argscheck import Iterator, Iterable, Optional
+from argscheck import Iterator, Iterable, Optional, check_args
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -64,6 +64,12 @@ class TestIterable(TestCaseArgscheck):
         with self.assertRaises(Exception):
             next(iterator)
 
+        @check_args
+        def fn(x: Iterable(int)):
+            return list(x)
+
+        fn(MockIterable((1, 2, 3)))
+
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
@@ -93,3 +99,9 @@ class TestIterator(TestCaseArgscheck):
         self.assertEqual(next(iterator), True)
         with self.assertRaises(Exception):
             next(iterator)
+
+        @check_args
+        def fn(x: Iterator(int)):
+            yield from x
+
+        fn(MockIterable([1, 2, 3]))
