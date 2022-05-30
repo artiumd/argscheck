@@ -73,11 +73,6 @@ class Iterator(Checker):
 
         return self
 
-    def check(self, *args, **kwargs):
-        name, value = self._resolve_name_value(*args, **kwargs)
-
-        return self.__call__(name, value)
-
 
 class Iterable(Iterator):
     """

@@ -131,16 +131,22 @@ class Checker(metaclass=CheckerMeta):
         The only difference is that in the second call, ``name`` will appear in the error message in case the check
         fails.
         """
+        # TODO
+        deferred = self.__class__.__name__ in {'Iterable', 'Iterator'}
+
         name, value = self._resolve_name_value(*args, **kwargs)
 
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = self(name, value)
-
-        if passed:
-            return value_or_excp
+        if deferred:
+            return self.__call__(name, value)
         else:
-            raise value_or_excp
+            # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+            # exception.
+            passed, value_or_excp = self(name, value)
+
+            if passed:
+                return value_or_excp
+            else:
+                raise value_or_excp
 
     def validator(self, name, **kwargs):
         """
