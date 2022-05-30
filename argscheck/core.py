@@ -59,7 +59,7 @@ def check_args(fn):
         # Check each argument for which a checker was defined, then, call original function with checked values
         for name, checker in checkers.items():
             value = bound_args.arguments[name]
-            bound_args.arguments[name] = checker._check(name, value)
+            bound_args.arguments[name] = checker.check(**{name: value})
 
         return fn(*bound_args.args, **bound_args.kwargs)
 
@@ -133,7 +133,14 @@ class Checker(metaclass=CheckerMeta):
         """
         name, value = self._resolve_name_value(*args, **kwargs)
 
-        return self._check(name, value)
+        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+        # exception.
+        passed, value_or_excp = self(name, value)
+
+        if passed:
+            return value_or_excp
+        else:
+            raise value_or_excp
 
     def validator(self, name, **kwargs):
         """
@@ -146,7 +153,7 @@ class Checker(metaclass=CheckerMeta):
         """
         import pydantic
 
-        return pydantic.validator(name, **kwargs)(lambda value: self._check(name, value))
+        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
 
     def expected(self):
         return []
@@ -187,16 +194,6 @@ class Checker(metaclass=CheckerMeta):
         err_msg = '\n'.join([title, actual, expected])
 
         return err_type(err_msg)
-
-    def _check(self, name, value):
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = self(name, value)
-
-        if passed:
-            return value_or_excp
-        else:
-            raise value_or_excp
 
 
 class Typed(Checker):
