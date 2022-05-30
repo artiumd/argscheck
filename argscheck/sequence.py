@@ -50,6 +50,7 @@ class Sequence(Sized, Typed):
         checker.check(['a', 1])      # Fails, raises TypeError (not all items are str)
 
     """
+    # TODO consider moving to metaclass constructor
     types = (object,)
 
     def __init__(self, *args, **kwargs):
@@ -143,6 +144,7 @@ class Tuple(Sequence):
 
     :meta skip-extend-docstring:
     """
+    # TODO consider moving to metaclass constructor
     types = (tuple,)
 
 
@@ -191,6 +193,7 @@ class List(MutableSequence):
 
     :meta skip-extend-docstring:
     """
+    # TODO consider moving to metaclass constructor
     types = (list,)
 
 

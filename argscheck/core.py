@@ -67,8 +67,18 @@ def check_args(fn):
 
 
 class CheckerMeta(type):
-    def __init__(cls, name, bases, attrs, **kwargs):
+    def __new__(mcs, name, bases, attrs, deferred=False, **kwargs):
+        # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
+        # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
+        return super().__new__(mcs, name, bases, attrs, **kwargs)
+
+    def __init__(cls, name, bases, attrs, deferred=False, **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
+
+        if not isinstance(deferred, bool):
+            raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
+
+        cls.deferred = deferred
         extend_docstring(cls)
 
 
@@ -76,6 +86,7 @@ class Checker(metaclass=CheckerMeta):
     """
     Base class for all checkers. This is presented mainly for the user-facing methods described below.
     """
+
     def __repr__(self):
         return type(self).__qualname__
 
@@ -128,12 +139,9 @@ class Checker(metaclass=CheckerMeta):
         The only difference is that in the second call, ``name`` will appear in the error message in case the check
         fails.
         """
-        # TODO
-        deferred = self.__class__.__name__ in {'Iterable', 'Iterator'}
-
         name, value = self._resolve_name_value(*args, **kwargs)
 
-        if deferred:
+        if self.deferred:
             return self._check(name, value)
         else:
             # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned

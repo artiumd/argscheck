@@ -39,6 +39,7 @@ class Collection(Sized, Typed):
         checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
 
     """
+    # TODO consider moving to metaclass constructor
     types = (object,)
 
     def __init__(self, *args, **kwargs):
@@ -96,6 +97,7 @@ class Set(Comparable, Collection):
 
     :meta skip-extend-docstring-other_type:
     """
+    # TODO consider moving to metaclass constructor
     types = (set,)
 
     def __init__(self, *args, **kwargs):
