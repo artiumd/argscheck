@@ -13,7 +13,7 @@ creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the re
 from .core import Checker
 
 
-class Iterator(Checker):
+class Iterator(Checker, deferred=True):
     """
     Check if ``x`` is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
 
@@ -37,6 +37,7 @@ class Iterator(Checker):
         next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
@@ -57,13 +58,13 @@ class Iterator(Checker):
             raise stop
 
         # Check next item from iterator
-        passed, value = self.item_checker(name, value)
+        passed, value = self.item_checker._check(name, value)
         if not passed:
             raise value
 
         return value
 
-    def __call__(self, name, value):
+    def _check(self, name, value):
         if not name:
             name = repr(self).lower()
 
@@ -73,13 +74,8 @@ class Iterator(Checker):
 
         return self
 
-    def check(self, *args, **kwargs):
-        name, value = self._resolve_name_value(*args, **kwargs)
 
-        return self.__call__(name, value)
-
-
-class Iterable(Iterator):
+class Iterable(Iterator, deferred=True):
     """
     Same as :class:`.Iterator`, plus, ``x`` can be a plain iterable (not necessarily an iterator).
 

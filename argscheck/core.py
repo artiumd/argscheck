@@ -59,7 +59,7 @@ def check_args(fn):
         # Check each argument for which a checker was defined, then, call original function with checked values
         for name, checker in checkers.items():
             value = bound_args.arguments[name]
-            bound_args.arguments[name] = checker._check(name, value)
+            bound_args.arguments[name] = checker.check(**{name: value})
 
         return fn(*bound_args.args, **bound_args.kwargs)
 
@@ -67,8 +67,18 @@ def check_args(fn):
 
 
 class CheckerMeta(type):
-    def __init__(cls, name, bases, attrs, **kwargs):
+    def __new__(mcs, name, bases, attrs, deferred=False, **kwargs):
+        # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
+        # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
+        return super().__new__(mcs, name, bases, attrs, **kwargs)
+
+    def __init__(cls, name, bases, attrs, deferred=False, **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
+
+        if not isinstance(deferred, bool):
+            raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
+
+        cls.deferred = deferred
         extend_docstring(cls)
 
 
@@ -76,11 +86,9 @@ class Checker(metaclass=CheckerMeta):
     """
     Base class for all checkers. This is presented mainly for the user-facing methods described below.
     """
+
     def __repr__(self):
         return type(self).__qualname__
-
-    def __call__(self, name, value):
-        return True, value
 
     @classmethod
     def from_checker_likes(cls, value, name='args'):
@@ -133,7 +141,17 @@ class Checker(metaclass=CheckerMeta):
         """
         name, value = self._resolve_name_value(*args, **kwargs)
 
-        return self._check(name, value)
+        if self.deferred:
+            return self._check(name, value)
+        else:
+            # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
+            # exception.
+            passed, value_or_excp = self._check(name, value)
+
+            if passed:
+                return value_or_excp
+            else:
+                raise value_or_excp
 
     def validator(self, name, **kwargs):
         """
@@ -146,10 +164,13 @@ class Checker(metaclass=CheckerMeta):
         """
         import pydantic
 
-        return pydantic.validator(name, **kwargs)(lambda value: self._check(name, value))
+        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
 
     def expected(self):
         return []
+
+    def _check(self, name, value):
+        return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
         for name in names:
@@ -187,16 +208,6 @@ class Checker(metaclass=CheckerMeta):
         err_msg = '\n'.join([title, actual, expected])
 
         return err_type(err_msg)
-
-    def _check(self, name, value):
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = self(name, value)
-
-        if passed:
-            return value_or_excp
-        else:
-            raise value_or_excp
 
 
 class Typed(Checker):
@@ -237,8 +248,8 @@ class Typed(Checker):
 
         self.types = args
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -337,8 +348,8 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -397,8 +408,8 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -407,7 +418,7 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker(name, value)
+            passed, ret_value_ = checker._check(name, value)
             if passed:
                 passed_count += 1
                 ret_value = ret_value_
