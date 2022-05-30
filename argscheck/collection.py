@@ -49,8 +49,8 @@ class Collection(Sized, Typed):
         else:
             self.iterable = None
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -61,7 +61,7 @@ class Collection(Sized, Typed):
         if not name:
             name = repr(self).lower()
 
-        items = list(self.iterable(name, value))
+        items = list(self.iterable._check(name, value))
 
         try:
             value = type(value)(items)

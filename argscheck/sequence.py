@@ -60,8 +60,8 @@ class Sequence(Sized, Typed):
         else:
             self.item_checker = None
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -108,7 +108,7 @@ class Sequence(Sized, Typed):
                 return False, TypeError(f'Failed getting {item_name.format(i)}, make sure {seq_name} is a sequence.'), \
                        modified
 
-            passed, post_check_item = self.item_checker(item_name.format(i), pre_check_item)
+            passed, post_check_item = self.item_checker._check(item_name.format(i), pre_check_item)
             if not passed:
                 return False, post_check_item, modified
 

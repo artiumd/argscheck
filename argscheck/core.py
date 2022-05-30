@@ -79,9 +79,6 @@ class Checker(metaclass=CheckerMeta):
     def __repr__(self):
         return type(self).__qualname__
 
-    def __call__(self, name, value):
-        return True, value
-
     @classmethod
     def from_checker_likes(cls, value, name='args'):
         if isinstance(value, tuple) and len(value) == 1:
@@ -137,11 +134,11 @@ class Checker(metaclass=CheckerMeta):
         name, value = self._resolve_name_value(*args, **kwargs)
 
         if deferred:
-            return self.__call__(name, value)
+            return self._check(name, value)
         else:
             # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
             # exception.
-            passed, value_or_excp = self(name, value)
+            passed, value_or_excp = self._check(name, value)
 
             if passed:
                 return value_or_excp
@@ -163,6 +160,9 @@ class Checker(metaclass=CheckerMeta):
 
     def expected(self):
         return []
+
+    def _check(self, name, value):
+        return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
         for name in names:
@@ -240,8 +240,8 @@ class Typed(Checker):
 
         self.types = args
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -340,8 +340,8 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -400,8 +400,8 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def __call__(self, name, value):
-        passed, value = super().__call__(name, value)
+    def _check(self, name, value):
+        passed, value = super()._check(name, value)
         if not passed:
             return False, value
 
@@ -410,7 +410,7 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker(name, value)
+            passed, ret_value_ = checker._check(name, value)
             if passed:
                 passed_count += 1
                 ret_value = ret_value_

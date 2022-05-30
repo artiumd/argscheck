@@ -57,13 +57,13 @@ class Iterator(Checker):
             raise stop
 
         # Check next item from iterator
-        passed, value = self.item_checker(name, value)
+        passed, value = self.item_checker._check(name, value)
         if not passed:
             raise value
 
         return value
 
-    def __call__(self, name, value):
+    def _check(self, name, value):
         if not name:
             name = repr(self).lower()
 
