@@ -43,21 +43,6 @@ class Iterator(Checker):
         self.item_checker = Checker.from_checker_likes(args)
         self.name = self.i = self.iterator = None
 
-    def check(self, *args, **kwargs):
-        name, value = self._resolve_name_value(*args, **kwargs)
-
-        return self.__call__(name, value)
-
-    def __call__(self, name, value):
-        if not name:
-            name = repr(self).lower()
-
-        self.name = 'item {} from ' + name
-        self.iterator = value
-        self.i = 0
-
-        return self
-
     def __next__(self):
         name = self.name.format(self.i)
         self.i += 1
@@ -77,6 +62,21 @@ class Iterator(Checker):
             raise value
 
         return value
+
+    def __call__(self, name, value):
+        if not name:
+            name = repr(self).lower()
+
+        self.name = 'item {} from ' + name
+        self.iterator = value
+        self.i = 0
+
+        return self
+
+    def check(self, *args, **kwargs):
+        name, value = self._resolve_name_value(*args, **kwargs)
+
+        return self.__call__(name, value)
 
 
 class Iterable(Iterator):

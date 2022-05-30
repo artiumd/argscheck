@@ -2,16 +2,6 @@ from collections import OrderedDict
 import inspect
 
 
-class ContainsAll:
-    def __contains__(self, item):
-        return True
-
-
-class ContainsNone:
-    def __contains__(self, item):
-        return False
-
-
 class Sentinel:
     def __init__(self, name):
         self.name = name
@@ -20,12 +10,51 @@ class Sentinel:
         return self.name
 
 
-class DocString:
+def extend_docstring(cls):
+    cls_doc, *bases_docs = [_DocString.from_class(base) for base in inspect.getmro(cls)]
+    cls_doc.extend_params(bases_docs)
+
+    cls.__doc__ = cls_doc.to_string()
+
+
+def partition(sequence, condition):
+    true, false = [], []
+
+    for item in sequence:
+        if condition(item):
+            true.append(item)
+        else:
+            false.append(item)
+
+    return true, false
+
+
+def join(string, iterable, *, on_empty=None):
+    """
+    A functional version of ``str.join()`` providing more flexibility via the ``on_empty`` parameter.
+
+    Arguments are not checked.
+
+    :param string:
+    :param iterable:
+    :param on_empty:
+    :return:
+    """
+    if on_empty == 'drop':
+        return string.join(item for item in iterable if item)
+
+    if on_empty == 'abort' and '' in iterable:
+        return ''
+
+    return string.join(iterable)
+
+
+class _DocString:
     def __init__(self, doc):
         self.prefix = ''
         self.params = OrderedDict()
         self.suffix = ''
-        self.skipped_params = ContainsNone()
+        self.skipped_params = _ContainsNone()
         self._parse_docstring(doc)
 
     @classmethod
@@ -58,7 +87,7 @@ class DocString:
             if params:
                 self.skipped_params = set(params)
             else:
-                self.skipped_params = ContainsAll()
+                self.skipped_params = _ContainsAll()
 
         examples_start = doc.find(':Example:')
         params_start = doc.find(':param')
@@ -103,40 +132,11 @@ class DocString:
                 self.params[key] = value
 
 
-def extend_docstring(cls):
-    cls_doc, *bases_docs = [DocString.from_class(base) for base in inspect.getmro(cls)]
-    cls_doc.extend_params(bases_docs)
-
-    cls.__doc__ = cls_doc.to_string()
+class _ContainsAll:
+    def __contains__(self, item):
+        return True
 
 
-def partition(sequence, condition):
-    true, false = [], []
-
-    for item in sequence:
-        if condition(item):
-            true.append(item)
-        else:
-            false.append(item)
-
-    return true, false
-
-
-def join(string, iterable, *, on_empty=None):
-    """
-    A functional version of ``str.join()`` providing more flexibility via the ``on_empty`` parameter.
-
-    Arguments are not checked.
-
-    :param string:
-    :param iterable:
-    :param on_empty:
-    :return:
-    """
-    if on_empty == 'drop':
-        return string.join(item for item in iterable if item)
-
-    if on_empty == 'abort' and '' in iterable:
-        return ''
-
-    return string.join(iterable)
+class _ContainsNone:
+    def __contains__(self, item):
+        return False

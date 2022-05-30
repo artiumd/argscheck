@@ -1,0 +1,2 @@
+.. automodule:: argscheck.optional
+    :members:
