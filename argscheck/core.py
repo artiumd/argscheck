@@ -99,6 +99,20 @@ def check_args(fn):
     return checked_fn
 
 
+def validator(checker, name, **kwargs):
+    """
+    Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
+    ``pydantic`` model. The validator will perform the checking and conversion by calling the
+    :meth:`.Checker.check` method.
+
+    :param name: *str* – Name of field for which validator is created.
+    :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
+    """
+    import pydantic
+
+    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
+
+
 class CheckerMeta(type):
     def __new__(mcs, name, bases, attrs, deferred=False, **kwargs):
         # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
@@ -160,19 +174,6 @@ class Checker(metaclass=CheckerMeta):
             return Typed(value)
 
         raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
-
-    def validator(self, name, **kwargs):
-        """
-        Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
-        ``pydantic`` model. The validator will perform the checking and conversion by calling the
-        :meth:`.Checker.check` method.
-
-        :param name: *str* – Name of field for which validator is created.
-        :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
-        """
-        import pydantic
-
-        return pydantic.validator(name, **kwargs)(lambda value: check(self, value, name))
 
     def expected(self):
         return []
