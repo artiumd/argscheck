@@ -52,6 +52,23 @@ class TestIterable(TestCaseArgscheck):
         behaviours = ['is', 'raises:Exception', 'is', 'raises:Exception', 'raises:Exception', 'is']
         self.assertItemsFromIter(MockIterable(values), behaviours, values, iterable=True)
 
+        checker = Iterable(Iterable(int))
+        value = [[0, 1, 2], [3, 4, 5]]
+        expected_value = 0
+
+        for outer_value in check(checker, value):
+            for inner_value in outer_value:
+                self.assertEqual(expected_value, inner_value)
+                expected_value += 1
+
+        checker = Iterable(Iterable(int))
+        value = [['']]
+
+        for outer_value in check(checker, value):
+            with self.assertRaises(TypeError):
+                for inner_value in outer_value:
+                    pass
+
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
