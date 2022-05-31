@@ -117,6 +117,12 @@ class CheckerMeta(type):
         cls.deferred = deferred
         extend_docstring(cls)
 
+    def __getitem__(cls, item):
+        if isinstance(item, tuple):
+            return cls(*item)
+        else:
+            return cls(item)
+
 
 class Checker(metaclass=CheckerMeta):
     """
