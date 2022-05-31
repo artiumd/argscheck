@@ -37,12 +37,12 @@ def check(checker_like, value, name=''):
     if isinstance(result, Checker) and result.deferred:  # TODO maybe `and checker.deferred`
         return result
     else:
-        passed, value_or_excp = result
+        passed, value_or_exception = result
 
         if passed:
-            return value_or_excp
+            return value_or_exception
         else:
-            raise value_or_excp
+            raise value_or_exception
 
 
 def check_args(fn):
@@ -231,9 +231,9 @@ class Typed(Checker):
         # In case ``Typed(*types)`` and ``types`` contains ``object``, return a ``Checker`` instance, which will always
         # pass without the need to call ``isinstance()``.
         if cls is Typed and object in args:
-            return object.__new__(Checker)
+            return super().__new__(Checker)
         else:
-            return object.__new__(cls)
+            return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)

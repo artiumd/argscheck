@@ -63,6 +63,15 @@ class TestTyped(TestCaseArgscheck):
         self.assertOutputIsInput('abcd')
         self.assertRaisesOnCheck(TypeError, 0x1234)
 
+        self.checker = Typed(object)
+        self.assertOutputIsInput('')
+        self.assertOutputIsInput([])
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput([[[]]])
+        self.assertOutputIsInput(object)
+        self.assertOutputIsInput(object())
+        self.assertOutputIsInput(type)
+
 
 class TestOne(TestCaseArgscheck):
     def test_init(self):
