@@ -60,7 +60,7 @@ class Iterator(Checker, deferred=True):
         # Check next item from iterator
         return check(self.item_checker, value, name)
 
-    def _check(self, name, value):
+    def check(self, name, value):
         if not name:
             name = repr(self).lower()
 

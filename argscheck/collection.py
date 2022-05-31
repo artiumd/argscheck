@@ -50,8 +50,8 @@ class Collection(Sized, Typed):
         else:
             self.iterable = None
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 

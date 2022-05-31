@@ -34,11 +34,13 @@ def check(checker_like, value, name=''):
     checker = Checker.from_checker_likes(checker_like)
 
     if checker.deferred:
-        return checker._check(name, value)
+        wrapper = checker.check(name, value)
+
+        return wrapper
     else:
         # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
         # exception.
-        passed, value_or_excp = checker._check(name, value)
+        passed, value_or_excp = checker.check(name, value)
 
         if passed:
             return value_or_excp
@@ -172,7 +174,7 @@ class Checker(metaclass=CheckerMeta):
     def expected(self):
         return []
 
-    def _check(self, name, value):
+    def check(self, name, value):
         return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
@@ -241,8 +243,8 @@ class Typed(Checker):
 
         self.types = args
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -341,8 +343,8 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -401,8 +403,8 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -411,7 +413,7 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker._check(name, value)
+            passed, ret_value_ = checker.check(name, value)
             if passed:
                 passed_count += 1
                 ret_value = ret_value_
