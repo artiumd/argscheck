@@ -1,10 +1,7 @@
 from argscheck import Checker, Typed, Sized, One, Comparable, String, Int
 
 from tests.argscheck_test_case import TestCaseArgscheck
-
-
-class MockClass:
-    pass
+from tests.mocks import MockClass
 
 
 class TestTyped(TestCaseArgscheck):

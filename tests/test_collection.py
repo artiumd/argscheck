@@ -1,20 +1,7 @@
 from argscheck import Optional, Collection, Set
 
 from tests.argscheck_test_case import TestCaseArgscheck
-
-
-class MockCollection:
-    def __init__(self, items):
-        self.items = list(items)
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __eq__(self, other):
-        return set(self.items) == set(other.items)
+from tests.mocks import MockCollection
 
 
 class TestCollection(TestCaseArgscheck):

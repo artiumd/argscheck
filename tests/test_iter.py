@@ -1,29 +1,7 @@
 from argscheck import Iterator, Iterable, Optional, check_args, check, PositiveNumber
 
 from tests.argscheck_test_case import TestCaseArgscheck
-
-
-class MockIterable:
-    def __init__(self, values):
-        self.values = values
-
-    def __iter__(self):
-        return MockIterator(self.values)
-
-
-class MockIterator:
-    def __init__(self, values):
-        self.values = values
-        self.i = 0
-
-    def __next__(self):
-        if self.i == len(self.values):
-            raise StopIteration
-        else:
-            ret = self.values[self.i]
-            self.i += 1
-
-            return ret
+from tests.mocks import MockIterable, MockIterator
 
 
 class TestIterable(TestCaseArgscheck):
