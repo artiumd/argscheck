@@ -60,14 +60,19 @@ class Optional(Checker):
         if not passed:
             return False, value
 
-        passed, value_ = self.checker.check(name, value)
-
-        if passed:
-            return True, value_
-        elif value is self.sentinel:
+        if value is self.sentinel:
             return True, self.default_factory()
+
+        result = self.checker.check(name, value)
+
+        if self.checker.deferred:
+            return result
         else:
-            return False, self._make_check_error(type(value_), name, value)
+            passed, value_ = result
+            if passed:
+                return True, value_
+            else:
+                return False, self._make_check_error(type(value_), name, value)
 
     def expected(self):
         return super().expected() + ['missing or'] + self.checker.expected()

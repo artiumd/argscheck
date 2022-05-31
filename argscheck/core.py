@@ -32,15 +32,12 @@ def check(checker_like, value, name=''):
     fails.
     """
     checker = Checker.from_checker_likes(checker_like)
+    result = checker.check(name, value)
 
-    if checker.deferred:
-        wrapper = checker.check(name, value)
-
-        return wrapper
+    if isinstance(result, Checker) and result.deferred:  # TODO maybe `and checker.deferred`
+        return result
     else:
-        # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-        # exception.
-        passed, value_or_excp = checker.check(name, value)
+        passed, value_or_excp = result
 
         if passed:
             return value_or_excp
