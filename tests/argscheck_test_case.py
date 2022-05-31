@@ -41,3 +41,27 @@ class TestCaseArgscheck(unittest.TestCase):
 
     def assertRaisesOnCheck(self, expected_exception, *args, **kwargs):
         return self.assertRaises(expected_exception, partial(check, self.checker), *args, **kwargs)
+
+    def assertItemsFromIter(self, value, exp_behaviours, exp_output, iterable):
+        checker = check(self.checker, value)
+
+        if iterable:
+            checker = iter(checker)
+
+        for behaviour, expected_value in zip(exp_behaviours, exp_output):
+            if behaviour == 'is':
+                actual_value = next(checker)
+                self.assertIs(actual_value, expected_value)
+            elif behaviour == 'equal':
+                actual_value = next(checker)
+                self.assertEqual(actual_value, expected_value)
+            elif behaviour.startswith('raises'):
+                expected_exception = eval(behaviour.split(':')[1])
+
+                with self.assertRaises(expected_exception):
+                    next(checker)
+            else:
+                raise ValueError(f'assertItemsFromIterator got unexpected behaviour key: {behaviour}')
+
+        with self.assertRaises(StopIteration):
+            next(checker)
