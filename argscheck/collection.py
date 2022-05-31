@@ -39,8 +39,6 @@ class Collection(Sized, Typed):
         checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
 
     """
-    # TODO consider moving to metaclass constructor
-    types = (object,)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*self.types, **kwargs)
@@ -73,7 +71,7 @@ class Collection(Sized, Typed):
         return True, value
 
 
-class Set(Comparable, Collection):
+class Set(Comparable, Collection, types=(set,)):
     """
     Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
     operators, e.g. using ``gt=other`` will check if ``x`` is a superset of ``other`` (which must also be a ``set``).
@@ -97,8 +95,6 @@ class Set(Comparable, Collection):
 
     :meta skip-extend-docstring-other_type:
     """
-    # TODO consider moving to metaclass constructor
-    types = (set,)
 
     def __init__(self, *args, **kwargs):
         # Sets should only be compared to other sets, hence: other_type=set

@@ -12,7 +12,7 @@ _floats = (float,)
 _numbers = _ints + _floats
 
 
-class Number(Comparable, Typed):
+class Number(Comparable, Typed, types=_numbers):
     """
     Check if ``x`` is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
     any of the following binary operators: ``{< | <= | != | == | >= | >}``.
@@ -22,27 +22,25 @@ class Number(Comparable, Typed):
        other ``int`` or ``float`` objects.
     """
     def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_numbers, other_type=other_type, **kwargs)
+        super().__init__(*self.types, other_type=other_type, **kwargs)
 
 
-class Int(Comparable, Typed):
+class Int(Number, types=_ints):
     """
     Same as :class:`.Number`, plus, ``x`` must be an ``int``.
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_ints, other_type=other_type, **kwargs)
+    pass
 
 
-class Float(Comparable, Typed):
+class Float(Number, types=_floats):
     """
     Same as :class:`.Number`, plus, ``x`` must be a ``float``.
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_floats, other_type=other_type, **kwargs)
+    pass
 
 
 """

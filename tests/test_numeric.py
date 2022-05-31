@@ -1,4 +1,4 @@
-from argscheck import Sized
+from argscheck import Sized, Float
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -50,3 +50,10 @@ class TestSized(TestCaseArgscheck):
         self.assertOutputIsInput('abc')
         self.assertRaisesOnCheck(ValueError, {'a', 'b'})
         self.assertRaisesOnCheck(TypeError, 123)
+
+
+class TestFloat(TestCaseArgscheck):
+    def test_check(self):
+        self.checker = Float()
+        self.assertOutputIsInput(1.1)
+        self.assertRaisesOnCheck(TypeError, 1)

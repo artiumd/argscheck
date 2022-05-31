@@ -114,18 +114,22 @@ def validator(checker, name, **kwargs):
 
 
 class CheckerMeta(type):
-    def __new__(mcs, name, bases, attrs, deferred=False, **kwargs):
+    def __new__(mcs, name, bases, attrs, deferred=False, types=(object,), **kwargs):
         # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
         # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
         return super().__new__(mcs, name, bases, attrs, **kwargs)
 
-    def __init__(cls, name, bases, attrs, deferred=False, **kwargs):
+    def __init__(cls, name, bases, attrs, deferred=False, types=(object,), **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
 
         if not isinstance(deferred, bool):
             raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
 
+        if not isinstance(types, tuple) or not all(isinstance(type_, type) for type_ in types):
+            raise TypeError(f'`types` must be a tuple of types, got {types} instead.')
+
         cls.deferred = deferred
+        cls.types = types
         extend_docstring(cls)
 
     def __getitem__(cls, item):
