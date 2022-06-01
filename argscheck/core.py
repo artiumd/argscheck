@@ -12,6 +12,39 @@ import inspect
 from .utils import extend_docstring, partition, join
 
 
+def check(checker_like, value, name=''):
+    """
+    Check an argument (and possibly convert it, depending on the particular checker instance).
+
+    A call to ``check()`` will have one of two possible outcomes:
+
+    1. Check passes, the checked (and possibly converted) argument will be returned.
+    2. Check fails, an appropriate exception with an error message will be raised.
+
+    Also, there are two possible calling signatures:
+
+    .. code-block:: python
+
+        checker.check(value)
+        checker.check(name=value)
+
+    The only difference is that in the second call, ``name`` will appear in the error message in case the check
+    fails.
+    """
+    checker = Checker.from_checker_likes(checker_like)
+    result = checker.check(name, value)
+
+    if isinstance(result, Checker) and result.deferred:  # TODO maybe `and checker.deferred`
+        return result
+    else:
+        passed, value_or_exception = result
+
+        if passed:
+            return value_or_exception
+        else:
+            raise value_or_exception
+
+
 def check_args(fn):
     """
     A decorator, that when applied to a function:
@@ -52,34 +85,58 @@ def check_args(fn):
     # Build a function that performs argument checking, then, calls original function
     @wraps(fn)
     def checked_fn(*args, **kwargs):
-        # Bind arguments to parameters so we can associate checkers with argument values
+        # Bind arguments to parameters, so we can associate checkers with argument values
         bound_args = signature.bind(*args, **kwargs)
         bound_args.apply_defaults()
 
         # Check each argument for which a checker was defined, then, call original function with checked values
         for name, checker in checkers.items():
             value = bound_args.arguments[name]
-            bound_args.arguments[name] = checker.check(**{name: value})
+            bound_args.arguments[name] = check(checker, value, name)
 
         return fn(*bound_args.args, **bound_args.kwargs)
 
     return checked_fn
 
 
+def validator(checker, name, **kwargs):
+    """
+    Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
+    ``pydantic`` model. The validator will perform the checking and conversion by calling the
+    :meth:`.Checker.check` method.
+
+    :param name: *str* – Name of field for which validator is created.
+    :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
+    """
+    import pydantic
+
+    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
+
+
 class CheckerMeta(type):
-    def __new__(mcs, name, bases, attrs, deferred=False, **kwargs):
+    def __new__(mcs, name, bases, attrs, deferred=False, types=(object,), **kwargs):
         # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
         # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
         return super().__new__(mcs, name, bases, attrs, **kwargs)
 
-    def __init__(cls, name, bases, attrs, deferred=False, **kwargs):
+    def __init__(cls, name, bases, attrs, deferred=False, types=(object,), **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
 
         if not isinstance(deferred, bool):
             raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
 
+        if not isinstance(types, tuple) or not all(isinstance(type_, type) for type_ in types):
+            raise TypeError(f'`types` must be a tuple of types, got {types} instead.')
+
         cls.deferred = deferred
+        cls.types = types
         extend_docstring(cls)
+
+    def __getitem__(cls, item):
+        if isinstance(item, tuple):
+            return cls(*item)
+        else:
+            return cls(item)
 
 
 class Checker(metaclass=CheckerMeta):
@@ -92,22 +149,24 @@ class Checker(metaclass=CheckerMeta):
 
     @classmethod
     def from_checker_likes(cls, value, name='args'):
-        if isinstance(value, tuple) and len(value) == 1:
-            return cls.from_checker_likes(value[0], name=f'{name}[0]')
+        if isinstance(value, tuple):
+            if len(value) == 1:
+                value = value[0]
+            elif len(value) > 1:
+                # Partition tuple into non-Checker types and everything else
+                types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
 
-        if isinstance(value, tuple) and len(value) > 1:
-            # Partition tuple into non-Checker types and everything else
-            types, others = partition(value, lambda x: isinstance(x, type) and not issubclass(x, Checker))
+                if types and others:
+                    others.append(Typed(*types))
+                    checker = One(*others)
+                elif types:
+                    checker = Typed(*types)
+                else:
+                    checker = One(*others)
 
-            if types and others:
-                others.append(Typed(*types))
-                checker = One(*others)
-            elif types:
-                checker = Typed(*types)
+                return checker
             else:
-                checker = One(*others)
-
-            return checker
+                pass
 
         if isinstance(value, Checker):
             return value
@@ -120,72 +179,16 @@ class Checker(metaclass=CheckerMeta):
 
         raise TypeError(f'{name}={value!r} is a expected to be a checker-like.')
 
-    def check(self, *args, **kwargs):
-        """
-        Check an argument (and possibly convert it, depending on the particular checker instance).
-
-        A call to ``check()`` will have one of two possible outcomes:
-
-        1. Check passes, the checked (and possibly converted) argument will be returned.
-        2. Check fails, an appropriate exception with an error message will be raised.
-
-        Also, there are two possible calling signatures:
-
-        .. code-block:: python
-
-            checker.check(value)
-            checker.check(name=value)
-
-        The only difference is that in the second call, ``name`` will appear in the error message in case the check
-        fails.
-        """
-        name, value = self._resolve_name_value(*args, **kwargs)
-
-        if self.deferred:
-            return self._check(name, value)
-        else:
-            # Perform argument checking. If passed, return (possibly converted) value, otherwise, raise the returned
-            # exception.
-            passed, value_or_excp = self._check(name, value)
-
-            if passed:
-                return value_or_excp
-            else:
-                raise value_or_excp
-
-    def validator(self, name, **kwargs):
-        """
-        Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
-        ``pydantic`` model. The validator will perform the checking and conversion by calling the
-        :meth:`.Checker.check` method.
-
-        :param name: *str* – Name of field for which validator is created.
-        :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
-        """
-        import pydantic
-
-        return pydantic.validator(name, **kwargs)(lambda value: self.check(**{name: value}))
-
     def expected(self):
         return []
 
-    def _check(self, name, value):
+    def check(self, name, value):
         return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
         for name in names:
             if name in kwargs:
                 raise ValueError(f'{self!r}() got an unexpected argument {name}={kwargs[name]!r}.')
-
-    def _resolve_name_value(self, *args, **kwargs):
-        # Make sure method is called properly and unpack argument's name and value
-        if len(args) + len(kwargs) != 1:
-            raise TypeError(f'{self!r}.check() must be called with a single positional or keyword argument.'
-                            f' Got {len(args)} positional arguments and {len(kwargs)} keyword arguments.')
-        if args:
-            return '', args[0]
-        else:
-            return next(iter(kwargs.items()))
 
     def _raise_init_error(self, err_type, desc, *args, **kwargs):
         args = [f'{value!r}' for value in args]
@@ -233,9 +236,9 @@ class Typed(Checker):
         # In case ``Typed(*types)`` and ``types`` contains ``object``, return a ``Checker`` instance, which will always
         # pass without the need to call ``isinstance()``.
         if cls is Typed and object in args:
-            return object.__new__(Checker)
+            return super().__new__(Checker)
         else:
-            return object.__new__(cls)
+            return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
@@ -248,8 +251,8 @@ class Typed(Checker):
 
         self.types = args
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -348,8 +351,8 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -408,8 +411,8 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -418,7 +421,7 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker._check(name, value)
+            passed, ret_value_ = checker.check(name, value)
             if passed:
                 passed_count += 1
                 ret_value = ret_value_

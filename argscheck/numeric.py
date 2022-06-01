@@ -12,7 +12,7 @@ _floats = (float,)
 _numbers = _ints + _floats
 
 
-class Number(Comparable, Typed):
+class Number(Comparable, Typed, types=_numbers):
     """
     Check if ``x`` is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
     any of the following binary operators: ``{< | <= | != | == | >= | >}``.
@@ -22,27 +22,25 @@ class Number(Comparable, Typed):
        other ``int`` or ``float`` objects.
     """
     def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_numbers, other_type=other_type, **kwargs)
+        super().__init__(*self.types, other_type=other_type, **kwargs)
 
 
-class Int(Comparable, Typed):
+class Int(Number, types=_ints):
     """
     Same as :class:`.Number`, plus, ``x`` must be an ``int``.
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_ints, other_type=other_type, **kwargs)
+    pass
 
 
-class Float(Comparable, Typed):
+class Float(Number, types=_floats):
     """
     Same as :class:`.Number`, plus, ``x`` must be a ``float``.
 
     :meta skip-extend-docstring:
     """
-    def __init__(self, other_type=_numbers, **kwargs):
-        super().__init__(*_floats, other_type=other_type, **kwargs)
+    pass
 
 
 """
@@ -231,8 +229,8 @@ class Sized(Checker):
         # Check that no negative values were provided
         self._validate_lengths(len_lt=len_lt, len_le=len_le, len_ne=len_ne, len_eq=len_eq, len_ge=len_ge, len_gt=len_gt)
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -243,7 +241,7 @@ class Sized(Checker):
             return False, self._make_check_error(TypeError, name, value)
 
         # Check length
-        passed, e = self.len_checker._check(name, length)
+        passed, e = self.len_checker.check(name, length)
         if not passed:
             return False, self._make_check_error(ValueError, name, value)
 

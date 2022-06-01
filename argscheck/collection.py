@@ -13,7 +13,7 @@ In this context, a collection is a class that:
 Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
 ``*args`` parameter.
 """
-from .core import Typed, Comparable
+from .core import check, Typed, Comparable
 from .numeric import Sized
 from .iter import Iterable
 
@@ -39,8 +39,6 @@ class Collection(Sized, Typed):
         checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
 
     """
-    # TODO consider moving to metaclass constructor
-    types = (object,)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*self.types, **kwargs)
@@ -50,8 +48,8 @@ class Collection(Sized, Typed):
         else:
             self.iterable = None
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -62,7 +60,7 @@ class Collection(Sized, Typed):
         if not name:
             name = repr(self).lower()
 
-        items = list(self.iterable._check(name, value))
+        items = list(check(self.iterable, value, name))
 
         try:
             value = type(value)(items)
@@ -73,7 +71,7 @@ class Collection(Sized, Typed):
         return True, value
 
 
-class Set(Comparable, Collection):
+class Set(Comparable, Collection, types=(set,)):
     """
     Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
     operators, e.g. using ``gt=other`` will check if ``x`` is a superset of ``other`` (which must also be a ``set``).
@@ -97,8 +95,6 @@ class Set(Comparable, Collection):
 
     :meta skip-extend-docstring-other_type:
     """
-    # TODO consider moving to metaclass constructor
-    types = (set,)
 
     def __init__(self, *args, **kwargs):
         # Sets should only be compared to other sets, hence: other_type=set

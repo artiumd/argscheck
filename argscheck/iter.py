@@ -10,7 +10,7 @@ item, until finally ``StopIteration`` is raised.
 An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
 creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
 """
-from .core import Checker
+from .core import check, Checker
 
 
 class Iterator(Checker, deferred=True):
@@ -58,13 +58,9 @@ class Iterator(Checker, deferred=True):
             raise stop
 
         # Check next item from iterator
-        passed, value = self.item_checker._check(name, value)
-        if not passed:
-            raise value
+        return check(self.item_checker, value, name)
 
-        return value
-
-    def _check(self, name, value):
+    def check(self, name, value):
         if not name:
             name = repr(self).lower()
 

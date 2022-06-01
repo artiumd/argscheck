@@ -1,10 +1,7 @@
 from argscheck import Checker, Typed, Sized, One, Comparable, String, Int
 
 from tests.argscheck_test_case import TestCaseArgscheck
-
-
-class MockClass:
-    pass
+from tests.mocks import MockClass
 
 
 class TestTyped(TestCaseArgscheck):
@@ -62,6 +59,15 @@ class TestTyped(TestCaseArgscheck):
         self.assertOutputIsInput('')
         self.assertOutputIsInput('abcd')
         self.assertRaisesOnCheck(TypeError, 0x1234)
+
+        self.checker = Typed(object)
+        self.assertOutputIsInput('')
+        self.assertOutputIsInput([])
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput([[[]]])
+        self.assertOutputIsInput(object)
+        self.assertOutputIsInput(object())
+        self.assertOutputIsInput(type)
 
 
 class TestOne(TestCaseArgscheck):

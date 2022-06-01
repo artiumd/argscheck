@@ -1,95 +1,101 @@
-from argscheck import Iterator, Iterable, Optional
+from argscheck import Iterator, Iterable, Optional, check_args, check, PositiveNumber
 
 from tests.argscheck_test_case import TestCaseArgscheck
-
-
-class MockIterable:
-    def __init__(self, values):
-        self.values = values
-
-    def __iter__(self):
-        return MockIterator(self.values)
-
-
-class MockIterator:
-    def __init__(self, values):
-        self.values = values
-        self.i = 0
-
-    def __next__(self):
-        if self.i == len(self.values):
-            raise StopIteration
-        else:
-            ret = self.values[self.i]
-            self.i += 1
-
-            return ret
+from tests.mocks import MockIterable, MockIterator
 
 
 class TestIterable(TestCaseArgscheck):
     def test_init(self):
         # Good arguments
-        Iterable(str).check(MockIterable('ret'))
-        Iterable(Optional(int, default_value=66)).check([1, 2, None, 3])
+        check(Iterable(str), MockIterable('ret'))
+        check(Iterable(Optional(int, default_value=66)), [1, 2, None, 3])
 
         # Bad arguments
         self.assertRaises(TypeError, Iterable, None)
         self.assertRaises(TypeError, Iterable, MockIterator('ret'))
 
     def test_check(self):
+
+        self.checker = Iterable(list)
         values = ([], [], [])
-        iter_checker = Iterable(list).check(MockIterable(values))
+        behaviours = ['is', 'is', 'is']
+        self.assertItemsFromIter(MockIterable(values), behaviours, values, iterable=True)
 
-        i = 0
-        for item, value in zip(iter_checker, values):
-            self.assertIs(item, value)
-            i += 1
-        self.assertEqual(i, len(values))
-
+        self.checker = Iterable(Optional(int, default_value=66))
         values = [1, 2, None, 3]
-        checker = Iterable(Optional(int, default_value=66))
+        expected_value = [1, 2, 66, 3]
+        behaviours = ['equal', 'equal', 'equal', 'equal']
+        self.assertItemsFromIter(MockIterable(values), behaviours, expected_value, iterable=True)
 
-        ret = list(checker.check(values))
-        self.assertEqual(ret, [1, 2, 66, 3])
+        self.checker = Iterable(int)
+        values = 'ret'
+        behaviours = ['raises:TypeError', 'raises:TypeError', 'raises:TypeError']
+        self.assertItemsFromIter(MockIterable(values), behaviours, values, iterable=True)
 
-        iter_checker = Iterable(int).check(MockIterable('ret'))
-        self.assertRaises(TypeError, list, iter_checker)
+        self.checker = Iterable(str, bool)
+        values = ['a', True, 1.1]
+        behaviours = ['is', 'is', 'raises:Exception']
+        self.assertItemsFromIter(MockIterable(values), behaviours, values, iterable=True)
 
-        checker = Iterable(str, bool)
-        iterable = checker.check(['a', True, 1.1])
+        @check_args
+        def fn(x: Iterable(int)):
+            return list(x)
 
-        iterator = iter(iterable)
-        self.assertEqual(next(iterator), 'a')
-        self.assertEqual(next(iterator), True)
-        with self.assertRaises(Exception):
-            next(iterator)
+        fn(MockIterable((1, 2, 3)))
+
+        with self.assertRaises(TypeError):
+            fn(MockIterable((1, 2, [3])))
+
+        self.checker = Optional[Iterable[int]]
+        self.assertOutputEquals(None, None)
+        values = [1, 2.1, 3, '', [], -2]
+        behaviours = ['is', 'raises:Exception', 'is', 'raises:Exception', 'raises:Exception', 'is']
+        self.assertItemsFromIter(MockIterable(values), behaviours, values, iterable=True)
+
+        checker = Iterable(Iterable(int))
+        value = [[0, 1, 2], [3, 4, 5]]
+        expected_value = 0
+
+        for outer_value in check(checker, value):
+            for inner_value in outer_value:
+                self.assertEqual(expected_value, inner_value)
+                expected_value += 1
+
+        checker = Iterable(Iterable(int))
+        value = [['']]
+
+        for outer_value in check(checker, value):
+            with self.assertRaises(TypeError):
+                for inner_value in outer_value:
+                    pass
 
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
-        Iterator(str).check(MockIterator('ret'))
+        check(Iterator(str), MockIterator('ret'))
 
         self.assertRaises(TypeError, Iterator, None)
         self.assertRaises(TypeError, Iterator, None)
 
     def test_check(self):
-        values = ([], [], [])
-        iterator = MockIterator(values)
-        checker = Iterator(list)
-        checker.check(iterator)
+        self.checker = Iterator(list)
+        values = [[], [], []]
+        behaviours = ['is', 'is', 'is']
+        self.assertItemsFromIter(MockIterator(values), behaviours, values, iterable=False)
 
-        for value in values:
-            ret = next(checker)
-            self.assertIs(value, ret)
+        self.checker = Iterator(str, bool)
+        values = ['a',  1.1, True]
+        behaviours = ['is', 'raises:TypeError', 'is']
+        self.assertItemsFromIter(iter(values), behaviours, values, iterable=False)
 
-        with self.assertRaises(StopIteration):
-            next(checker)
+        @check_args
+        def fn(x: Iterator(int)):
+            yield from x
 
-        # Each item must be an str or bool instance
-        checker = Iterator(str, bool)
-        iterator = checker.check(iter(['a', True, 1.1]))
+        fn(MockIterable([1, 2, 3]))
 
-        self.assertEqual(next(iterator), 'a')
-        self.assertEqual(next(iterator), True)
-        with self.assertRaises(Exception):
-            next(iterator)
+        self.checker = Optional[Iterator[PositiveNumber, str]]
+        self.assertOutputEquals(None, None)
+        values = [1, 2.1, 3, '', [], -2]
+        behaviours = ['is', 'is', 'is', 'is', 'raises:Exception', 'raises:Exception']
+        self.assertItemsFromIter(iter(values), behaviours, values, iterable=False)

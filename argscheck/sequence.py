@@ -50,8 +50,6 @@ class Sequence(Sized, Typed):
         checker.check(['a', 1])      # Fails, raises TypeError (not all items are str)
 
     """
-    # TODO consider moving to metaclass constructor
-    types = (object,)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*self.types, **kwargs)
@@ -61,8 +59,8 @@ class Sequence(Sized, Typed):
         else:
             self.item_checker = None
 
-    def _check(self, name, value):
-        passed, value = super()._check(name, value)
+    def check(self, name, value):
+        passed, value = super().check(name, value)
         if not passed:
             return False, value
 
@@ -109,7 +107,7 @@ class Sequence(Sized, Typed):
                 return False, TypeError(f'Failed getting {item_name.format(i)}, make sure {seq_name} is a sequence.'), \
                        modified
 
-            passed, post_check_item = self.item_checker._check(item_name.format(i), pre_check_item)
+            passed, post_check_item = self.item_checker.check(item_name.format(i), pre_check_item)
             if not passed:
                 return False, post_check_item, modified
 
@@ -138,14 +136,13 @@ class NonEmptySequence(NonEmpty, Sequence):
     pass
 
 
-class Tuple(Sequence):
+class Tuple(Sequence, types=(tuple,)):
     """
     Same as :class:`.Sequence`, plus, ``x`` must be a ``tuple``.
 
     :meta skip-extend-docstring:
     """
-    # TODO consider moving to metaclass constructor
-    types = (tuple,)
+    pass
 
 
 class NonEmptyTuple(NonEmpty, Tuple):
@@ -187,14 +184,13 @@ class NonEmptyMutableSequence(NonEmpty, MutableSequence):
     pass
 
 
-class List(MutableSequence):
+class List(MutableSequence, types=(list,)):
     """
     Same as :class:`.MutableSequence`, plus, ``x`` must be a ``list``.
 
     :meta skip-extend-docstring:
     """
-    # TODO consider moving to metaclass constructor
-    types = (list,)
+    pass
 
 
 class NonEmptyList(NonEmpty, List):
