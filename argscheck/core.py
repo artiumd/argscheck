@@ -34,7 +34,7 @@ def check(checker_like, value, name=''):
     checker = Checker.from_checker_likes(checker_like)
     result = checker.check(name, value)
 
-    if isinstance(result, Checker) and result.deferred:  # TODO maybe `and checker.deferred`
+    if isinstance(result, Wrapper):
         return result
     else:
         passed, value_or_exception = result
@@ -113,22 +113,22 @@ def validator(checker, name, **kwargs):
     return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
 
 
+class Wrapper:
+    pass
+
+
 class CheckerMeta(type):
-    def __new__(mcs, name, bases, attrs, deferred=False, types=(object,), **kwargs):
+    def __new__(mcs, name, bases, attrs, types=(object,), **kwargs):
         # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
         # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
         return super().__new__(mcs, name, bases, attrs, **kwargs)
 
-    def __init__(cls, name, bases, attrs, deferred=False, types=(object,), **kwargs):
+    def __init__(cls, name, bases, attrs, types=(object,), **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
-
-        if not isinstance(deferred, bool):
-            raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
 
         if not isinstance(types, tuple) or not all(isinstance(type_, type) for type_ in types):
             raise TypeError(f'`types` must be a tuple of types, got {types} instead.')
 
-        cls.deferred = deferred
         cls.types = types
         extend_docstring(cls)
 

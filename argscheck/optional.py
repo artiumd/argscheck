@@ -1,4 +1,4 @@
-from .core import Checker
+from .core import Checker, Wrapper
 from .utils import Sentinel
 
 
@@ -65,7 +65,7 @@ class Optional(Checker):
 
         result = self.checker.check(name, value)
 
-        if self.checker.deferred:
+        if isinstance(result, Wrapper):
             return result
         else:
             passed, value_ = result
