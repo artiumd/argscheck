@@ -16,9 +16,6 @@ class TestCaseArgscheck(unittest.TestCase):
         return self._checker
 
     def set_checker(self, value):
-        if value is not None and not isinstance(value, Checker):
-            raise TypeError(f'checker property of {self!r} must be None or a checker instance. Got {value!r}.')
-
         self._checker = value
 
     checker = property(get_checker, set_checker)

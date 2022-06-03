@@ -422,7 +422,12 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker.check(name, value)
+            result = checker.check(name, value)
+
+            if isinstance(result, Wrapper):
+                raise NotImplementedError(f'{self!r} does not support nesting deferred checkers such as {checker!r}.')
+
+            passed, ret_value_ = result
             if passed:
                 passed_count += 1
                 ret_value = ret_value_

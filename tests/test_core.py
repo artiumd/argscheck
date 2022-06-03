@@ -1,7 +1,7 @@
-from argscheck import Checker, Typed, Sized, One, Comparable, String, Int
+from argscheck import Checker, Typed, Sized, One, Comparable, String, Int, Iterable, Iterator
 
 from tests.argscheck_test_case import TestCaseArgscheck
-from tests.mocks import MockClass
+from tests.mocks import MockClass, MockIterable, MockIterator
 
 
 class TestTyped(TestCaseArgscheck):
@@ -85,7 +85,7 @@ class TestOne(TestCaseArgscheck):
         self.assertRaises(TypeError, One, str, 2)
 
     def test_check(self):
-        self.checker = One(int, String)
+        self.checker = (int, String)
         self.assertOutputIsInput('abcd')
         self.assertOutputIsInput(1234)
         self.assertOutputIsInput(True)
@@ -102,8 +102,16 @@ class TestOne(TestCaseArgscheck):
         self.assertRaisesOnCheck(Exception, [1, 2, 3])
         self.assertRaisesOnCheck(Exception, 1)
 
-        self.checker = One(Sized, list)
+        self.checker = (Sized, list)
         self.assertRaisesOnCheck(Exception, [])  # [] is both a list and has a length
+
+        self.checker = (int, Iterable[int])
+        self.assertRaisesOnCheck(NotImplementedError, 1)
+        self.assertRaisesOnCheck(NotImplementedError, MockIterable([1, 2, 3]))
+
+        self.checker = (int, Iterator[int])
+        self.assertRaisesOnCheck(NotImplementedError, 1)
+        self.assertRaisesOnCheck(NotImplementedError, MockIterator([1, 2, 3]))
 
 
 class TestComparable(TestCaseArgscheck):
