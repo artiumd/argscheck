@@ -1,7 +1,7 @@
-from argscheck import Optional, Collection, Set
+from argscheck import Optional, Collection, Set, Iterator, Iterable
 
 from tests.argscheck_test_case import TestCaseArgscheck
-from tests.mocks import MockCollection
+from tests.mocks import MockCollection, MockIterator, MockIterable
 
 
 class TestCollection(TestCaseArgscheck):
@@ -32,3 +32,9 @@ class TestSet(TestCaseArgscheck):
         self.assertRaisesOnCheck(TypeError, ['a', 'b'])
         self.assertRaisesOnCheck(ValueError, {'a'})
         self.assertRaisesOnCheck(ValueError, {'b', 'c'})
+
+        self.checker = Set[Iterator[str]]
+        self.assertRaisesOnCheck(NotImplementedError, {'aa', MockIterator(['a', 'b']), MockIterator(['a', 'b'])})
+
+        self.checker = Set[Iterable[str]]
+        self.assertRaisesOnCheck(NotImplementedError, {'aa', MockIterable(['a', 'b']), MockIterable(['a', 'b'])})
