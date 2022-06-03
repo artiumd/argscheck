@@ -114,7 +114,8 @@ def validator(checker, name, **kwargs):
 
 
 class Wrapper:
-    pass
+    def __getattr__(self, item):
+        return getattr(self.wrapped, item)
 
 
 class CheckerMeta(type):

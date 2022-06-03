@@ -84,9 +84,9 @@ class Iterable(Checker):
 
 
 class _IteratorWrapper(Wrapper):
-    def __init__(self, checker, iterator, name):
+    def __init__(self, checker, wrapped, name):
         self.checker = checker
-        self.iterator = iterator
+        self.wrapped = wrapped
         self.name = name
         self.i = 0
 
@@ -97,7 +97,7 @@ class _IteratorWrapper(Wrapper):
 
         # Get next item from iterator
         try:
-            value = next(self.iterator)
+            value = next(self.wrapped)
         except TypeError:
             raise TypeError(f'Failed calling next() on {self.iterator!r}, make sure this object is an iterator.')
         except StopIteration as stop:
@@ -109,17 +109,16 @@ class _IteratorWrapper(Wrapper):
 
 
 class _IterableWrapper(Wrapper):
-    def __init__(self, checker, iterable, name):
+    def __init__(self, checker, wrapped, name):
         self.checker = checker
-        self.iterable = iterable
+        self.wrapped = wrapped
         self.name = name
-        self.iterator = None
 
     def __iter__(self):
         # Create iterator from iterable
         try:
-            iterator = iter(self.iterable)
+            iterator = iter(self.wrapped)
         except TypeError:
-            raise TypeError(f'Failed calling iter() on {self.iterator!r}, make sure this object is iterable.')
+            raise TypeError(f'Failed calling iter() on {self.wrapped!r}, make sure this object is iterable.')
 
         return _IteratorWrapper(self.checker, iterator, self.name)
