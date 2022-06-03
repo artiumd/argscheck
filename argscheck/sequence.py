@@ -27,7 +27,7 @@ Checkers that convert values (like :class:`.Optional` for example) are applied a
 2. For (non mutable) sequences, a new sequence instance is created from the converted items (this will happen only if
    actual conversion took place for at least one item).
 """
-from .core import Checker, Typed
+from .core import Checker, Typed, Wrapper
 from .numeric import Sized, NonEmpty
 
 
@@ -107,7 +107,12 @@ class Sequence(Sized, Typed):
                 return False, TypeError(f'Failed getting {item_name.format(i)}, make sure {seq_name} is a sequence.'), \
                        modified
 
-            passed, post_check_item = self.item_checker.check(item_name.format(i), pre_check_item)
+            result = self.item_checker.check(item_name.format(i), pre_check_item)
+
+            if isinstance(result, Wrapper):
+                raise NotImplementedError(f'{self!r} does not support nesting deferred checkers such as {self.item_checker!r}.')
+
+            passed, post_check_item = result
             if not passed:
                 return False, post_check_item, modified
 
