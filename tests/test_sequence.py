@@ -1,6 +1,7 @@
-from argscheck import Optional, List, Tuple, Sequence
+from argscheck import Optional, List, Tuple, Sequence, Iterable, Iterator
 
 from tests.argscheck_test_case import TestCaseArgscheck
+from tests.mocks import MockIterable, MockIterator
 
 
 class TestSequence(TestCaseArgscheck):
@@ -37,6 +38,12 @@ class TestTuple(TestCaseArgscheck):
         self.assertOutputEquals((1, 2, 3, 4, None), (1, 2, 3, 4, 66))
         self.assertRaisesOnCheck(ValueError, (1,))
         self.assertRaisesOnCheck(TypeError, 123)
+
+        self.checker = Tuple[Iterator[str]]
+        self.assertRaisesOnCheck(NotImplementedError, (MockIterator(['a', 'b']), MockIterator(['a', 'b'])))
+
+        self.checker = Tuple[Iterable[str]]
+        self.assertRaisesOnCheck(NotImplementedError, (MockIterable(['a', 'b']), MockIterable(['a', 'b'])))
 
 
 class TestList(TestCaseArgscheck):

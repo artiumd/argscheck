@@ -34,7 +34,7 @@ def check(checker_like, value, name=''):
     checker = Checker.from_checker_likes(checker_like)
     result = checker.check(name, value)
 
-    if isinstance(result, Checker) and result.deferred:  # TODO maybe `and checker.deferred`
+    if isinstance(result, Wrapper):
         return result
     else:
         passed, value_or_exception = result
@@ -113,22 +113,23 @@ def validator(checker, name, **kwargs):
     return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
 
 
+class Wrapper:
+    def __getattr__(self, item):
+        return getattr(self.wrapped, item)
+
+
 class CheckerMeta(type):
-    def __new__(mcs, name, bases, attrs, deferred=False, types=(object,), **kwargs):
+    def __new__(mcs, name, bases, attrs, types=(object,), **kwargs):
         # __new__ is only defined to consume `deferred` so it does not get passed to `type.__new__`.
         # Otherwise, an exception is thrown: TypeError: __init_subclass__() takes no keyword arguments
         return super().__new__(mcs, name, bases, attrs, **kwargs)
 
-    def __init__(cls, name, bases, attrs, deferred=False, types=(object,), **kwargs):
+    def __init__(cls, name, bases, attrs, types=(object,), **kwargs):
         super().__init__(name, bases, attrs, **kwargs)
-
-        if not isinstance(deferred, bool):
-            raise TypeError(f'`deferred` flag must be bool, got {deferred.__class__.__name__} instead.')
 
         if not isinstance(types, tuple) or not all(isinstance(type_, type) for type_ in types):
             raise TypeError(f'`types` must be a tuple of types, got {types} instead.')
 
-        cls.deferred = deferred
         cls.types = types
         extend_docstring(cls)
 
@@ -421,7 +422,12 @@ class One(Checker):
 
         # Apply all checkers to value, make sure only one passes
         for checker in self.checkers:
-            passed, ret_value_ = checker.check(name, value)
+            result = checker.check(name, value)
+
+            if isinstance(result, Wrapper):
+                raise NotImplementedError(f'{self!r} does not support nesting deferred checkers such as {checker!r}.')
+
+            passed, ret_value_ = result
             if passed:
                 passed_count += 1
                 ret_value = ret_value_
