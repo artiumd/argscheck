@@ -13,6 +13,7 @@ For the sake of brevity, throughout the API reference, the argument being checke
 
    core
    string
+   comparable
    numeric
    pathlike
    iter

@@ -13,7 +13,8 @@ In this context, a collection is a class that:
 Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
 ``*args`` parameter.
 """
-from .core import check, Typed, Comparable, Wrapper
+from .core import check, Typed, Wrapper
+from . import Comparable
 from .numeric import Sized
 from .iter import Iterable
 
