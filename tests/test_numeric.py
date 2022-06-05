@@ -57,3 +57,28 @@ class TestFloat(TestCaseArgscheck):
         self.checker = Float()
         self.assertOutputIsInput(1.1)
         self.assertRaisesOnCheck(TypeError, 1)
+
+        self.checker = Float(gt=0.0)
+        self.assertOutputIsInput(1.1)
+        self.assertRaisesOnCheck(TypeError, 1)
+        self.assertRaisesOnCheck(ValueError, 0.0)
+        self.assertRaisesOnCheck(ValueError, -1.0)
+
+        self.checker = Float(gt=0.0, le=1.0)
+        self.assertOutputIsInput(1.0)
+        self.assertOutputIsInput(0.5)
+        self.assertRaisesOnCheck(ValueError, 1.1)
+        self.assertRaisesOnCheck(ValueError, 0.0)
+        self.assertRaisesOnCheck(ValueError, -1.0)
+
+        self.checker = Float(ge=0.0, lt=1.0)
+        self.assertOutputIsInput(0.0)
+        self.assertOutputIsInput(0.5)
+        self.assertRaisesOnCheck(ValueError, 1.0)
+        self.assertRaisesOnCheck(ValueError, 1.1)
+        self.assertRaisesOnCheck(ValueError, -1.0)
+
+        self.checker = Float(ne=0.0)
+        self.assertOutputIsInput(-1.0)
+        self.assertOutputIsInput(0.5)
+        self.assertRaisesOnCheck(ValueError, 0.0)

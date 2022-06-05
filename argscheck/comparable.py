@@ -1,7 +1,127 @@
-import operator
-from functools import partial
-
 from argscheck import Checker
+
+
+class _Comparer:
+    def __init__(self, other):
+        self.other = other
+
+
+class _LessThanComparer(_Comparer):
+    name = 'less than'
+
+    def __call__(self, value):
+        return value < self.other
+
+
+class _LessEqualComparer(_Comparer):
+    name = 'less than or equal to'
+
+    def __call__(self, value):
+        return value <= self.other
+
+
+class _GreaterThanComparer(_Comparer):
+    name = 'greater than'
+
+    def __call__(self, value):
+        return value > self.other
+
+
+class _GreaterEqualComparer(_Comparer):
+    name = 'greater than or equal to'
+
+    def __call__(self, value):
+        return value >= self.other
+
+
+class _EqualComparer(_Comparer):
+    name = 'equal to'
+
+    def __call__(self, value):
+        return value == self.other
+
+
+class _NotEqualComparer(_Comparer):
+    name = 'not equal to'
+
+    def __call__(self, value):
+        return value != self.other
+
+
+class _Descriptor:
+    excludes = set()
+    greater_than = set()
+    less_than = set()
+    Comparer = None
+
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    def __get__(self, obj, owner=None):
+        return obj.__dict__.get(self.name, None)
+
+    def __set__(self, obj, value):
+        if value is not None:
+            if not isinstance(value, obj.other_type):
+                obj._raise_init_type_error(f'must have type {obj.other_type!r} if present', **{self.name: value})
+
+            for other_name in self.excludes:
+                other_value = getattr(obj, other_name)
+
+                if other_value is not None:
+                    obj._raise_init_type_error('must not be both present', **{self.name: value, other_name: other_value.other})
+
+            for other_name in self.greater_than:
+                other_value = getattr(obj, other_name)
+
+                if other_value is not None and value < other_value.other:
+                    obj._raise_init_value_error(f'{self.name} must be greater than {other_name}',
+                                                **{self.name: value, other_name: other_value.other})
+
+            for other_name in self.less_than:
+                other_value = getattr(obj, other_name)
+
+                if other_value is not None and value > other_value.other:
+                    obj._raise_init_value_error(f'{self.name} must be less than {other_name}',
+                                                **{self.name: value, other_name: other_value.other})
+
+            value = self.Comparer(value)
+
+        obj.__dict__[self.name] = value
+
+
+class _LessThanDescriptor(_Descriptor):
+    excludes = {'le', 'eq'}
+    greater_than = {'gt', 'ge'}
+    Comparer = _LessThanComparer
+
+
+class _LessEqualDescriptor(_Descriptor):
+    excludes = {'lt', 'eq'}
+    greater_than = {'gt', 'ge'}
+    Comparer = _LessEqualComparer
+
+
+class _GreaterThanDescriptor(_Descriptor):
+    excludes = {'ge', 'eq'}
+    less_than = {'lt', 'le'}
+    Comparer = _GreaterThanComparer
+
+
+class _GreaterEqualDescriptor(_Descriptor):
+    excludes = {'gt', 'eq'}
+    less_than = {'lt', 'le'}
+    Comparer = _GreaterEqualComparer
+
+
+class _EqualDescriptor(_Descriptor):
+    excludes = {'lt', 'le', 'gt', 'ge', 'ne'}
+    Comparer = _EqualComparer
+
+
+class _NotEqualDescriptor(_Descriptor):
+    excludes = {'eq'}
+    Comparer = _NotEqualComparer
 
 
 class Comparable(Checker):
@@ -35,16 +155,15 @@ class Comparable(Checker):
         checker.check({'a', 'b'})  # Fails, raises ValueError ({'a', 'b'} is equal to {'a', 'b'})
         checker.check('a')         # Fails, raises TypeError (< is not supported between set and str)
     """
-    comp_fns = dict(lt=operator.lt, le=operator.le, ne=operator.ne, eq=operator.eq, ge=operator.ge, gt=operator.gt)
-    comp_names = dict(lt='less than', le='less than or equal to', ne='not equal to', eq='equal to',
-                      ge='greater than or equal to', gt='greater than')
+    lt = _LessThanDescriptor()
+    le = _LessEqualDescriptor()
+    gt = _GreaterThanDescriptor()
+    ge = _GreaterEqualDescriptor()
+    eq = _EqualDescriptor()
+    ne = _NotEqualDescriptor()
 
     def __init__(self, *args, lt=None, le=None, ne=None, eq=None, ge=None, gt=None, other_type=object, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Arrange arguments in a dictionary for convenience, keep only those that are not None
-        others = dict(lt=lt, le=le, ne=ne, eq=eq, ge=ge, gt=gt)
-        others = {name: value for name, value in others.items() if value is not None}
 
         # `other_type` must be a type or tuple of types
         if not isinstance(other_type, tuple):
@@ -52,63 +171,31 @@ class Comparable(Checker):
         if not all(isinstance(item, type) for item in other_type):
             self._raise_init_type_error('must be a type or tuple of types', other_type=other_type)
 
-        # Check "other" argument types according to `other_type`
-        for name, value in others.items():
-            if not isinstance(value, other_type):
-                other_type = other_type[0] if len(other_type) == 1 else other_type
-                self._raise_init_type_error(f'must have type {other_type!r} if present', **{name: value})
+        self.other_type = other_type
 
-        # `lt` and `le` are mutually exclusive
-        if 'lt' in others and 'le' in others:
-            self._raise_init_type_error('must not be both present', lt=lt, le=le)
-
-        # `ge` and `gt` are mutually exclusive
-        if 'ge' in others and 'gt' in others:
-            self._raise_init_type_error('must not be both present', ge=ge, gt=gt)
-
-        # `eq` exclude all other arguments
-        if 'eq' in others and len(others) > 1:
-            del others['eq']
-            self._raise_init_type_error(f'must not be present if eq={eq!r} is present', **others)
-
-        # Check that lower bound is indeed lower than upper bound (if both are provided)
-        lb = ('ge', ge) if ge is not None else ('gt', gt)
-        ub = ('le', le) if le is not None else ('lt', lt)
-        if (lb[1] is not None) and (ub[1] is not None) and (lb[1] > ub[1]):
-            self._raise_init_value_error('lower bound must be lower than upper bound', **dict([lb, ub]))
-
-        # Create comparator functions for the arguments that are not None
-        self.comparators = [partial(self._compare, other=other, comp_fn=self.comp_fns[name])
-                            for name, other
-                            in others.items()]
-
-        # Build the "expected" string
-        expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
-        self._expected_str = ', '.join(expected)
+        # Set comparators
+        self.lt, self.le, self.ne, self.eq, self.ge, self.gt = lt, le, ne, eq, ge, gt
 
     def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
 
-        for comparator in self.comparators:
-            passed, value = comparator(name, value)
-            if not passed:
-                return False, value
+        for comparator in (self.lt, self.le, self.ne, self.eq, self.ge, self.gt):
+            if comparator is not None:
+                try:
+                    result = comparator(value)
+                except TypeError:
+                    return False, self._make_check_error(TypeError, name, value)
+
+                if not result:
+                    return False, self._make_check_error(ValueError, name, value)
 
         return True, value
 
     def expected(self):
-        return super().expected() + [self._expected_str]
+        comparators = (self.lt, self.le, self.ne, self.eq, self.ge, self.gt)
+        expected = [f'{comparator.name} {comparator.other!r}' for comparator in comparators if comparator is not None]
+        expected = ', '.join(expected)
 
-    def _compare(self, name, value, other, comp_fn):
-        # Compare value, if comparison fails, return the caught exception
-        try:
-            result = comp_fn(value, other)
-        except TypeError:
-            return False, self._make_check_error(TypeError, name, value)
-
-        if result:
-            return True, value
-        else:
-            return False, self._make_check_error(ValueError, name, value)
+        return super().expected() + [expected]
