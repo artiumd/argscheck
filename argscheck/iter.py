@@ -10,7 +10,7 @@ item, until finally ``StopIteration`` is raised.
 An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
 creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
 """
-from .core import check, Checker, Wrapper
+from .core import check, Checker, Wrapper, RAISE_ON_ERROR_DEFAULT
 
 
 class Iterator(Checker):
@@ -42,11 +42,11 @@ class Iterator(Checker):
         super().__init__(**kwargs)
         self.item_checker = Checker.from_checker_likes(args)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         if not name:
             name = repr(self).lower()
 
-        return _IteratorWrapper(self.item_checker, value, 'item {} from ' + name)
+        return _IteratorWrapper(self.item_checker, value, 'item {} from ' + name, **kwargs)
 
 
 class Iterable(Checker):
@@ -76,18 +76,19 @@ class Iterable(Checker):
         super().__init__(**kwargs)
         self.item_checker = Checker.from_checker_likes(args)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         if not name:
             name = repr(self).lower()
 
-        return _IterableWrapper(self.item_checker, value, 'item {} from ' + name)
+        return _IterableWrapper(self.item_checker, value, 'item {} from ' + name, **kwargs)
 
 
 class _IteratorWrapper(Wrapper):
-    def __init__(self, checker, wrapped, name):
+    def __init__(self, checker, wrapped, name, raise_on_error=RAISE_ON_ERROR_DEFAULT):
         self.checker = checker
         self.wrapped = wrapped
         self.name = name
+        self.raise_on_error = raise_on_error
         self.i = 0
 
     def __next__(self):
@@ -105,14 +106,15 @@ class _IteratorWrapper(Wrapper):
             raise stop
 
         # Check next item from iterator
-        return check(self.checker, value, name)
+        return check(self.checker, value, name, self.raise_on_error)
 
 
 class _IterableWrapper(Wrapper):
-    def __init__(self, checker, wrapped, name):
+    def __init__(self, checker, wrapped, name, raise_on_error=RAISE_ON_ERROR_DEFAULT):
         self.checker = checker
         self.wrapped = wrapped
         self.name = name
+        self.raise_on_error = raise_on_error
 
     def __iter__(self):
         # Create iterator from iterable
@@ -121,4 +123,4 @@ class _IterableWrapper(Wrapper):
         except TypeError:
             raise TypeError(f'Failed calling iter() on {self.wrapped!r}, make sure this object is iterable.')
 
-        return _IteratorWrapper(self.checker, iterator, self.name)
+        return _IteratorWrapper(self.checker, iterator, self.name, self.raise_on_error)

@@ -12,7 +12,10 @@ import inspect
 from .utils import extend_docstring, partition, join
 
 
-def check(checker_like, value, name=''):
+RAISE_ON_ERROR_DEFAULT = True
+
+
+def check(checker_like, value, name='', raise_on_error=RAISE_ON_ERROR_DEFAULT):
     """
     Check an argument (and possibly convert it, depending on the particular checker instance).
 
@@ -31,18 +34,23 @@ def check(checker_like, value, name=''):
     The only difference is that in the second call, ``name`` will appear in the error message in case the check
     fails.
     """
+    if not isinstance(raise_on_error, bool):
+        raise TypeError(f'check() expects that raise_on_error is bool, got {raise_on_error.__class__.__name__} instead.')
+
     checker = Checker.from_checker_likes(checker_like)
-    result = checker.check(name, value)
+    result = checker.check(name, value, raise_on_error=raise_on_error)
 
     if isinstance(result, Wrapper):
         return result
     else:
-        passed, value_or_exception = result
+        passed, new_value = result
 
-        if passed:
-            return value_or_exception
+        if not raise_on_error:
+            return passed, new_value, value
+        elif passed:
+            return new_value
         else:
-            raise value_or_exception
+            raise new_value
 
 
 def check_args(fn):
@@ -99,7 +107,7 @@ def check_args(fn):
     return checked_fn
 
 
-def validator(checker, name, **kwargs):
+def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
     """
     Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
     ``pydantic`` model. The validator will perform the checking and conversion by calling the
@@ -110,7 +118,7 @@ def validator(checker, name, **kwargs):
     """
     import pydantic
 
-    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
+    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name, raise_on_error=raise_on_error))
 
 
 class Wrapper:
@@ -183,7 +191,7 @@ class Checker(metaclass=CheckerMeta):
     def expected(self):
         return []
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
@@ -252,7 +260,7 @@ class Typed(Checker):
 
         self.types = args
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
@@ -352,7 +360,7 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
@@ -412,7 +420,7 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value

@@ -55,7 +55,7 @@ class Optional(Checker):
 
         self.sentinel = sentinel
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value

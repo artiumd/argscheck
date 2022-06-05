@@ -48,7 +48,7 @@ class Collection(Sized, Typed):
         else:
             self.iterable = None
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
@@ -60,7 +60,7 @@ class Collection(Sized, Typed):
         if not name:
             name = repr(self).lower()
 
-        items = list(check(self.iterable, value, name))
+        items = list(check(self.iterable, value, name, **kwargs))
 
         for item in items:
             if isinstance(item, Wrapper):
