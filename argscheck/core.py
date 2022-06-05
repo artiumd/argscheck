@@ -53,7 +53,7 @@ def check(checker_like, value, name='', raise_on_error=RAISE_ON_ERROR_DEFAULT):
             raise new_value
 
 
-def check_args(fn):
+def check_args(function=None, raise_on_error=RAISE_ON_ERROR_DEFAULT):
     """
     A decorator, that when applied to a function:
 
@@ -76,35 +76,43 @@ def check_args(fn):
         convex_sum(0, [2], 0.5)  # Fails, raises TypeError ([2] is not a number)
 
     """
-    checkers = {}
+    def decorator(fn):
+        checkers = {}
 
-    # Extract signature, iterate over parameters and create checkers from annotations
-    signature = inspect.signature(fn)
+        # Extract signature, iterate over parameters and create checkers from annotations
+        signature = inspect.signature(fn)
 
-    for name, parameter in signature.parameters.items():
-        annotation = parameter.annotation
+        for name, parameter in signature.parameters.items():
+            annotation = parameter.annotation
 
-        # Skip parameters without annotations
-        if annotation == parameter.empty:
-            continue
+            # Skip parameters without annotations
+            if annotation == parameter.empty:
+                continue
 
-        checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')
+            checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')
 
-    # Build a function that performs argument checking, then, calls original function
-    @wraps(fn)
-    def checked_fn(*args, **kwargs):
-        # Bind arguments to parameters, so we can associate checkers with argument values
-        bound_args = signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
+        # Build a function that performs argument checking, then, calls original function
+        @wraps(fn)
+        def checked_fn(*args, **kwargs):
+            # Bind arguments to parameters, so we can associate checkers with argument values
+            bound = signature.bind(*args, **kwargs)
+            bound.apply_defaults()
 
-        # Check each argument for which a checker was defined, then, call original function with checked values
-        for name, checker in checkers.items():
-            value = bound_args.arguments[name]
-            bound_args.arguments[name] = check(checker, value, name)
+            # Check each argument for which a checker was defined, then, call original function with checked values
+            for name, checker in checkers.items():
+                value = bound.arguments[name]
+                bound.arguments[name] = check(checker, value, name, raise_on_error=raise_on_error)
 
-        return fn(*bound_args.args, **bound_args.kwargs)
+            return fn(*bound.args, **bound.kwargs)
 
-    return checked_fn
+        return checked_fn
+
+    if function is None:
+        # When applied like @check_args(...)
+        return decorator
+    else:
+        # When applied like @check_args
+        return decorator(function)
 
 
 def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
