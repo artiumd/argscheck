@@ -154,6 +154,24 @@ class CheckerMeta(type):
         else:
             return cls(item)
 
+    def __lt__(cls, other):
+        return cls(lt=other)
+
+    def __gt__(cls, other):
+        return cls(gt=other)
+
+    def __le__(cls, other):
+        return cls(le=other)
+
+    def __ge__(cls, other):
+        return cls(ge=other)
+
+    def __ne__(cls, other):
+        return cls(ne=other)
+
+    def __eq__(cls, other):
+        return cls(eq=other)
+
 
 class Checker(metaclass=CheckerMeta):
     """

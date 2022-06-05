@@ -69,3 +69,17 @@ class TestComparable(TestCaseArgscheck):
         self.assertRaisesOnCheck(ValueError, 0)
         self.assertRaisesOnCheck(ValueError, 10.01)
         self.assertRaisesOnCheck(TypeError, 'a')
+
+        self.checker = Comparable < 3
+        self.assertOutputIsInput(1)
+        self.assertOutputIsInput(-1.1)
+        self.assertRaisesOnCheck(ValueError, 3)
+        self.assertRaisesOnCheck(ValueError, 333.3)
+        self.assertRaisesOnCheck(TypeError, 'a')
+
+        self.checker = 3 > Comparable
+        self.assertOutputIsInput(1)
+        self.assertOutputIsInput(-1.1)
+        self.assertRaisesOnCheck(ValueError, 3)
+        self.assertRaisesOnCheck(ValueError, 333.3)
+        self.assertRaisesOnCheck(TypeError, 'a')

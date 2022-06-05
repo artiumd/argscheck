@@ -10,7 +10,6 @@ class TestTyped(TestCaseArgscheck):
         Typed(MockClass)
         Typed(int)
         Typed(type(None))
-        Typed(Checker)
         Typed(type)
         Typed(int, float)
         Typed(int, bool, list, dict, str, MockClass)
@@ -41,10 +40,6 @@ class TestTyped(TestCaseArgscheck):
         self.assertOutputIsInput([])
         self.assertRaisesOnCheck(TypeError, {})
         self.assertRaisesOnCheck(TypeError, ())
-
-        self.checker = Typed(Typed)
-        self.assertOutputIsInput(self.checker)
-        self.assertRaisesOnCheck(TypeError, Checker())
 
         self.checker = Typed(int, float)
         self.assertOutputIsInput(-12)
