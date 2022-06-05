@@ -12,7 +12,10 @@ import inspect
 from .utils import extend_docstring, partition, join
 
 
-def check(checker_like, value, name=''):
+RAISE_ON_ERROR_DEFAULT = True
+
+
+def check(checker_like, value, name='', raise_on_error=RAISE_ON_ERROR_DEFAULT):
     """
     Check an argument (and possibly convert it, depending on the particular checker instance).
 
@@ -31,21 +34,26 @@ def check(checker_like, value, name=''):
     The only difference is that in the second call, ``name`` will appear in the error message in case the check
     fails.
     """
+    if not isinstance(raise_on_error, bool):
+        raise TypeError(f'check() expects that raise_on_error is bool, got {raise_on_error.__class__.__name__} instead.')
+
     checker = Checker.from_checker_likes(checker_like)
-    result = checker.check(name, value)
+    result = checker.check(name, value, raise_on_error=raise_on_error)
 
     if isinstance(result, Wrapper):
         return result
     else:
-        passed, value_or_exception = result
+        passed, new_value = result
 
-        if passed:
-            return value_or_exception
+        if not raise_on_error:
+            return passed, new_value, value
+        elif passed:
+            return new_value
         else:
-            raise value_or_exception
+            raise new_value
 
 
-def check_args(fn):
+def check_args(function=None, raise_on_error=RAISE_ON_ERROR_DEFAULT):
     """
     A decorator, that when applied to a function:
 
@@ -68,38 +76,46 @@ def check_args(fn):
         convex_sum(0, [2], 0.5)  # Fails, raises TypeError ([2] is not a number)
 
     """
-    checkers = {}
+    def decorator(fn):
+        checkers = {}
 
-    # Extract signature, iterate over parameters and create checkers from annotations
-    signature = inspect.signature(fn)
+        # Extract signature, iterate over parameters and create checkers from annotations
+        signature = inspect.signature(fn)
 
-    for name, parameter in signature.parameters.items():
-        annotation = parameter.annotation
+        for name, parameter in signature.parameters.items():
+            annotation = parameter.annotation
 
-        # Skip parameters without annotations
-        if annotation == parameter.empty:
-            continue
+            # Skip parameters without annotations
+            if annotation == parameter.empty:
+                continue
 
-        checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')
+            checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')
 
-    # Build a function that performs argument checking, then, calls original function
-    @wraps(fn)
-    def checked_fn(*args, **kwargs):
-        # Bind arguments to parameters, so we can associate checkers with argument values
-        bound_args = signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
+        # Build a function that performs argument checking, then, calls original function
+        @wraps(fn)
+        def checked_fn(*args, **kwargs):
+            # Bind arguments to parameters, so we can associate checkers with argument values
+            bound = signature.bind(*args, **kwargs)
+            bound.apply_defaults()
 
-        # Check each argument for which a checker was defined, then, call original function with checked values
-        for name, checker in checkers.items():
-            value = bound_args.arguments[name]
-            bound_args.arguments[name] = check(checker, value, name)
+            # Check each argument for which a checker was defined, then, call original function with checked values
+            for name, checker in checkers.items():
+                value = bound.arguments[name]
+                bound.arguments[name] = check(checker, value, name, raise_on_error=raise_on_error)
 
-        return fn(*bound_args.args, **bound_args.kwargs)
+            return fn(*bound.args, **bound.kwargs)
 
-    return checked_fn
+        return checked_fn
+
+    if function is None:
+        # When applied like @check_args(...)
+        return decorator
+    else:
+        # When applied like @check_args
+        return decorator(function)
 
 
-def validator(checker, name, **kwargs):
+def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
     """
     Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
     ``pydantic`` model. The validator will perform the checking and conversion by calling the
@@ -110,7 +126,7 @@ def validator(checker, name, **kwargs):
     """
     import pydantic
 
-    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name))
+    return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name, raise_on_error=raise_on_error))
 
 
 class Wrapper:
@@ -183,7 +199,7 @@ class Checker(metaclass=CheckerMeta):
     def expected(self):
         return []
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         return True, value
 
     def _assert_not_in_kwargs(self, *names, **kwargs):
@@ -252,7 +268,7 @@ class Typed(Checker):
 
         self.types = args
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
@@ -352,7 +368,7 @@ class Comparable(Checker):
         expected = [f'{self.comp_names[name]} {other!r}' for name, other in others.items()]
         self._expected_str = ', '.join(expected)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
@@ -412,7 +428,7 @@ class One(Checker):
         # Validate checker-like positional arguments
         self.checkers = [Checker.from_checker_likes(other, name=f'args[{i}]') for i, other in enumerate(others)]
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value

@@ -47,7 +47,7 @@ class PathLike(Typed):
 
         self.suffix = _Suffix(suffix, suffixes, ignore_suffix_case, parent=self)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value

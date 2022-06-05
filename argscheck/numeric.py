@@ -229,7 +229,7 @@ class Sized(Checker):
         # Check that no negative values were provided
         self._validate_lengths(len_lt=len_lt, len_le=len_le, len_ne=len_ne, len_eq=len_eq, len_ge=len_ge, len_gt=len_gt)
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value

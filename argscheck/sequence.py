@@ -59,7 +59,7 @@ class Sequence(Sized, Typed):
         else:
             self.item_checker = None
 
-    def check(self, name, value):
+    def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:
             return False, value
