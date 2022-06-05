@@ -176,6 +176,36 @@ class Comparable(Checker):
         # Set comparators
         self.lt, self.le, self.ne, self.eq, self.ge, self.gt = lt, le, ne, eq, ge, gt
 
+    def __lt__(self, other):
+        self.lt = other
+
+        return self
+
+    def __gt__(self, other):
+        self.gt = other
+
+        return self
+
+    def __le__(self, other):
+        self.le = other
+
+        return self
+
+    def __ge__(self, other):
+        self.ge = other
+
+        return self
+
+    def __ne__(self, other):
+        self.ne = other
+
+        return self
+
+    def __eq__(self, other):
+        self.eq = other
+
+        return self
+
     def check(self, name, value, **kwargs):
         passed, value = super().check(name, value)
         if not passed:

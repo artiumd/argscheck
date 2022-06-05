@@ -85,7 +85,7 @@ def check_args(function=None, raise_on_error=RAISE_ON_ERROR_DEFAULT):
             annotation = parameter.annotation
 
             # Skip parameters without annotations
-            if annotation == parameter.empty:
+            if annotation is parameter.empty:
                 continue
 
             checkers[name] = Checker.from_checker_likes(annotation, f'{fn.__name__}({name})')

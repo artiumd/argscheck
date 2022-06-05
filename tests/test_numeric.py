@@ -1,4 +1,4 @@
-from argscheck import Sized, Float, Number
+from argscheck import Sized, Float, Number, check_args
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -90,6 +90,23 @@ class TestFloat(TestCaseArgscheck):
         self.checker = 1.0 > Float
         self.assertOutputIsInput(0.99)
         self.assertRaisesOnCheck(ValueError, 1.0)
+
+        self.checker = 0.0 <= (Float <= 1.0)
+        self.assertOutputIsInput(0.5)
+        self.assertOutputIsInput(1.0)
+        self.assertOutputIsInput(0.0)
+        self.assertRaisesOnCheck(ValueError, 1.1)
+        self.assertRaisesOnCheck(ValueError, -0.9)
+
+        @check_args
+        def fun(x: 0.0 <= (Float <= 1.0)):
+            pass
+
+        fun(0.0)
+        fun(0.5)
+        fun(1.0)
+        self.assertRaises(ValueError, fun, 1.1)
+        self.assertRaises(TypeError, fun, 2)
 
 
 class TestNumber(TestCaseArgscheck):

@@ -38,3 +38,11 @@ class TestSet(TestCaseArgscheck):
 
         self.checker = Set[Iterable[str]]
         self.assertRaisesOnCheck(NotImplementedError, {'aa', MockIterable(['a', 'b']), MockIterable(['a', 'b'])})
+
+        self.checker = Set[str] <= {'one', 'two', 'three'}
+        self.assertOutputEqualsInput({'one'})
+        self.assertOutputEqualsInput({'one', 'two'})
+        self.assertOutputEqualsInput({'one', 'two', 'three'})
+        self.assertRaisesOnCheck(ValueError, {'one', 'two', 'three', 'four'})
+        self.assertRaisesOnCheck(ValueError, {'four'})
+        self.assertRaisesOnCheck(TypeError, {1})
