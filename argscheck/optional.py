@@ -9,6 +9,9 @@ from .core import Checker, Wrapper
 from .utils import Sentinel
 
 
+_missing = Sentinel('<MISSING>')
+
+
 class Optional(Checker):
     """
     Check if ``x`` is ``None`` or something else, similarly to ``typing.Optional``.
@@ -34,28 +37,25 @@ class Optional(Checker):
         checker.check(None)       # Passes, returns []
         checker.check("string")   # Fails, raises TypeError ("string" is neither None nor a list or a set)
     """
-    missing = Sentinel('<MISSING>')
 
-    def __init__(self, *args, default_value=missing, default_factory=missing, sentinel=None, **kwargs):
+    def __init__(self, *args, default_value=_missing, default_factory=_missing, sentinel=None, **kwargs):
         super().__init__(**kwargs)
 
         # `default_value` and `default_factory` are mutually exclusive
-        if default_value is not self.missing and default_factory is not self.missing:
-            self._raise_init_type_error('must not be both present',
-                                        default_value=default_value,
-                                        default_factory=default_factory)
+        if default_value is not _missing and default_factory is not _missing:
+            self._raise_init_type_error('must not be both present', default_value=default_value, default_factory=default_factory)
 
         # `default_factory` must be a callable if provided
-        if default_factory is not self.missing and not callable(default_factory):
+        if default_factory is not _missing and not callable(default_factory):
             self._raise_init_type_error('must be a callable (if present)', default_factory=default_factory)
 
         # Create a checker from `*args`
         self.checker = Checker.from_checker_likes(args)
 
         # Set the default factory function
-        if default_factory is not self.missing:
+        if default_factory is not _missing:
             self.default_factory = default_factory
-        elif default_value is not self.missing:
+        elif default_value is not _missing:
             self.default_factory = lambda: default_value
         else:
             self.default_factory = lambda: sentinel
