@@ -1,28 +1,12 @@
-from argscheck import Checker, Typed, Sized, One, Comparable, String, Int, Iterable, Iterator
+from argscheck import Sized, One, Comparable, String, Int, Iterable, Iterator
 
 from tests.argscheck_test_case import TestCaseArgscheck
-from tests.mocks import MockClass, MockIterable, MockIterator
+from tests.mocks import MockIterable, MockIterator
 
 
 class TestTyped(TestCaseArgscheck):
-    def test_init(self):
-        # Good arguments
-        Typed(MockClass)
-        Typed(int)
-        Typed(type(None))
-        Typed(type)
-        Typed(int, float)
-        Typed(int, bool, list, dict, str, MockClass)
-
-        # Bad arguments
-        self.assertRaises(TypeError, Typed)
-        self.assertRaises(TypeError, Typed, None)
-        self.assertRaises(TypeError, Typed, 1)
-        self.assertRaises(TypeError, Typed, tuple())
-        self.assertRaises(TypeError, Typed, MockClass())
-
     def test_check(self):
-        self.checker = Typed(float)
+        self.checker = float
         self.assertOutputIsInput(0.0)
         self.assertOutputIsInput(1e5)
         self.assertOutputIsInput(float('nan'))
@@ -30,32 +14,32 @@ class TestTyped(TestCaseArgscheck):
         self.assertOutputIsInput(float('-inf'))
         self.assertRaisesOnCheck(TypeError, 1)
 
-        self.checker = Typed(int)
+        self.checker = int
         self.assertOutputIsInput(True)
         self.assertOutputIsInput(-1234)
         self.assertRaisesOnCheck(TypeError, 1e5)
 
-        self.checker = Typed(list)
+        self.checker = list
         self.assertOutputIsInput(['', {}, [], ()])
         self.assertOutputIsInput([])
         self.assertRaisesOnCheck(TypeError, {})
         self.assertRaisesOnCheck(TypeError, ())
 
-        self.checker = Typed(int, float)
+        self.checker = (int, float)
         self.assertOutputIsInput(-12)
         self.assertOutputIsInput(1.234)
 
-        self.checker = Typed(bool)
+        self.checker = bool
         self.assertOutputIsInput(False)
         self.assertRaisesOnCheck(TypeError, 1)  # 1 is not a bool
         self.assertRaisesOnCheck(TypeError, None)
 
-        self.checker = Typed(str)
+        self.checker = str
         self.assertOutputIsInput('')
         self.assertOutputIsInput('abcd')
         self.assertRaisesOnCheck(TypeError, 0x1234)
 
-        self.checker = Typed(object)
+        self.checker = object
         self.assertOutputIsInput('')
         self.assertOutputIsInput([])
         self.assertOutputIsInput(0)
