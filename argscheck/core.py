@@ -169,8 +169,10 @@ class CheckerMeta(type):
     def __ne__(cls, other):
         return cls(ne=other)
 
-    def __eq__(cls, other):
-        return cls(eq=other)
+    # Workaround: when building sphinx docs, CheckerMeta.__eq__ gets called (with unintentional consequences)
+    if 'sphinx' not in sys.modules:
+        def __eq__(cls, other):
+            return cls(eq=other)
 
 
 class Checker(metaclass=CheckerMeta):
