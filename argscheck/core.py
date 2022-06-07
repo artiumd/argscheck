@@ -2,7 +2,7 @@
 Core
 ====
 
-This section documents the functions available to perform argument checking.
+This page documents the functions available to perform argument checking.
 
 These can be used with checker-likes (types or tuples of types) or with checkers from the other sections to check for
 more complex conditions.

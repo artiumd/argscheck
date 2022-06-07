@@ -1,8 +1,8 @@
 """
-TODO
-****
+Optional
+========
 
-TODO
+This page documents the :class:`.Optional` checker.
 """
 
 from .core import Checker, Wrapper
@@ -14,28 +14,29 @@ _missing = Sentinel('<MISSING>')
 
 class Optional(Checker):
     """
-    Check if ``x`` is ``None`` or something else, similarly to ``typing.Optional``.
+    Check if `x` is `None` or something else, similarly to `typing.Optional`.
 
-    :param args: *Tuple[CheckerLike]* – Specifies what ``x`` may be (other than ``None``).
-    :param default_value: *Optional[Any]* – If ``x is None``, it will be replaced by ``default_value``.
-    :param default_factory: *Optional[Callable]* – if ``x is None``, it will be replaced by a value freshly returned
-        from ``default_factory()``. This is useful for setting default values that are of mutable types.
-    :param sentinel: *Optional[Any]* – ``x is sentinel`` will be used to determine if the ``x`` is missing, instead of
-        ``x is None``.
+    :param args: *Tuple[CheckerLike]* – Specifies what `x` may be (other than `None`).
+    :param default_value: *Optional[Any]* – If `x` is `None`, it will be replaced by `default_value`.
+    :param default_factory: *Optional[Callable]* – if `x is None`, it will be replaced by a value freshly returned
+        from `default_factory()`. This is useful for setting default values that are of mutable types.
+    :param sentinel: *Optional[Any]* – `x is sentinel` will be used to determine if the `x` is missing, instead of
+        `x is None`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Optional
+        from argscheck import check, Optional
+
 
         # Check if a list, set or None, replace None with a fresh list
         checker = Optional(list, set, default_factory=list)
 
-        checker.check([1, 2, 3])  # Passes, returns [1, 2, 3]
-        checker.check({1, 2, 3})  # Passes, returns {1, 2, 3}
-        checker.check(None)       # Passes, returns []
-        checker.check("string")   # Fails, raises TypeError ("string" is neither None nor a list or a set)
+        check(checker, [1, 2, 3])  # Passes, [1, 2, 3] is returned
+        check(checker, {1, 2, 3})  # Passes, {1, 2, 3} is returned
+        check(checker, None)       # Passes, [] is returned
+        check(checker, "string")   # Fails, a TypeError is raised
     """
 
     def __init__(self, *args, default_value=_missing, default_factory=_missing, sentinel=None, **kwargs):
@@ -73,6 +74,8 @@ class Optional(Checker):
         result = self.checker.check(name, value)
 
         if isinstance(result, Wrapper):
+            # `Optional` supports deferred checkers. The rest of the check will continue as the value is consumed from
+            # the wrapper
             return result
         else:
             passed, value_ = result
