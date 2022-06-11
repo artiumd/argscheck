@@ -2,17 +2,19 @@
 Collections
 ===========
 
-This module contains checkers for collection objects.
+This page documents checkers for collection objects.
 
-In this context, a collection is a class that:
+We define a collection as a class that:
 
-1. Has ``__len__()`` implemented.
+1. Has `__len__()` implemented.
 2. Its instances are iterable.
 3. Can be instantiated from an iterable.
 
-Collections can be homogeneous, i.e. all items in it have some shared properties. Homogeneity can be checked using the
-``*args`` parameter.
+Collections can be homogeneous, i.e. all items in it satisfy the same set of conditions.
+
+Homogeneity can be checked for using  the by providing one or more positional arguments to the checker's constructor.
 """
+
 from .core import check, Typed, Wrapper
 from . import Comparable
 from .numeric import Sized
@@ -21,23 +23,24 @@ from .iter import Iterable
 
 class Collection(Sized, Typed):
     """
-    Check if ``x`` is a collection.
+    Check if `x` is a collection.
 
-    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in ``x``.
+    :param args: *Optional[Tuple[CheckerLike]]* – If provided, apply the given check to each item in `x`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Collection
+        from argscheck import check, Collection
 
-        # Check if a non empty collection of floats
+
+        # Check if a non-empty collection of floats
         checker = Collection(float, len_gt=0)
 
-        checker.check({1.2, 3.4})       # Passes, returns {1.2, 3.4}
-        checker.check([1.1, 2.2, 3.3])  # Passes, returns [1.1, 2.2, 3.3]
-        checker.check(())               # Fails, raises ValueError (empty collection)
-        checker.check('abcd')           # Fails, raises TypeError (collection of str and not float)
+        check(checker, {1.2, 3.4})       # Passes, {1.2, 3.4} is returned
+        check(checker, [1.1, 2.2, 3.3])  # Passes, [1.1, 2.2, 3.3] is returned
+        check(checker, ())               # Fails, a ValueError is raised (empty collection)
+        check(checker, 'abcd')           # Fails, a TypeError is raised (collection of str and not float)
 
     """
 
@@ -78,25 +81,30 @@ class Collection(Sized, Typed):
 
 class Set(Comparable, Collection, types=(set,)):
     """
-    Check if ``x`` is a homogenous ``set`` and optionally, check its length and compare it to other sets using binary
-    operators, e.g. using ``gt=other`` will check if ``x`` is a superset of ``other`` (which must also be a ``set``).
+    Check if `x` is a (possibly homogenous) `set` and optionally, check its length.
 
-    :param args: *Optional[Tuple[CheckerLike]]* – If provided, this check will be applied to each item in ``x``.
+    `x` can also be compared to other sets using binary comparison operators, e.g. using `gt=other` will check if `x`
+    is a superset of `other` (which must also be a `set`).
+
+    Comparison shorthands can be used here, see example.
+
+    :param args: *Optional[Tuple[CheckerLike]]* – If provided, apply the given check to each item in `x`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Set
+        from argscheck import check, Set
+
 
         # Check if a set of length at least 2 and is a superset of {'a'}
-        checker = Set(gt={'a'}, len_ge=2)
+        checker = Set(len_ge=2) > {'a'}
 
-        checker.check({'a', 'b'})    # Passes, returns {'a', 'b'}
-        checker.check({'a', 1, ()})  # Passes, returns {'a', 1, ()}
-        checker.check(['a', 'b'])    # Fails, raises TypeError (type is list and not set)
-        checker.check({'a'})         # Fails, raises ValueError (length is 1 and not 2 or greater)
-        checker.check({'b', 'c'})    # Fails, raises ValueError ({'b', 'c'} is not a superset of {'a'})
+        check(checker, {'a', 'b'})    # Passes, {'a', 'b'} is returned
+        check(checker, {'a', 1, ()})  # Passes, {'a', 1, ()} is returned
+        check(checker, ['a', 'b'])    # Fails, a TypeError is raised (type is list and not set)
+        check(checker, {'a'})         # Fails, a ValueError is raised (length is 1 and not 2 or greater)
+        check(checker, {'b', 'c'})    # Fails, a ValueError is raised ({'b', 'c'} is not a superset of {'a'})
 
     :meta skip-extend-docstring-other_type:
     """
