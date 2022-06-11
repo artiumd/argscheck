@@ -56,34 +56,58 @@ class _Descriptor:
 
 class Comparable(Checker):
     """
-    Check if ``x`` correctly compares to other value(s) using any of the following binary operators:
-    ``<``, ``<=``, ``!=``, ``==``, ``>=`` or ``>``.
+    Check if `x` correctly compares to other values using any of the following binary operators:
+    `<`, `<=`, `!=`, `==`, `>=` or `>`.
 
-    Comparison need not necessarily be between numeric types, as can be seen in the example below.
+    Comparison need not necessarily be between numeric types, as can be seen in the first example below.
 
-    :param lt: *Optional[Any]* – Check if ``x < lt``.
-    :param le: *Optional[Any]* – Check if ``x <= le``.
-    :param ne: *Optional[Any]* – Check if ``x != ne``.
-    :param eq: *Optional[Any]* – Check if ``x == eq``.
-    :param ge: *Optional[Any]* – Check if ``x >= ge``.
-    :param gt: *Optional[Any]* – Check if ``x > gt``.
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which ``x`` can
-       be compared, e.g. ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError`` (because ``1.0`` is not an
-       ``int``).
+    Also, comparison shorthands can be used, as can be seen in the second example below.
+
+    :param lt: *Optional[Any]* – Check if `x< lt`.
+    :param le: *Optional[Any]* – Check if `x <= le`.
+    :param ne: *Optional[Any]* – Check if `x != ne`.
+    :param eq: *Optional[Any]* – Check if `x == eq`.
+    :param ge: *Optional[Any]* – Check if `x >= ge`.
+    :param gt: *Optional[Any]* – Check if `x > gt`.
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – If provided, restricts the types to which `x` can
+       be compared, e.g. `other_type=int` with `ne=1.0` will raise a `TypeError` (because `1.0` is not an `int`).
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Comparable
+        from argscheck import check, Comparable
 
-        # Check if a strict subset
+
+        # Check if a strict subset of {'a', 'b'}
         checker = Comparable(lt={'a', 'b'})
 
-        checker.check(set())       # Passes, returns set()
-        checker.check({'a'})       # Passes, returns {'a'}
-        checker.check({'a', 'b'})  # Fails, raises ValueError ({'a', 'b'} is equal to {'a', 'b'})
-        checker.check('a')         # Fails, raises TypeError (< is not supported between set and str)
+        check(checker, set())       # Passes, an empty set is returned
+        check(checker, {'a'})       # Passes, {'a'} is returned
+        check(checker, {'a', 'b'})  # Fails, a ValueError is raised ({'a', 'b'} is equal to {'a', 'b'})
+        check(checker, 'a')         # Fails, a TypeError is raised (< is not supported between set and str)
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import check, Comparable
+
+
+        # Check if between 3 (inclusive) and 10 (exclusive)
+        checker = 3 <= (Comparable < 10)
+
+        check(checker, 7.0)   # Passes, 7.0 is returned
+        check(checker, 3)     # Passes, 3 is returned
+        check(checker, 1)     # Fails, a ValueError is raised
+        check(checker, 10)    # Fails, a ValueError is raised (< is not supported between set and str)
+
+    .. warning::
+
+       When using a **chained** comparison shorthand like in the second example, one of the comparisons must always be
+       surrounded by parentheses. i.e. the following will not work: `3 <= Comparable < 10`.
+
+       This is due to how Python's chained comparison handling is implemented.
     """
 
     lt = _Descriptor(operator.lt, excludes={'le', 'eq'}, greater_than={'gt', 'ge'}, long_name='less than')
