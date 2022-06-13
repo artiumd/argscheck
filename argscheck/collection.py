@@ -12,7 +12,7 @@ We define a collection as a class that:
 
 Collections can be homogeneous, i.e. all items in it satisfy the same set of conditions.
 
-Homogeneity can be checked for using  the by providing one or more positional arguments to the checker's constructor.
+Homogeneity can be checked for using by providing one or more positional arguments to the checker's constructor.
 """
 
 from .core import check, Typed, Wrapper
@@ -23,7 +23,7 @@ from .iter import Iterable
 
 class Collection(Sized, Typed):
     """
-    Check if `x` is a collection.
+    Check if `x` is a (possible homogeneous) collection.
 
     :param args: *Optional[Tuple[CheckerLike]]* – If provided, apply the given check to each item in `x`.
 

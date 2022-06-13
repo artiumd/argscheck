@@ -69,6 +69,11 @@ class TestIterable(TestCaseArgscheck):
                 for inner_value in outer_value:
                     pass
 
+        self.checker = Iterable
+        values = [1, 1.1, 'one', [], None]
+        behaviours = ['is', 'is', 'is', 'is', 'is']
+        self.assertItemsFromIter(values, behaviours, values, iterable=True)
+
 
 class TestIterator(TestCaseArgscheck):
     def test_init(self):
@@ -98,4 +103,9 @@ class TestIterator(TestCaseArgscheck):
         self.assertOutputEquals(None, None)
         values = [1, 2.1, 3, '', [], -2]
         behaviours = ['is', 'is', 'is', 'is', 'raises:Exception', 'raises:Exception']
+        self.assertItemsFromIter(iter(values), behaviours, values, iterable=False)
+
+        self.checker = Iterator
+        values = [1, 1.1, 'one', [], None]
+        behaviours = ['is', 'is', 'is', 'is', 'is']
         self.assertItemsFromIter(iter(values), behaviours, values, iterable=False)
