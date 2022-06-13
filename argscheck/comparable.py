@@ -63,7 +63,7 @@ class Comparable(Checker):
 
     Also, comparison shorthands can be used, as can be seen in the second example below.
 
-    :param lt: *Optional[Any]* – Check if `x< lt`.
+    :param lt: *Optional[Any]* – Check if `x < lt`.
     :param le: *Optional[Any]* – Check if `x <= le`.
     :param ne: *Optional[Any]* – Check if `x != ne`.
     :param eq: *Optional[Any]* – Check if `x == eq`.

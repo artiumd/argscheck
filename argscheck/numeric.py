@@ -2,10 +2,12 @@
 Numeric
 =======
 
-This module contains checkers for numeric arguments, as well as for sized arguments.
+This page documents checkers for numeric arguments, as well as for sized arguments.
 """
+
 from .core import Checker, Typed
 from . import Comparable
+
 
 _ints = (int,)
 _floats = (float,)
@@ -14,12 +16,44 @@ _numbers = _ints + _floats
 
 class Number(Comparable, Typed, types=_numbers):
     """
-    Check if ``x`` is of a numeric type (``int`` or ``float``) and optionally, compares it to other value(s) using
-    any of the following binary operators: ``{< | <= | != | == | >= | >}``.
+    Check if `x` is of a numeric type (`int` or `float`) and optionally, compares it to other value(s) using
+    any of the following binary operators: `<`, `<=`, `!=`, `==`, `>=`, `>`.
 
-    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – restricts the types to which ``x`` can be compared, e.g.
-       ``other_type=int`` with ``ne=1.0`` will raise a ``TypeError``. By default, ``x`` can only be compared to
-       other ``int`` or ``float`` objects.
+    Comparison shorthands can be used, as can be seen in the second example below.
+
+    :param other_type: *Optional[Union[Type, Tuple[Type]]]* – restricts the types to which `x` can be compared, e.g.
+       `other_type=int` with `ne=1.0` will raise a `TypeError`. By default, `x` can only be compared to other
+       `int` or `float` objects.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import check, Number
+
+
+        # Check if a number between 0 (inclusive) and 10 (exclusive)
+        checker = Number(ge=0, lt=10)
+
+        check(checker, 0)     # Passes, 0 is returned
+        check(checker, 5.0)   # Passes, 5 is returned
+        check(checker, 10)    # Fails, a ValueError is raised
+        check(checker, 'a')   # Fails, a TypeError is raised
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import check, Number
+
+
+        # Check if a number between 0 (inclusive) and 25 (exclusive) but not equal to 14
+        checker = (0.0 <= (Number < 25)) != 14
+
+        check(checker, 0)     # Passes, 0 is returned
+        check(checker, 11.0)  # Passes, 5 is returned
+        check(checker, 26)    # Fails, a ValueError is raised
+        check(checker, 14)    # Fails, a ValueError is raised
     """
     def __init__(self, other_type=_numbers, **kwargs):
         super().__init__(*self.types, other_type=other_type, **kwargs)
@@ -27,7 +61,7 @@ class Number(Comparable, Typed, types=_numbers):
 
 class Int(Number, types=_ints):
     """
-    Same as :class:`.Number`, plus, ``x`` must be an ``int``.
+    Same as :class:`.Number`, plus, `x` must be an `int`.
 
     :meta skip-extend-docstring:
     """
@@ -36,7 +70,7 @@ class Int(Number, types=_ints):
 
 class Float(Number, types=_floats):
     """
-    Same as :class:`.Number`, plus, ``x`` must be a ``float``.
+    Same as :class:`.Number`, plus, `x` must be a `float`.
 
     :meta skip-extend-docstring:
     """
@@ -50,7 +84,7 @@ Positive
 
 class PositiveNumber(Number):
     """
-    Same as :class:`.Number`, plus, ``x > 0`` must be ``True``.
+    Same as :class:`.Number`, plus, `x > 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -61,7 +95,7 @@ class PositiveNumber(Number):
 
 class PositiveInt(Int):
     """
-    Same as :class:`.Int`, plus, ``x > 0`` must be ``True``.
+    Same as :class:`.Int`, plus, `x > 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -72,7 +106,7 @@ class PositiveInt(Int):
 
 class PositiveFloat(Float):
     """
-    Same as :class:`.Float`, plus, ``x > 0`` must be ``True``.
+    Same as :class:`.Float`, plus, `x > 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -88,7 +122,7 @@ Non Negative
 
 class NonNegativeNumber(Number):
     """
-    Same as :class:`.Number`, plus, ``x >= 0`` must be ``True``.
+    Same as :class:`.Number`, plus, `x >= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -99,7 +133,7 @@ class NonNegativeNumber(Number):
 
 class NonNegativeInt(Int):
     """
-    Same as :class:`.Int`, plus, ``x >= 0`` must be ``True``.
+    Same as :class:`.Int`, plus, `x >= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -110,7 +144,7 @@ class NonNegativeInt(Int):
 
 class NonNegativeFloat(Float):
     """
-    Same as :class:`.Float`, plus, ``x >= 0`` must be ``True``.
+    Same as :class:`.Float`, plus, `x >= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -126,7 +160,7 @@ Negative
 
 class NegativeNumber(Number):
     """
-    Same as :class:`.Number`, plus, ``x < 0`` must be ``True``.
+    Same as :class:`.Number`, plus, `x < 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -137,7 +171,7 @@ class NegativeNumber(Number):
 
 class NegativeInt(Int):
     """
-    Same as :class:`.Int`, plus, ``x < 0`` must be ``True``.
+    Same as :class:`.Int`, plus, `x < 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -148,7 +182,7 @@ class NegativeInt(Int):
 
 class NegativeFloat(Float):
     """
-    Same as :class:`.Float`, plus, ``x < 0`` must be ``True``.
+    Same as :class:`.Float`, plus, `x < 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -164,7 +198,7 @@ Non Positive
 
 class NonPositiveNumber(Number):
     """
-    Same as :class:`.Number`, plus, ``x <= 0`` must be ``True``.
+    Same as :class:`.Number`, plus, `x <= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -175,7 +209,7 @@ class NonPositiveNumber(Number):
 
 class NonPositiveInt(Int):
     """
-    Same as :class:`.Int`, plus, ``x <= 0`` must be ``True``.
+    Same as :class:`.Int`, plus, `x <= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -186,7 +220,7 @@ class NonPositiveInt(Int):
 
 class NonPositiveFloat(Float):
     """
-    Same as :class:`.Float`, plus, ``x <= 0`` must be ``True``.
+    Same as :class:`.Float`, plus, `x <= 0` must be `True`.
 
     :meta skip-extend-docstring:
     """
@@ -197,28 +231,27 @@ class NonPositiveFloat(Float):
 
 class Sized(Checker):
     """
-    Check the length of ``x`` (as returned from ``len(x)``).
+    Check the length of `x`, as returned by `len(x)`.
 
-    :param len_lt: *Optional[int]* – Check if ``len(x) < len_lt``.
-    :param len_le: *Optional[int]* – Check if ``len(x) <= len_le``.
-    :param len_ne: *Optional[int]* – Check if ``len(x) != len_ne``.
-    :param len_eq: *Optional[int]* – Check if ``len(x) == len_eq``.
-    :param len_ge: *Optional[int]* – Check if ``len(x) >= len_ge``.
-    :param len_gt: *Optional[int]* – Check if ``len(x) > len_gt``.
+    :param len_lt: *Optional[int]* – Check if `len(x) < len_lt`.
+    :param len_le: *Optional[int]* – Check if `len(x) <= len_le`.
+    :param len_ne: *Optional[int]* – Check if `len(x) != len_ne`.
+    :param len_eq: *Optional[int]* – Check if `len(x) == len_eq`.
+    :param len_ge: *Optional[int]* – Check if `len(x) >= len_ge`.
+    :param len_gt: *Optional[int]* – Check if `len(x) > len_gt`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Sized
+        from argscheck import check, Sized
+
 
         # Check if length is equal to 3
-        checker = Sized(len_eq=3)
-
-        checker.check(['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
-        checker.check('abc')            # Passes, returns 'abc'
-        checker.check({'a', 'b'})       # Fails, raises ValueError (length is 2 instead of 3)
-        checker.check(123)              # Fails, raises TypeError (int does not have a length)
+        check(Sized(len_eq=3), ['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
+        check(Sized(len_eq=3), 'abc')            # Passes, returns 'abc'
+        check(Sized(len_eq=3), {'a', 'b'})       # Fails, raises ValueError (length is 2 instead of 3)
+        check(Sized(len_eq=3), 123)              # Fails, raises TypeError (int does not have a length)
 
     """
     def __init__(self, *args, len_lt=None, len_le=None, len_ne=None, len_eq=None, len_ge=None, len_gt=None, **kwargs):
@@ -262,21 +295,20 @@ class Sized(Checker):
 
 class NonEmpty(Sized):
     """
-    Check if length of ``x`` is greater than zero.
+    Check if the length of `x` is greater than zero.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import NonEmpty
+        from argscheck import check, NonEmpty
+
 
         # Check if non empty
-        checker = NonEmpty()
-
-        checker.check(['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
-        checker.check('abc')            # Passes, returns 'abc'
-        checker.check('')               # Fails, raises ValueError (empty string)
-        checker.check([])               # Fails, raises ValueError (empty list)
+        check(NonEmpty, ['a', 'b', 'c'])  # Passes, returns ['a', 'b', 'c']
+        check(NonEmpty, 'abc')            # Passes, returns 'abc'
+        check(NonEmpty, '')               # Fails, raises ValueError (empty string)
+        check(NonEmpty, [])               # Fails, raises ValueError (empty list)
 
     :meta skip-extend-docstring:
     """
