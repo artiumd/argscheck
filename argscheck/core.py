@@ -30,6 +30,11 @@ def check(checker_like, value, name='', raise_on_error=RAISE_ON_ERROR_DEFAULT):
     1. If check passes, the checked (and possibly converted) argument will be returned.
     2. If check fails, an appropriate exception with an error message will be raised.
 
+    :param checker_like: *CheckerLike* – Describes the check performed on `value`.
+    :param value: *Any* - The value of the argument being checked.
+    :param name: *Optional[str]* - Optional name of the argument being checked. Will be used in error messages.
+    :param raise_on_error: *bool* - Whether to use the default or the alternative behaviour of this function.
+
     :Example:
 
     .. code-block:: python
@@ -58,16 +63,13 @@ def check(checker_like, value, name='', raise_on_error=RAISE_ON_ERROR_DEFAULT):
 
         passed, value, _ = check(int, 1, raise_on_error=False)      # passed is True, value is 1.
         passed, value, _ = check(int, 'one', raise_on_error=False)  # passed is False, value is a TypeError.
-
-    :param checker_like: *CheckerLike* – Describes the check performed on `value`.
-    :param value: *Any* - The value of the argument being checked.
-    :param name: *Optional[str]* - Optional name of the argument being checked. Will be used in error messages.
-    :param raise_on_error: *bool* - Whether to use the default or the alternative behaviour of this function.
     """
 
     # raise_on_error must be a boolean
     if not isinstance(raise_on_error, bool):
-        raise TypeError(f'check() expects that raise_on_error is bool, got {raise_on_error.__class__.__name__} instead.')
+        class_name = raise_on_error.__class__.__name__
+
+        raise TypeError(f'check() expects that raise_on_error is bool, got {class_name} instead.')
 
     # Transform checker-like to checker and apply it to the argument's value
     checker = Checker.from_checker_likes(checker_like)
@@ -195,6 +197,11 @@ def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
     ``pydantic`` model. The validator will perform the checking and conversion by internally calling the
     :func:`.check` function.
 
+    :param checker: *CheckerLike* - Describes the check that will be performed on the field.
+    :param name: *str* – Name of field for which validator is created.
+    :param raise_on_error: *bool* – See :func:`.check`.
+    :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
+
     :Example:
 
     .. code-block:: python
@@ -213,11 +220,6 @@ def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
         UserModel(items={'a': 1, 'b': 2}).items  # Passes, {'a': 1, 'b': 2} is returned
         UserModel(items=None).items              # Passes, {} is returned
         UserModel(items=[1, 2]).items            # Fails, a TypeError is raised
-
-    :param checker: *CheckerLike* - Describes the check that will be performed on the field.
-    :param name: *str* – Name of field for which validator is created.
-    :param raise_on_error: *bool* – See :func:`.check`.
-    :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
     """
 
     import pydantic
@@ -239,11 +241,9 @@ class Wrapper:
         return getattr(self.wrapped, item)
 
 
-class CheckerMeta(type):
+class _CheckerMeta(type):
     """
     Metaclass for the Checker class.
-
-    :meta private:
     """
 
     def __new__(mcs, name, bases, attrs, types=(object,), **kwargs):
@@ -299,7 +299,7 @@ class CheckerMeta(type):
             return cls(eq=other)
 
 
-class Checker(metaclass=CheckerMeta):
+class Checker(metaclass=_CheckerMeta):
     """
     Base class for all checkers.
 
@@ -359,8 +359,6 @@ class Checker(metaclass=CheckerMeta):
         chain.
 
         :return: *List[str]*
-
-        :meta private:
         """
 
         return []
@@ -380,8 +378,6 @@ class Checker(metaclass=CheckerMeta):
         :return: Tuple[bool, Any]. Returns a tuple (passed, value). passed indicates whether the check passed or not.
             If check passed, then value is the (possibly converted) checked value, otherwise it is an exception that
             explains why the check failed.
-
-        :meta private:
         """
 
         return True, value
@@ -421,7 +417,7 @@ class Checker(metaclass=CheckerMeta):
 
 class Typed(Checker):
     """
-    Check if ``x`` is an instance of a given type (or types) using ``isinstance(x, args)``.
+    Check if `x` is an instance of a given type (or types) using `isinstance(x, args)`.
 
     :param args: *Tuple[Type]* – One or more types.
 
@@ -473,7 +469,7 @@ class Typed(Checker):
 
 class One(Checker):
     """
-    Check if ``x`` matches **exactly one** of a set of checkers.
+    Check if `x` matches **exactly one** of a set of checkers.
 
     :param args: *Tuple[CheckerLike]* – At least two checker-like object(s) out of which exactly one must pass.
 

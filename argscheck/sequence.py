@@ -7,8 +7,7 @@ This page documents checkers for sequence objects.
 We define a sequence as a class that:
 
 1. Implements `__len__()`.
-2. Implements `__getitem__()`, which accepts (among others) integers starting from zero and up to (and not including)
-    the object's own length.
+2. Implements `__getitem__()`, which accepts (among others) integers starting from zero and up to (and not including) the object's own length.
 3. Can be instantiated from an iterable.
 
 We define a mutable sequence as a class that:

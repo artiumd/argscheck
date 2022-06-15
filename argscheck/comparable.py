@@ -7,7 +7,7 @@ This page documents the :class:`.Comparable` checker.
 
 import operator
 
-from argscheck import Checker
+from .core import Checker
 
 
 class _Descriptor:
@@ -27,27 +27,29 @@ class _Descriptor:
     def __set__(self, obj, value):
         if value is not None:
             if not isinstance(value, obj.other_type):
-                obj._raise_init_type_error(f'must have type {obj.other_type!r} if present', **{self.name: value})
+                parameters = {self.name: value}
+                obj._raise_init_type_error(f'must have type {obj.other_type!r} if present', **parameters)
 
             for other_name in self.excludes:
                 other_value = getattr(obj, other_name)
 
                 if other_value is not None:
-                    obj._raise_init_type_error('must not be both present', **{self.name: value, other_name: other_value.other})
+                    parameters = {self.name: value, other_name: other_value.other}
+                    obj._raise_init_type_error('must not be both present', **parameters)
 
             for other_name in self.greater_than:
                 other_value = getattr(obj, other_name)
 
                 if other_value is not None and value < other_value.other:
-                    obj._raise_init_value_error(f'{self.name} must be greater than {other_name}',
-                                                **{self.name: value, other_name: other_value.other})
+                    parameters = {self.name: value, other_name: other_value.other}
+                    obj._raise_init_value_error(f'{self.name} must be greater than {other_name}', **parameters)
 
             for other_name in self.less_than:
                 other_value = getattr(obj, other_name)
 
                 if other_value is not None and value > other_value.other:
-                    obj._raise_init_value_error(f'{self.name} must be less than {other_name}',
-                                                **{self.name: value, other_name: other_value.other})
+                    parameters = {self.name: value, other_name: other_value.other}
+                    obj._raise_init_value_error(f'{self.name} must be less than {other_name}', **parameters)
 
             value = _Comparer(value, self.long_name, self.comp_op)
 

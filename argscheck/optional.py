@@ -44,7 +44,8 @@ class Optional(Checker):
 
         # `default_value` and `default_factory` are mutually exclusive
         if default_value is not _missing and default_factory is not _missing:
-            self._raise_init_type_error('must not be both present', default_value=default_value, default_factory=default_factory)
+            parameters = dict(default_value=default_value, default_factory=default_factory)
+            self._raise_init_type_error('must not be both present', **parameters)
 
         # `default_factory` must be a callable if provided
         if default_factory is not _missing and not callable(default_factory):
