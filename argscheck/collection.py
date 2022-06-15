@@ -6,7 +6,7 @@ This page documents checkers for collection objects.
 
 We define a collection as a class that:
 
-1. Has `__len__()` implemented.
+1. Implements `__len__()`.
 2. Its instances are iterable.
 3. Can be instantiated from an iterable.
 

@@ -6,12 +6,12 @@ This page documents checkers for iterators and iterable objects.
 
 We define and iterator as a class that:
 
-1. Has `__next__()` implemented.
+1. Implements `__next__()`.
 2. Each call to `next()` on iterator instances returns some value, until finally `StopIteration` is raised.
 
 We define an iterable as a class that:
 
-1. Has `__iter__()` implemented.
+1. Implements `__iter__()`.
 2. Calling `iter()` on iterable instances returns an iterator.
 
 Iterators and iterables can be homogeneous, i.e. all items they yield satisfy the same set of conditions.
