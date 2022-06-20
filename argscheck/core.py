@@ -209,7 +209,7 @@ def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
         from typing import Any
 
         from pydantic import BaseModel
-        from argscheck import Optional
+        from argscheck import validator, Optional
 
 
         class UserModel(BaseModel):
@@ -359,6 +359,8 @@ class Checker(metaclass=_CheckerMeta):
         chain.
 
         :return: *List[str]*
+
+        :meta private:
         """
 
         return []
@@ -378,6 +380,8 @@ class Checker(metaclass=_CheckerMeta):
         :return: Tuple[bool, Any]. Returns a tuple (passed, value). passed indicates whether the check passed or not.
             If check passed, then value is the (possibly converted) checked value, otherwise it is an exception that
             explains why the check failed.
+
+        :meta private:
         """
 
         return True, value
