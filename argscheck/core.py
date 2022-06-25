@@ -191,13 +191,59 @@ def check_args(function=None, raise_on_error=RAISE_ON_ERROR_DEFAULT):
         return decorator(function)
 
 
-def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
+class descriptor:
+    """
+    Create a data-descriptor class that performs argument checking (and possibly conversion)
+
+    Internally, the :func:`.check` function is called during value assignment.
+
+    :param checker_like: *CheckerLike* - Describes the check that will be performed on value assignment.
+
+    :Example:
+
+    .. code-block:: python
+
+        from argscheck import descriptor, Int
+
+
+        class Person:
+            name = descriptor(str)
+            age = descriptor(Int >= 0)
+            degr = descriptor(Optional(str, default_value='unemployed'))
+
+            def __init__(self, name, size):
+                self.name = name
+                self.size = size
+
+        Record(name='', size=1024)  # Passes, {'a': 1, 'b': 2} is returned
+        UserModel(items=None).items              # Passes, {} is returned
+        UserModel(items=[1, 2]).items            # Fails, a TypeError is raised
+    """
+    def __init__(self, checker_like):
+        self.checker = Checker.from_checker_likes(checker_like, 'descriptor()')
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.qualname = f'{owner.__name__}.{name}'
+
+    def __get__(self, instance, owner):
+        return instance.__dict__[self.name]
+
+    def __set__(self, instance, value):
+        value = check(self.checker, value, self.qualname, raise_on_error=True)
+        instance.__dict__[self.name] = value
+
+    def __delete__(self, instance):
+        del instance[self.name]
+
+
+def validator(checker_like, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
     """
     Create a `validator <https://pydantic-docs.helpmanual.io/usage/validators/>`_ for a field in a
     ``pydantic`` model. The validator will perform the checking and conversion by internally calling the
     :func:`.check` function.
 
-    :param checker: *CheckerLike* - Describes the check that will be performed on the field.
+    :param checker_like: *CheckerLike* - Describes the check that will be performed on the field.
     :param name: *str* – Name of field for which validator is created.
     :param raise_on_error: *bool* – See :func:`.check`.
     :param kwargs: *Optional* – Passed to ``pydantic.validator`` as-is.
@@ -223,6 +269,8 @@ def validator(checker, name, raise_on_error=RAISE_ON_ERROR_DEFAULT, **kwargs):
     """
 
     import pydantic
+
+    checker = Checker.from_checker_likes(checker_like)
 
     return pydantic.validator(name, **kwargs)(lambda value: check(checker, value, name, raise_on_error=raise_on_error))
 

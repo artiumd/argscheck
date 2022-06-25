@@ -1,4 +1,4 @@
-from .core import check, check_args, validator, One
+from .core import check, check_args, descriptor, validator, One
 from .comparable import Comparable
 from .optional import Optional
 from .numeric import Int, Float, Number, PositiveInt, PositiveNumber, PositiveFloat, NonNegativeInt,\
@@ -12,7 +12,7 @@ from .iter import Iterator, Iterable
 from .pathlike import PathLike, ExistingDir, ExistingFile
 
 
-__all__ = ['check', 'check_args', 'validator', 'One',
+__all__ = ['check', 'check_args', 'descriptor', 'validator', 'One',
 
            'Comparable',
 

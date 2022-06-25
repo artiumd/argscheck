@@ -1,4 +1,6 @@
-from argscheck import Sized, One, Comparable, String, Int, Iterable, Iterator
+import unittest
+
+from argscheck import Sized, One, Comparable, String, Int, Iterable, Iterator, descriptor, Number, Optional
 
 from tests.argscheck_test_case import TestCaseArgscheck
 from tests.mocks import MockIterable, MockIterator
@@ -91,3 +93,32 @@ class TestOne(TestCaseArgscheck):
         self.checker = (int, Iterator[int])
         self.assertRaisesOnCheck(NotImplementedError, 1)
         self.assertRaisesOnCheck(NotImplementedError, MockIterator([1, 2, 3]))
+
+
+class TestDescriptor(unittest.TestCase):
+    def test(self):
+        class Class:
+            boolean = descriptor(bool)
+            opt_number = descriptor(Optional((-1.0 <= Number) <= 1.0, default_value=0.0))
+
+        instance = Class()
+        value = True
+        instance.boolean = value
+        self.assertIs(instance.boolean, value)
+
+        value = False
+        instance.boolean = value
+        self.assertIs(instance.boolean, value)
+
+        value = 0.5
+        instance.opt_number = value
+        self.assertIs(instance.opt_number, value)
+
+        instance.opt_number = None
+        self.assertEqual(instance.opt_number, 0.0)
+
+        with self.assertRaises(TypeError):
+            instance.boolean = []
+
+        with self.assertRaises(ValueError):
+            instance.opt_number = 2.1
