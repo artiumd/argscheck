@@ -1,5 +1,5 @@
 # argscheck
-Simple yet comprehensive argument checking for Python
+Effortless Argument Checking For Python
 
 ## Installation
 
