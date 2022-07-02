@@ -1,7 +1,7 @@
 import unittest
 from functools import partial
 
-from argscheck import check, Checker
+from argscheck import check
 
 
 class TestCaseArgscheck(unittest.TestCase):

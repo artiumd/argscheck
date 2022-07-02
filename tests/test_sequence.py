@@ -13,6 +13,11 @@ class TestSequence(TestCaseArgscheck):
         self.assertRaisesOnCheck(ValueError, ['a'])
         self.assertRaisesOnCheck(TypeError, ['a', 1])
 
+        self.checker = Sequence(Sequence(int, str, len_eq=2), len_eq=3)
+        self.assertOutputIsInput([[1, 'a'], [2, 3], ['b', 'c']])
+        self.assertRaisesOnCheck(ValueError, [[1, 'a'], [2, 3]])
+        self.assertRaisesOnCheck(ValueError, [[1, 'a'], [2, 3, 4], ['b', 'c']])
+
 
 class TestTuple(TestCaseArgscheck):
     def test_init(self):

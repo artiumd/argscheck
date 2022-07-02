@@ -13,7 +13,6 @@ class Sentinel:
 def extend_docstring(cls):
     cls_doc, *bases_docs = [_DocString.from_class(base) for base in inspect.getmro(cls)]
     cls_doc.extend_params(bases_docs)
-
     cls.__doc__ = cls_doc.to_string()
 
 

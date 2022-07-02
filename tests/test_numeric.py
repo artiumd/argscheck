@@ -1,4 +1,4 @@
-from argscheck import Sized, Float, Number, check_args
+from argscheck import Sized, Float, Number, check_args, NonEmpty
 
 from tests.argscheck_test_case import TestCaseArgscheck
 
@@ -120,3 +120,33 @@ class TestNumber(TestCaseArgscheck):
         self.assertOutputIsInput(6)
         self.assertOutputIsInput(6.0)
         self.assertRaisesOnCheck(ValueError, 1)
+
+        self.checker = Number(ge=0, lt=10)
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput(5.0)
+        self.assertRaisesOnCheck(ValueError, 10)
+        self.assertRaisesOnCheck(TypeError, 'a')
+
+        self.checker = 0 <= (Number < 10)
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput(5.0)
+        self.assertRaisesOnCheck(ValueError, 10)
+        self.assertRaisesOnCheck(TypeError, 'a')
+
+        self.checker = (0.0 <= (Number < 25)) != 14
+        self.assertOutputIsInput(0)
+        self.assertOutputIsInput(11.0)
+        self.assertRaisesOnCheck(ValueError, 26)
+        self.assertRaisesOnCheck(ValueError, 14)
+        self.assertRaisesOnCheck(TypeError, 'a')
+
+
+class TestNonEmpty(TestCaseArgscheck):
+    def test_check(self):
+        self.checker = NonEmpty
+        self.assertOutputIsInput(['a', 'b', 'c'])
+        self.assertOutputIsInput('abc')
+        self.assertRaisesOnCheck(ValueError, '')
+        self.assertRaisesOnCheck(ValueError, [])
+        self.assertRaisesOnCheck(TypeError, 0)
+        self.assertRaisesOnCheck(TypeError, None)

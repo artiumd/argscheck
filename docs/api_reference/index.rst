@@ -12,6 +12,7 @@ For the sake of brevity, throughout the API reference, the argument being checke
    :maxdepth: 2
 
    core
+   optional
    string
    comparable
    numeric

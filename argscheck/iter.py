@@ -2,45 +2,75 @@
 Iterator and Iterable
 =====================
 
-This module contains checkers for iterator and iterable arguments.
+This page documents checkers for iterators and iterable objects.
 
-In this context, an iterator is a class that has ``__next__()`` implemented, so each call to ``next()`` produces an
-item, until finally ``StopIteration`` is raised.
+We define and iterator as a class that:
 
-An iterable is a class that has ``__iter__()`` implemented, so it can be iterated over by a for loop or by explicitly
-creating an iterator with ``iter()`` and repeatedly calling ``next()`` on the resulting iterator.
+1. Implements `__next__()`.
+2. Each call to `next()` on iterator instances returns some value, until finally `StopIteration` is raised.
+
+We define an iterable as a class that:
+
+1. Implements `__iter__()`.
+2. Calling `iter()` on iterable instances returns an iterator.
+
+Iterators and iterables can be homogeneous, i.e. all items they yield satisfy the same set of conditions.
+
+Homogeneity can be checked for by providing one or more positional arguments to the checker's constructor.
+
+The usage of the `Iterator` and `Iterable` checkers, does not follow the usual pattern of:
+
+.. code-block:: python
+
+    checker = SomeChecker()
+    check(checker, good_value)  # Passes, the good value is returned
+    check(checker, bad_value)  # Fails, an exception is raised
+
+Instead, calling `check()` returns a wrapper around the (iterator or iterable) value, and checking is preformed as the
+values are being produced by the iterator or iterable.
+
+See examples for :class:`.Iterator` and :class:`.Iterable`.
+
+.. warning::
+
+       Composing :class:`.Iterator`, :class:`.Iterable` inside other checkers has limited support (only
+       :class:`~argscheck.optional.Optional` is supported).
+
+       e.g. ``Collection(Iterable(int))`` is not supported (but ``Iterable(Collection(int))`` is supported).
 """
+
 from .core import check, Checker, Wrapper, RAISE_ON_ERROR_DEFAULT
 
 
 class Iterator(Checker):
     """
-    Check if ``x`` is a homogeneous iterator, i.e. each item satisfies the same set of checkers.
+    Check if `x` is a (possible homogeneous) iterator.
 
-    The usage of the ``Iterator`` checker is a little different than the rest: calling ``check(x)`` returns a wrapper
-    around ``x``, and calling ``next()`` on it will call ``next()`` on ``x`` and check each item before it is returned.
-
-    :param args: *Tuple[CheckerLike]* – Describes what each item from the iterator must be.
+    :param args: *Optional[Tuple[CheckerLike]]* –  If provided, apply the given check to each item from `x`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Iterator
+        from argscheck import check, Iterator
+
 
         # Each item must be an str or bool instance
-        checker = Iterator(str, bool)
-        iterator = checker.check(iter(['a', True, 1.1]))
+        iterator = check(Iterator(str, bool), iter(['a', True, 1.1]))
 
-        next(iterator)  # Passes, returns 'a'
-        next(iterator)  # Passes, returns True
-        next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).
+        next(iterator)  # Passes, 'a' is returned
+        next(iterator)  # Passes, True is returned
+        next(iterator)  # Fails, a TypeError is raised (1.1 is not an str or bool).
 
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
-        self.item_checker = Checker.from_checker_likes(args)
+
+        if args:
+            self.item_checker = Checker.from_checker_likes(args)
+        else:
+            self.item_checker = None
 
     def check(self, name, value, **kwargs):
         if not name:
@@ -51,30 +81,29 @@ class Iterator(Checker):
 
 class Iterable(Checker):
     """
-    Same as :class:`.Iterator`, plus, ``x`` can be a plain iterable (not necessarily an iterator).
+    Check if `x` is a (possible homogeneous) iterable.
+
+    :param args: *Optional[Tuple[CheckerLike]]* –  If provided, apply the given check to each item from `x`.
 
     :Example:
 
     .. code-block:: python
 
-        from argscheck import Iterable
+        from argscheck import check, Iterable
+
 
         # Each item must be an str or bool instance
-        checker = Iterable(str, bool)
-
-        # Can be iterated over with a for loop
-        for item in checker.check(['a', True, 1.1]):
+        for item in check(Iterable(str, bool), ['a', True, 1.1]):
             print(item)     # prints "a\\n", "True\\n", then raises TypeError (1.1 is not an str or bool).
 
-        # Can be iterated over manually
-        iterator = iter(checker.check(['a', True, 1.1]))
-        next(iterator)  # Passes, returns 'a'
-        next(iterator)  # Passes, returns True
-        next(iterator)  # Fails, raises TypeError (1.1 is not an str or bool).
     """
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
-        self.item_checker = Checker.from_checker_likes(args)
+
+        if args:
+            self.item_checker = Checker.from_checker_likes(args)
+        else:
+            self.item_checker = None
 
     def check(self, name, value, **kwargs):
         if not name:
@@ -106,7 +135,12 @@ class _IteratorWrapper(Wrapper):
             raise stop
 
         # Check next item from iterator
-        return check(self.checker, value, name, self.raise_on_error)
+        if self.checker is not None:
+            return check(self.checker, value, name, self.raise_on_error)
+        elif self.raise_on_error:
+            return value
+        else:
+            return True, value, value
 
 
 class _IterableWrapper(Wrapper):

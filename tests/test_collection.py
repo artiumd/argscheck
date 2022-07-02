@@ -46,3 +46,10 @@ class TestSet(TestCaseArgscheck):
         self.assertRaisesOnCheck(ValueError, {'one', 'two', 'three', 'four'})
         self.assertRaisesOnCheck(ValueError, {'four'})
         self.assertRaisesOnCheck(TypeError, {1})
+
+        self.checker = Set(len_ge=2) > {'a'}
+        self.assertOutputIsInput({'a', 'b'})
+        self.assertOutputIsInput({'a', 1, ()})
+        self.assertRaisesOnCheck(TypeError, ['a', 'b'])
+        self.assertRaisesOnCheck(ValueError, {'a'})
+        self.assertRaisesOnCheck(ValueError, {'b', 'c'})
